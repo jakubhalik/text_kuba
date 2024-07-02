@@ -68,20 +68,38 @@ async function signUp(
             .update(combinedPassword)
             .digest('hex');
 
-        // The double quotes around identifiers are necessary to preserve the case
         await client.query(`
             CREATE USER "${username}" WITH PASSWORD '${formData.password}';
             GRANT "user" TO "${username}";
         `);
 
         await client.query(`
-            CREATE TABLE "${username}_messages_table" (
+            CREATE SCHEMA "${username}_schema" AUTHORIZATION "${username}";
+            GRANT ALL ON SCHEMA "${username}_schema" TO "${username}";
+            GRANT USAGE ON SCHEMA "${username}_schema" TO postgres;
+        `);
+
+        client.release();
+
+        // Connect as the new user to create tables
+        const newUserPostgresAccount = new Pool({
+            host: 'localhost',
+            port: 5432,
+            database: 'text_kuba',
+            user: username,
+            password: formData.password,
+        });
+
+        const userClient = await newUserPostgresAccount.connect();
+
+        await userClient.query(`
+            CREATE TABLE "${username}_schema"."messages_table" (
                 datetime_from TIMESTAMPTZ,
                 send_by TEXT,
                 send_to TEXT,
                 text TEXT
             );
-            CREATE TABLE "${username}_profile_table" (
+            CREATE TABLE "${username}_schema"."profile_table" (
                 name TEXT,
                 email TEXT,
                 phone_number TEXT,
@@ -89,21 +107,21 @@ async function signUp(
                 theology TEXT,
                 philosophy TEXT
             );
-            INSERT INTO "${username}_profile_table" (name) VALUES ('${username}');
-            UPDATE "${username}_profile_table" SET
+            INSERT INTO "${username}_schema"."profile_table" (name) VALUES ('${username}');
+            UPDATE "${username}_schema"."profile_table" SET
                 name = pgp_sym_encrypt(name::text, '${hashedPassword}'),
                 email = pgp_sym_encrypt(email::text, '${hashedPassword}'),
                 phone_number = pgp_sym_encrypt(phone_number::text, '${hashedPassword}'),
                 avatar = pgp_sym_encrypt(encode(avatar, 'hex'), '${hashedPassword}'),
                 theology = pgp_sym_encrypt(theology::text, '${hashedPassword}'),
                 philosophy = pgp_sym_encrypt(philosophy::text, '${hashedPassword}');
-            UPDATE "${username}_messages_table" SET
+            UPDATE "${username}_schema"."messages_table" SET
                 send_by = pgp_sym_encrypt(send_by::text, '${hashedPassword}'),
                 send_to = pgp_sym_encrypt(send_to::text, '${hashedPassword}'),
                 text = pgp_sym_encrypt(text::text, '${hashedPassword}');
         `);
 
-        client.release();
+        userClient.release();
         return await login(formData);
     } catch (error) {
         console.error('SignUp error:', error);

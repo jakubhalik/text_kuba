@@ -84,10 +84,7 @@ export default function LoginOrSignUp({
         if (result.success) {
             window.location.href = '/'; // Redirect to reload the page and trigger the logged-in state
         } else {
-            setError(
-                result.error ||
-                (isLogin ? texts.login_failed : texts.signup_failed)
-            );
+            setError(isLogin ? texts.login_failed : texts.signup_failed);
         }
     };
 
@@ -148,6 +145,7 @@ export default function LoginOrSignUp({
                             </>
                         )}
                     </div>
+                    {error && <p className="text-red-500">{error}</p>}
                     {!isLogin && (
                         <div className="flex items-center space-x-2 px-1">
                             <Label
@@ -158,7 +156,6 @@ export default function LoginOrSignUp({
                             </Label>
                         </div>
                     )}
-                    {error && <p className="text-red-500">{error}</p>}
                     <Button type="submit" className="w-full">
                         {isLogin ? texts.login_button : texts.signup_button}
                     </Button>

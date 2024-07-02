@@ -4,6 +4,8 @@
 read -p "Enter your name/alias: " username
 read -sp "Enter password for the 'postgres' user: " postgres_password
 echo
+read -sp "Enter password for '${username}' user: " user_password
+echo
 
 # Detect OS and install PostgreSQL if not installed
 install_postgresql() {
@@ -42,7 +44,7 @@ fi
 
 # Detect PostgreSQL data directory
 if [ -f /etc/debian_version ]; then
-    PGDATA=$(sudo -u postgres psql -t -P format=unaligned -c "SHOW data_directory;")
+    PGDATA=$(sudo -u postgres PGPASSWORD=$postgres_password psql -t -P format=unaligned -c "SHOW data_directory;")
 elif [ -f /etc/arch-release ]; then
     PGDATA="/var/lib/postgres/data"
 else
@@ -51,7 +53,7 @@ else
 fi
 
 # Set password for the postgres user
-sudo -u postgres psql -c "ALTER USER postgres PASSWORD '$postgres_password';"
+sudo -u postgres PGPASSWORD=$postgres_password psql -c "ALTER USER postgres PASSWORD '$postgres_password';"
 
 # Generate SSL certificates
 SSL_DIR="$PGDATA/ssl"
@@ -120,7 +122,7 @@ elif [ -f /etc/arch-release ]; then
 fi
 
 # Set up database and users
-sudo -u postgres psql <<EOF
+sudo -u postgres PGPASSWORD=$postgres_password psql <<EOF
 -- Drop database if it exists
 DROP DATABASE IF EXISTS text_${username};
 
@@ -132,7 +134,7 @@ DO
 \$do\$
 BEGIN
    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${username}') THEN
-      CREATE ROLE ${username} WITH LOGIN SUPERUSER;
+      CREATE ROLE ${username} WITH LOGIN;
    END IF;
    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'user') THEN
       CREATE ROLE "user" WITH LOGIN;
@@ -146,7 +148,7 @@ read -sp "Enter password for '${username}' user: " user_password
 echo
 
 # Create user with the specified password
-sudo -u postgres psql -c "ALTER ROLE ${username} WITH PASSWORD '$user_password';"
+sudo -u postgres PGPASSWORD=$postgres_password psql -c "ALTER ROLE ${username} WITH PASSWORD '$user_password';"
 
 # Generate combined password
 combined_password="${username}${user_password}"
@@ -155,18 +157,24 @@ combined_password="${username}${user_password}"
 hashed_password=$(echo -n "$combined_password" | sha256sum | awk '{print $1}')
 
 # Enable pgcrypto extension in the new database
-sudo -u postgres psql -d text_${username} -c "CREATE EXTENSION pgcrypto;"
+sudo -u postgres PGPASSWORD=$postgres_password psql -d text_${username} -c "CREATE EXTENSION pgcrypto;"
 
 # Create encrypted tables in the user's database
-sudo -u postgres psql -d text_${username} <<EOF
-CREATE TABLE ${username}_messages_table (
+sudo -u postgres PGPASSWORD=$postgres_password psql -d text_${username} <<EOF
+-- Create schema
+CREATE SCHEMA "${username}_schema" AUTHORIZATION "${username}";
+
+-- Grant necessary privileges to the schema
+GRANT USAGE ON SCHEMA "${username}_schema" TO ${username};
+
+CREATE TABLE "${username}_schema"."messages_table" (
     datetime_from TIMESTAMPTZ,
     send_by TEXT,
     send_to TEXT,
     text TEXT
 );
 
-CREATE TABLE ${username}_profile_table (
+CREATE TABLE "${username}_schema"."profile_table" (
     name TEXT,
     email TEXT,
     phone_number TEXT,
@@ -176,10 +184,10 @@ CREATE TABLE ${username}_profile_table (
 );
 
 -- Insert initial data into profile table
-INSERT INTO ${username}_profile_table (name) VALUES ('${username}');
+INSERT INTO "${username}_schema"."profile_table" (name) VALUES ('${username}');
 
 -- Encrypt table data
-UPDATE ${username}_profile_table SET
+UPDATE "${username}_schema"."profile_table" SET
     name = pgp_sym_encrypt(name::text, '$hashed_password'),
     email = pgp_sym_encrypt(email::text, '$hashed_password'),
     phone_number = pgp_sym_encrypt(phone_number::text, '$hashed_password'),
@@ -187,10 +195,16 @@ UPDATE ${username}_profile_table SET
     theology = pgp_sym_encrypt(theology::text, '$hashed_password'),
     philosophy = pgp_sym_encrypt(philosophy::text, '$hashed_password');
 
-UPDATE ${username}_messages_table SET
+UPDATE "${username}_schema"."messages_table" SET
     send_by = pgp_sym_encrypt(send_by::text, '$hashed_password'),
     send_to = pgp_sym_encrypt(send_to::text, '$hashed_password'),
     text = pgp_sym_encrypt(text::text, '$hashed_password');
+
+ALTER TABLE kuba_schema.messages_table OWNER TO ${username};
+ALTER TABLE kuba_schema.profile_table OWNER TO ${username};
+GRANT ALL PRIVILEGES ON TABLE kuba_schema.messages_table TO ${username};
+GRANT ALL PRIVILEGES ON TABLE kuba_schema.profile_table TO ${username};
+
 EOF
 
 # Create system user if it doesn't exist
