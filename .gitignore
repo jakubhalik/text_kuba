@@ -36,3 +36,4 @@ dev3.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+postgresConfig.ts
