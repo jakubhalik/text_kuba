@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ChangeEvent, useRef, useState } from 'react';
+import { useLanguage } from './GlobalStates';
+import { loadLanguage } from '@/lib/utils';
 
 interface FormData {
     username: string;
@@ -26,13 +28,18 @@ const useSecureFormState = (initialData: { username: string }) => {
     return [data, handleChange, passwordRef, getPassword] as const;
 };
 
-export default function Login({
-    action,
+export default function LoginOrSignUp({
+    loginAction,
 }: {
-    action: (
+    loginAction: (
         formData: FormData
     ) => Promise<{ success: boolean; error?: string }>;
 }) {
+    const { language } = useLanguage();
+    const texts = loadLanguage(language);
+
+    const [isLogin, setIsLogin] = useState<Boolean>(true);
+
     const [data, handleChange, passwordRef, getPassword] = useSecureFormState({
         username: '',
     });
@@ -44,11 +51,11 @@ export default function Login({
             username: data.username,
             password: getPassword(),
         };
-        const result = await action(formData);
+        const result = await loginAction(formData);
         if (result.success) {
             window.location.href = '/'; // Redirect to reload the page and trigger the logged-in state
         } else {
-            setError(result.error || 'Login failed.');
+            setError(result.error || texts.login_failed);
         }
     };
 
@@ -56,46 +63,85 @@ export default function Login({
         <>
             <div className="mx-auto max-w-sm space-y-6 pt-20 px-4">
                 <div className="space-y-2 text-center">
-                    <h1 className="text-3xl font-bold">Login</h1>
+                    <h1 className="text-3xl font-bold">
+                        {isLogin ? texts.login_h : texts.signup_h}
+                    </h1>
                     <p className="text-gray-500 dark:text-gray-400">
-                        Text privately with your friend running this app on his
-                        own server with full encryption!
+                        {texts.welcome_p}
                     </p>
                     <Link
                         className="text-sm underline"
                         href="https://github.com/jakubhalik/text_kuba"
                     >
-                        Deploy your own instance
+                        {texts.deploy_link}
                     </Link>
                 </div>
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <div className="space-y-2">
-                        <Label htmlFor="username">Username</Label>
+                        <Label htmlFor="username">{texts.username_label}</Label>
                         <Input
                             id="username"
                             name="username"
-                            placeholder="Enter your username"
+                            placeholder={texts.username_input_placeholder}
                             value={data.username}
                             onChange={handleChange}
                             required
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password">{texts.password_label}</Label>
                         <Input
                             id="password"
                             name="password"
                             type="password"
-                            placeholder="Enter your password"
+                            placeholder={texts.password_input_placeholder}
                             ref={passwordRef}
                             required
                         />
+                        {!isLogin && (
+                            <>
+                                <Label htmlFor="confirm-password">
+                                    {texts.confirm_password_label}
+                                </Label>
+                                <Input
+                                    id="confirm-password"
+                                    required
+                                    type="password"
+                                    placeholder={
+                                        texts.confirm_password_input_placeholder
+                                    }
+                                />
+                            </>
+                        )}
                     </div>
+                    {!isLogin && (
+                        <div className="flex items-center space-x-2 px-1">
+                            <Label
+                                className="text-sm leading-1"
+                                htmlFor="terms"
+                            >
+                                {texts.signup_information}
+                            </Label>
+                        </div>
+                    )}
                     {error && <p className="text-red-500">{error}</p>}
                     <Button type="submit" className="w-full">
-                        Login
+                        {isLogin ? texts.login_button : texts.signup_button}
                     </Button>
                 </form>
+            </div>
+            <div className="mt-4 text-center text-sm">
+                {isLogin
+                    ? `${texts.dont_have_account}`
+                    : `${texts.have_account}`}
+                <button
+                    className="underline pl-1"
+                    onClick={() => setIsLogin(!isLogin)}
+                >
+                    {isLogin
+                        ? `${texts.switch_to_sign_up}`
+                        : `${texts.switch_to_login}`}
+                </button>
             </div>
         </>
     );
