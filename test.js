@@ -23,5 +23,6 @@ pool.query('SELECT NOW()', (err, res) => {
         return;
     }
     console.log(res.rows);
+    console.log('If time got logged out, your db configuration works great.');
     pool.end();
 });

@@ -1,9 +1,35 @@
+'use client';
+
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
-export default function Login() {
+export default function Login({
+    action,
+}: {
+    action: ({
+        formData,
+    }: {
+        formData: { username: string; password: string };
+    }) => Promise<{ success: boolean; error?: string }>;
+}) {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const formData = { username, password };
+        const result = await action({ formData });
+        if (result.success) {
+            window.location.reload();
+        } else {
+            setError(result.error || 'Login failed.');
+        }
+    };
+
     return (
         <>
             <div className="mx-auto max-w-sm space-y-6 pt-20">
@@ -17,12 +43,14 @@ export default function Login() {
                         Deploy your own instance
                     </Link>
                 </div>
-                <div className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     <div className="space-y-2">
                         <Label htmlFor="username">Username</Label>
                         <Input
                             id="username"
                             placeholder="Enter your username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                             required
                         />
                     </div>
@@ -33,10 +61,15 @@ export default function Login() {
                             required
                             type="password"
                             placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
-                    <Button className="w-full">Login</Button>
-                </div>
+                    {error && <p className="text-red-500">{error}</p>}
+                    <Button type="submit" className="w-full">
+                        Login
+                    </Button>
+                </form>
             </div>
         </>
     );
