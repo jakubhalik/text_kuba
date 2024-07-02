@@ -1,8 +1,6 @@
-import SwitcherToLoginOrSignUp from '@/components/SwitcherToLoginOrSignUp';
-import Login from '@/components/Login';
-import { SignUp } from '@/components/SignUp';
 import GlobalStates from '@/components/GlobalStates';
 import { ModeToggle } from '@/components/ModeToggle';
+import { LangToggle } from '@/components/LangToggle';
 import { Pool } from 'pg';
 import { Messenger } from '@/components/Messenger';
 import SignOutForm from '@/components/SignOutForm';
@@ -63,6 +61,7 @@ export default async function Home() {
             <header className="flex pr-4 py-4 border-b">
                 <nav className="flex gap-2 ml-auto">
                     <ModeToggle />
+                    <LangToggle />
                     {loggedIn && <SignOutForm action={signOut} />}
                 </nav>
             </header>

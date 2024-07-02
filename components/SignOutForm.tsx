@@ -26,7 +26,7 @@ export default function SignOutForm({ action }: SignOutFormProps) {
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
                     <MoreHorizontal className="h-[1.2rem] w-[1.2rem]" />
-                    <span className="sr-only">Toggle theme</span>
+                    <span className="sr-only">{texts.more_options_toggle}</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

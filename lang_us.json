@@ -1,7 +1,7 @@
 {
     "login_h": "Login",
     "welcome_p": "Text privately with your friend running this app on his own server with full encryption!",
-    "deploy_link": "Deploy tour own instance",
+    "deploy_link": "Deploy to your own instance",
     "username_label": "Username",
     "username_input_placeholder": "Enter your username",
     "password_label": "Password",
@@ -17,5 +17,13 @@
     "confirm_password_input_placeholder": "Confirm your password",
     "signup_information": "By creating an account you are creating a disk which is encrypted with your credentials that only you know, so you must not forget your password or you will loose your access to the platform!",
     "signup_button": "Sign Up",
-    "signout_button": "Sign out"
+    "signout_button": "Sign out",
+    "more_options_toggle": "More options",
+    "theme_toggle": "Theme toggle",
+    "theme_toggle_light_dropdown_menu_item": "Light",
+    "theme_toggle_dark_dropdown_menu_item": "Dark",
+    "theme_toggle_system_dropdown_menu_item": "System",
+    "lang_toggle": "Toggle language",
+    "lang_toggle_english_dropdown_menu_item": "English",
+    "lang_toggle_czech_dropdown_menu_item": "Czech"
 }

@@ -1,4 +1,6 @@
-READ THE BASH SCRIPTS BEFORE RUNNING THEM! - U don't want to delete your databases on accident.
+# READ THE BASH SCRIPTS BEFORE RUNNING THEM! - U don't want to delete your databases on accident.
+
+# This project is NOT fininshed yet, it is still a work in progress
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
