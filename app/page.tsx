@@ -5,6 +5,8 @@ import { Pool } from 'pg';
 import { Messenger } from '@/components/Messenger';
 import SignOutForm from '@/components/SignOutForm';
 import LoginOrSignUp from '@/components/LoginOrSignUp';
+import { postgresUserPool } from '@/postgresConfig';
+import crypto from 'crypto';
 
 interface FormData {
     username: string;
@@ -53,6 +55,62 @@ function resetSessionTimeout(): void {
     ); // 30 hours
 }
 
+async function signUp(
+    formData: FormData
+): Promise<{ success: boolean; error?: string }> {
+    'use server';
+    try {
+        const client = await postgresUserPool.connect();
+        const username = formData.username;
+        const combinedPassword = `${formData.username}${formData.password}`;
+        const hashedPassword = crypto
+            .createHash('sha256')
+            .update(combinedPassword)
+            .digest('hex');
+
+        // The double quotes around identifiers are necessary to preserve the case
+        await client.query(`
+            CREATE USER "${username}" WITH PASSWORD '${formData.password}';
+            GRANT "user" TO "${username}";
+        `);
+
+        await client.query(`
+            CREATE TABLE "${username}_messages_table" (
+                datetime_from TIMESTAMPTZ,
+                send_by TEXT,
+                send_to TEXT,
+                text TEXT
+            );
+            CREATE TABLE "${username}_profile_table" (
+                name TEXT,
+                email TEXT,
+                phone_number TEXT,
+                avatar BYTEA,
+                theology TEXT,
+                philosophy TEXT
+            );
+            INSERT INTO "${username}_profile_table" (name) VALUES ('${username}');
+            UPDATE "${username}_profile_table" SET
+                name = pgp_sym_encrypt(name::text, '${hashedPassword}'),
+                email = pgp_sym_encrypt(email::text, '${hashedPassword}'),
+                phone_number = pgp_sym_encrypt(phone_number::text, '${hashedPassword}'),
+                avatar = pgp_sym_encrypt(encode(avatar, 'hex'), '${hashedPassword}'),
+                theology = pgp_sym_encrypt(theology::text, '${hashedPassword}'),
+                philosophy = pgp_sym_encrypt(philosophy::text, '${hashedPassword}');
+            UPDATE "${username}_messages_table" SET
+                send_by = pgp_sym_encrypt(send_by::text, '${hashedPassword}'),
+                send_to = pgp_sym_encrypt(send_to::text, '${hashedPassword}'),
+                text = pgp_sym_encrypt(text::text, '${hashedPassword}');
+        `);
+
+        client.release();
+        return await login(formData);
+    } catch (error) {
+        console.error('SignUp error:', error);
+        return { success: false, error: 'Sign up failed.' };
+    }
+}
+
 export default async function Home() {
     loggedIn && resetSessionTimeout();
 
@@ -65,7 +123,11 @@ export default async function Home() {
                     {loggedIn && <SignOutForm action={signOut} />}
                 </nav>
             </header>
-            {loggedIn ? <Messenger /> : <LoginOrSignUp loginAction={login} />}
+            {loggedIn ? (
+                <Messenger />
+            ) : (
+                <LoginOrSignUp loginAction={login} signUpAction={signUp} />
+            )}
         </GlobalStates>
     );
 }

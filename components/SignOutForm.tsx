@@ -31,7 +31,6 @@ export default function SignOutForm({ action }: SignOutFormProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                    className="text-white"
                     onClick={async (e) => {
                         e.preventDefault();
                         await action();

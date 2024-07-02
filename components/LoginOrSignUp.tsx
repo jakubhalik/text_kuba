@@ -17,6 +17,7 @@ const useSecureFormState = (initialData: { username: string }) => {
     const [data, setData] = useState(initialData);
 
     const passwordRef = useRef<HTMLInputElement>(null);
+    const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -24,23 +25,42 @@ const useSecureFormState = (initialData: { username: string }) => {
     };
 
     const getPassword = () => passwordRef.current?.value || '';
+    const getConfirmPassword = () => confirmPasswordRef.current?.value || '';
 
-    return [data, handleChange, passwordRef, getPassword] as const;
+    return [
+        data,
+        handleChange,
+        passwordRef,
+        confirmPasswordRef,
+        getPassword,
+        getConfirmPassword,
+    ] as const;
 };
 
 export default function LoginOrSignUp({
     loginAction,
+    signUpAction,
 }: {
     loginAction: (
+        formData: FormData
+    ) => Promise<{ success: boolean; error?: string }>;
+    signUpAction: (
         formData: FormData
     ) => Promise<{ success: boolean; error?: string }>;
 }) {
     const { language } = useLanguage();
     const texts = loadLanguage(language);
 
-    const [isLogin, setIsLogin] = useState<Boolean>(true);
+    const [isLogin, setIsLogin] = useState<boolean>(true);
 
-    const [data, handleChange, passwordRef, getPassword] = useSecureFormState({
+    const [
+        data,
+        handleChange,
+        passwordRef,
+        confirmPasswordRef,
+        getPassword,
+        getConfirmPassword,
+    ] = useSecureFormState({
         username: '',
     });
     const [error, setError] = useState('');
@@ -51,11 +71,23 @@ export default function LoginOrSignUp({
             username: data.username,
             password: getPassword(),
         };
-        const result = await loginAction(formData);
+
+        if (!isLogin && getPassword() !== getConfirmPassword()) {
+            setError(texts.password_mismatch);
+            return;
+        }
+
+        const result = isLogin
+            ? await loginAction(formData)
+            : await signUpAction(formData);
+
         if (result.success) {
             window.location.href = '/'; // Redirect to reload the page and trigger the logged-in state
         } else {
-            setError(result.error || texts.login_failed);
+            setError(
+                result.error ||
+                (isLogin ? texts.login_failed : texts.signup_failed)
+            );
         }
     };
 
@@ -105,11 +137,13 @@ export default function LoginOrSignUp({
                                 </Label>
                                 <Input
                                     id="confirm-password"
-                                    required
+                                    name="confirm-password"
                                     type="password"
                                     placeholder={
                                         texts.confirm_password_input_placeholder
                                     }
+                                    ref={confirmPasswordRef}
+                                    required
                                 />
                             </>
                         )}
@@ -136,7 +170,10 @@ export default function LoginOrSignUp({
                     : `${texts.have_account}`}
                 <button
                     className="underline pl-1"
-                    onClick={() => setIsLogin(!isLogin)}
+                    onClick={() => {
+                        setError('');
+                        setIsLogin(!isLogin);
+                    }}
                 >
                     {isLogin
                         ? `${texts.switch_to_sign_up}`
