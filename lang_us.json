@@ -1,0 +1,20 @@
+{
+    "login_h": "Login",
+    "welcome_p": "Text privately with your friend running this app on his own server with full encryption!",
+    "deploy_link": "Deploy tour own instance",
+    "username_label": "Username",
+    "username_input_placeholder": "Enter your username",
+    "password_label": "Password",
+    "password_input_placeholder": "Enter your password",
+    "dont_have_account": "Don't have an account yet?",
+    "have_account": "Already have an account?",
+    "login_button": "Login",
+    "switch_to_login": "Login",
+    "switch_to_sign_up": "Sign up",
+    "login_failed": "Login failed.",
+    "signup_h": "Sign Up",
+    "confirm_password_label": "Confirm Password",
+    "confirm_password_input_placeholder": "Confirm your password",
+    "signup_information": "By creating an account you are creating a disk which is encrypted with your credentials that only you know, so you must not forget your password or you will loose your access to the platform!",
+    "signup_button": "Sign Up"
+}

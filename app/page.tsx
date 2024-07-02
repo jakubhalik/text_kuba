@@ -6,6 +6,7 @@ import { ModeToggle } from '@/components/ModeToggle';
 import { Pool } from 'pg';
 import { Messenger } from '@/components/Messenger';
 import SignOutForm from '@/components/SignOutForm';
+import LoginOrSignUp from '@/components/LoginOrSignUp';
 
 interface FormData {
     username: string;
@@ -65,14 +66,7 @@ export default async function Home() {
                     {loggedIn && <SignOutForm action={signOut} />}
                 </nav>
             </header>
-            {loggedIn ? (
-                <Messenger />
-            ) : (
-                <SwitcherToLoginOrSignUp
-                    signUp={<SignUp />}
-                    login={<Login action={login} />}
-                />
-            )}
+            {loggedIn ? <Messenger /> : <LoginOrSignUp loginAction={login} />}
         </GlobalStates>
     );
 }
