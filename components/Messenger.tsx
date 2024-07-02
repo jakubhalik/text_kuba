@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
 
 export function Messenger() {
     return (
@@ -10,7 +11,7 @@ export function Messenger() {
             <div className="border-b flex items-center p-4">
                 <div className="flex items-center space-x-4">
                     <div className="rounded-full overflow-hidden border w-10 h-10">
-                        <img
+                        <Image
                             alt="Avatar"
                             className="rounded-full"
                             height="40"
@@ -29,7 +30,7 @@ export function Messenger() {
                         </p>
                     </div>
                 </div>
-                <Button className="ml-auto!" variant="icon">
+                <Button className="ml-auto!" variant="ghost" size="icon">
                     <SearchIcon className="w-4 h-4" />
                     <span className="sr-only">Search</span>
                 </Button>
@@ -41,7 +42,11 @@ export function Messenger() {
                             <FileEditIcon className="w-6 h-6 text-gray-500 rounded-lg hover:text-gray-900 dark:hover:text-gray-100" />
                             <MoreHorizontalIcon className="w-6 h-6 text-gray-500 rounded-lg hover:text-gray-900 dark:hover:text-gray-100" />
                         </div>
-                        <Button className="ml-auto!" variant="icon">
+                        <Button
+                            className="ml-auto!"
+                            variant="ghost"
+                            size="icon"
+                        >
                             <FileEditIcon className="w-6 h-6" />
                             <span className="sr-only">New chat</span>
                         </Button>
@@ -53,7 +58,7 @@ export function Messenger() {
                                     className="flex items-center gap-4 p-4 rounded-lg -m-4"
                                     href="#"
                                 >
-                                    <img
+                                    <Image
                                         alt="Avatar"
                                         className="rounded-full"
                                         height="40"
@@ -67,7 +72,7 @@ export function Messenger() {
                                     <div className="flex-1">
                                         <h3 className="font-semibold">Alice</h3>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            I'm on my way!
+                                            I&apos;m on my way!
                                         </p>
                                     </div>
                                     <span className="text-sm">2:14 PM</span>
@@ -78,7 +83,7 @@ export function Messenger() {
                                     className="flex items-center gap-4 p-4 rounded-lg -m-4"
                                     href="#"
                                 >
-                                    <img
+                                    <Image
                                         alt="Avatar"
                                         className="rounded-full"
                                         height="40"
@@ -103,7 +108,7 @@ export function Messenger() {
                                     className="flex items-center gap-4 p-4 rounded-lg -m-4"
                                     href="#"
                                 >
-                                    <img
+                                    <Image
                                         alt="Avatar"
                                         className="rounded-full"
                                         height="40"
@@ -119,7 +124,7 @@ export function Messenger() {
                                             Charlie
                                         </h3>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Let's meet at the cafe.
+                                            Let&apos;s meet at the cafe.
                                         </p>
                                     </div>
                                     <span className="text-sm">12:45 PM</span>
@@ -130,7 +135,7 @@ export function Messenger() {
                                     className="flex items-center gap-4 p-4 rounded-lg -m-4"
                                     href="#"
                                 >
-                                    <img
+                                    <Image
                                         alt="Avatar"
                                         className="rounded-full"
                                         height="40"
@@ -155,7 +160,7 @@ export function Messenger() {
                                     className="flex items-center gap-4 p-4 rounded-lg -m-4"
                                     href="#"
                                 >
-                                    <img
+                                    <Image
                                         alt="Avatar"
                                         className="rounded-full"
                                         height="40"
@@ -169,7 +174,7 @@ export function Messenger() {
                                     <div className="flex-1">
                                         <h3 className="font-semibold">Eve</h3>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Why aren't you replying?
+                                            Why aren&apos;t you replying?
                                         </p>
                                     </div>
                                     <span className="text-sm">2 days ago</span>
@@ -184,15 +189,15 @@ export function Messenger() {
                             <ArrowLeftIcon className="w-6 h-6" />
                             <h2 className="font-semibold">Alice</h2>
                         </div>
-                        <Button variant="icon">
+                        <Button variant="ghost" size="icon">
                             <VideoIcon className="w-6 h-6" />
                             <span className="sr-only">Video call</span>
                         </Button>
-                        <Button variant="icon">
+                        <Button variant="ghost" size="icon">
                             <PhoneIcon className="w-6 h-6" />
                             <span className="sr-only">Voice call</span>
                         </Button>
-                        <Button variant="icon">
+                        <Button variant="ghost" size="icon">
                             <MoreHorizontalIcon className="w-6 h-6" />
                             <span className="sr-only">More</span>
                         </Button>
@@ -212,7 +217,7 @@ export function Messenger() {
                         </div>
                         <div className="flex flex-row-reverse items-start">
                             <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
-                                <p>That sounds great! I'd love to. 😊</p>
+                                <p>That sounds great! I&apos;d love to. 😊</p>
                             </div>
                             <span className="text-sm text-gray-500 self-end mr-2 dark:text-gray-400">
                                 2:32 PM
@@ -221,8 +226,8 @@ export function Messenger() {
                         <div className="flex items-start">
                             <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
                                 <p>
-                                    Awesome! Let's meet at the entrance of the
-                                    mall at 1 PM.
+                                    Awesome! Let&apos;s meet at the entrance of
+                                    the mall at 1 PM.
                                 </p>
                             </div>
                             <span className="text-sm text-gray-500 self-end ml-2 dark:text-gray-400">
@@ -239,11 +244,19 @@ export function Messenger() {
                         </div>
                     </div>
                     <div className="border-t flex items-center p-4 space-x-4">
-                        <Button className="rounded-full" variant="icon">
+                        <Button
+                            className="rounded-full"
+                            variant="ghost"
+                            size="icon"
+                        >
                             <SmileIcon className="w-6 h-6" />
                             <span className="sr-only">Insert emoji</span>
                         </Button>
-                        <Button className="rounded-full" variant="icon">
+                        <Button
+                            className="rounded-full"
+                            variant="ghost"
+                            size="icon"
+                        >
                             <PaperclipIcon className="w-6 h-6" />
                             <span className="sr-only">Attach file</span>
                         </Button>
@@ -253,12 +266,10 @@ export function Messenger() {
                             id="file"
                             multiple
                             type="file"
-                            variant="unstyled"
                         />
                         <Label
                             className="rounded-full cursor-pointer"
                             htmlFor="file"
-                            variant="icon"
                         >
                             <CameraIcon className="w-6 h-6" />
                             <span className="sr-only">Attach photo</span>
@@ -267,7 +278,9 @@ export function Messenger() {
                             className="min-h-0 max-h-40 overflow-hidden resize-none"
                             placeholder="Type a message..."
                         />
-                        <Button size="md">Send</Button>
+                        <Button size="sm">
+                            <p className="text-md font-medium">Send</p>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -275,7 +288,7 @@ export function Messenger() {
     );
 }
 
-function ArrowLeftIcon(props) {
+function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -295,7 +308,7 @@ function ArrowLeftIcon(props) {
     );
 }
 
-function CameraIcon(props) {
+function CameraIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -315,7 +328,7 @@ function CameraIcon(props) {
     );
 }
 
-function FileEditIcon(props) {
+function FileEditIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -336,7 +349,7 @@ function FileEditIcon(props) {
     );
 }
 
-function MoreHorizontalIcon(props) {
+function MoreHorizontalIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -357,7 +370,7 @@ function MoreHorizontalIcon(props) {
     );
 }
 
-function PaperclipIcon(props) {
+function PaperclipIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -376,7 +389,7 @@ function PaperclipIcon(props) {
     );
 }
 
-function PhoneIcon(props) {
+function PhoneIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -395,7 +408,7 @@ function PhoneIcon(props) {
     );
 }
 
-function SearchIcon(props) {
+function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -415,7 +428,7 @@ function SearchIcon(props) {
     );
 }
 
-function SmileIcon(props) {
+function SmileIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -437,7 +450,7 @@ function SmileIcon(props) {
     );
 }
 
-function VideoIcon(props) {
+function VideoIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
