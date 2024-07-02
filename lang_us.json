@@ -16,5 +16,6 @@
     "confirm_password_label": "Confirm Password",
     "confirm_password_input_placeholder": "Confirm your password",
     "signup_information": "By creating an account you are creating a disk which is encrypted with your credentials that only you know, so you must not forget your password or you will loose your access to the platform!",
-    "signup_button": "Sign Up"
+    "signup_button": "Sign Up",
+    "signout_button": "Sign out"
 }

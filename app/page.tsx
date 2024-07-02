@@ -60,8 +60,8 @@ export default async function Home() {
 
     return (
         <GlobalStates>
-            <header className="flex px-6 sm:px-8 py-4 border-b">
-                <nav className="flex gap-4 md:gap-8 ml-auto">
+            <header className="flex pr-4 py-4 border-b">
+                <nav className="flex gap-2 ml-auto">
                     <ModeToggle />
                     {loggedIn && <SignOutForm action={signOut} />}
                 </nav>

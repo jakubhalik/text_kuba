@@ -1,22 +1,46 @@
 'use client';
 
+import { useLanguage } from './GlobalStates';
+import { loadLanguage } from '@/lib/utils';
+
+import { MoreHorizontal } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
 interface SignOutFormProps {
     action: () => Promise<void>;
 }
 
 export default function SignOutForm({ action }: SignOutFormProps) {
+    const { language } = useLanguage();
+    const texts = loadLanguage(language);
+
     return (
-        <form
-            method="post"
-            onSubmit={async (e) => {
-                e.preventDefault();
-                await action();
-                window.location.href = '/';
-            }}
-        >
-            <button type="submit" className="text-white">
-                Sign Out
-            </button>
-        </form>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                    <MoreHorizontal className="h-[1.2rem] w-[1.2rem]" />
+                    <span className="sr-only">Toggle theme</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                    className="text-white"
+                    onClick={async (e) => {
+                        e.preventDefault();
+                        await action();
+                        window.location.href = '/';
+                    }}
+                >
+                    {texts.signout_button}
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
