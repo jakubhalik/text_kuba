@@ -9,7 +9,7 @@ export default function SwitcherToLoginOrSignUp({
     signUp: ReactNode;
     login: ReactNode;
 }) {
-    const [isLogin, setIsLogin] = useState<Boolean>(false);
+    const [isLogin, setIsLogin] = useState<Boolean>(true);
 
     return (
         <>

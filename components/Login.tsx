@@ -6,14 +6,17 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
+interface FormData {
+    username: string;
+    password: string;
+}
+
 export default function Login({
     action,
 }: {
-    action: ({
-        formData,
-    }: {
-        formData: { username: string; password: string };
-    }) => Promise<{ success: boolean; error?: string }>;
+    action: (
+        formData: FormData
+    ) => Promise<{ success: boolean; error?: string }>;
 }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -21,10 +24,10 @@ export default function Login({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const formData = { username, password };
-        const result = await action({ formData });
+        const formData: FormData = { username, password };
+        const result = await action(formData);
         if (result.success) {
-            window.location.reload();
+            window.location.href = '/'; // Redirect to reload the page and trigger the logged-in state
         } else {
             setError(result.error || 'Login failed.');
         }
