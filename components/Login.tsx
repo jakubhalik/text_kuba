@@ -4,12 +4,27 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { ChangeEvent, useRef, useState } from 'react';
 
 interface FormData {
     username: string;
     password: string;
 }
+
+const useSecureFormState = (initialData: { username: string }) => {
+    const [data, setData] = useState(initialData);
+
+    const passwordRef = useRef<HTMLInputElement>(null);
+
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setData((prevData) => ({ ...prevData, [name]: value }));
+    };
+
+    const getPassword = () => passwordRef.current?.value || '';
+
+    return [data, handleChange, passwordRef, getPassword] as const;
+};
 
 export default function Login({
     action,
@@ -18,13 +33,17 @@ export default function Login({
         formData: FormData
     ) => Promise<{ success: boolean; error?: string }>;
 }) {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const [data, handleChange, passwordRef, getPassword] = useSecureFormState({
+        username: '',
+    });
     const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const formData: FormData = { username, password };
+        const formData: FormData = {
+            username: data.username,
+            password: getPassword(),
+        };
         const result = await action(formData);
         if (result.success) {
             window.location.href = '/'; // Redirect to reload the page and trigger the logged-in state
@@ -35,14 +54,17 @@ export default function Login({
 
     return (
         <>
-            <div className="mx-auto max-w-sm space-y-6 pt-20">
+            <div className="mx-auto max-w-sm space-y-6 pt-20 px-4">
                 <div className="space-y-2 text-center">
                     <h1 className="text-3xl font-bold">Login</h1>
                     <p className="text-gray-500 dark:text-gray-400">
                         Text privately with your friend running this app on his
                         own server with full encryption!
                     </p>
-                    <Link className="text-sm underline" href="">
+                    <Link
+                        className="text-sm underline"
+                        href="https://github.com/jakubhalik/text_kuba"
+                    >
                         Deploy your own instance
                     </Link>
                 </div>
@@ -51,9 +73,10 @@ export default function Login({
                         <Label htmlFor="username">Username</Label>
                         <Input
                             id="username"
+                            name="username"
                             placeholder="Enter your username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            value={data.username}
+                            onChange={handleChange}
                             required
                         />
                     </div>
@@ -61,11 +84,11 @@ export default function Login({
                         <Label htmlFor="password">Password</Label>
                         <Input
                             id="password"
-                            required
+                            name="password"
                             type="password"
                             placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            ref={passwordRef}
+                            required
                         />
                     </div>
                     {error && <p className="text-red-500">{error}</p>}
