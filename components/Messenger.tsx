@@ -1,290 +1,243 @@
+import { Pool } from 'pg';
+import crypto from 'crypto';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import Image from 'next/image';
+import Link from 'next/link';
 
-export function Messenger() {
+const owner = process.env.owner as string;
+const host = process.env.host as string;
+const port = process.env.port as string;
+const numberifiedPortForTypeSafety = parseInt(port, 10);
+
+interface Message {
+    datetime_from: string;
+    send_by: string;
+    send_to: string;
+    text: string;
+}
+
+async function getDecryptedMessages(
+    username: string,
+    password: string
+): Promise<Message[]> {
+    const pool = new Pool({
+        host: host,
+        port: numberifiedPortForTypeSafety,
+        database: `text_${owner}`,
+        user: username,
+        password: password,
+    });
+
+    const client = await pool.connect();
+
+    const combinedPassword = `${username}${password}`;
+    const hashedPassword = crypto
+        .createHash('sha256')
+        .update(combinedPassword)
+        .digest('hex');
+
+    const query = `
+        SELECT DISTINCT ON (send_by)
+            datetime_from,
+            pgp_sym_decrypt(send_by::bytea, $1) as send_by,
+            pgp_sym_decrypt(send_to::bytea, $1) as send_to,
+            pgp_sym_decrypt(text::bytea, $1) as text
+        FROM "${username}_schema".messages_table
+        ORDER BY send_by, datetime_from DESC;
+    `;
+
+    const result = await client.query(query, [hashedPassword]);
+
+    client.release();
+
+    return result.rows;
+}
+
+export async function Messenger({
+    username,
+    password,
+}: {
+    username: string;
+    password: string;
+}) {
+    const messages = await getDecryptedMessages(username, password);
+
     return (
-        <div className="h-screen flex flex-col">
-            <div className="border-b flex items-center p-4">
-                <div className="flex items-center space-x-4">
-                    <div className="rounded-full overflow-hidden border w-10 h-10">
-                        <Image
-                            alt="Avatar"
-                            className="rounded-full"
-                            height="40"
-                            src="/placeholder.svg"
-                            style={{
-                                aspectRatio: '40/40',
-                                objectFit: 'cover',
-                            }}
-                            width="40"
-                        />
+        <>
+            <div className="h-screen flex flex-col">
+                <div className="border-b flex items-center p-4">
+                    <div className="flex items-center space-x-4">
+                        <div className="rounded-full overflow-hidden border w-10 h-10">
+                            <Image
+                                alt="Avatar"
+                                className="rounded-full"
+                                height="40"
+                                src="/placeholder.svg"
+                                style={{
+                                    aspectRatio: '40/40',
+                                    objectFit: 'cover',
+                                }}
+                                width="40"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <h1 className="text-lg font-bold">Chats</h1>
+                        </div>
                     </div>
-                    <div className="space-y-1">
-                        <h1 className="text-lg font-bold">Chats</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Online
-                        </p>
-                    </div>
+                    <Button className="ml-auto" variant="ghost" size="icon">
+                        <SearchIcon className="w-4 h-4" />
+                        <span className="sr-only">Search</span>
+                    </Button>
                 </div>
-                <Button className="ml-auto!" variant="ghost" size="icon">
-                    <SearchIcon className="w-4 h-4" />
-                    <span className="sr-only">Search</span>
-                </Button>
-            </div>
-            <div className="flex-1 grid md:grid-cols-[300px_1fr]">
-                <div className="border-r flex flex-col w-full md:max-w-[300px]">
-                    <div className="border-b flex items-center p-4 space-x-4">
-                        <div className="flex items-center space-x-2">
-                            <FileEditIcon className="w-6 h-6 text-gray-500 rounded-lg hover:text-gray-900 dark:hover:text-gray-100" />
-                            <MoreHorizontalIcon className="w-6 h-6 text-gray-500 rounded-lg hover:text-gray-900 dark:hover:text-gray-100" />
-                        </div>
-                        <Button
-                            className="ml-auto!"
-                            variant="ghost"
-                            size="icon"
-                        >
-                            <FileEditIcon className="w-6 h-6" />
-                            <span className="sr-only">New chat</span>
-                        </Button>
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                        <ul className="divide-y">
-                            <li className="bg-gray-100 p-4 dark:bg-gray-900">
-                                <Link
-                                    className="flex items-center gap-4 p-4 rounded-lg -m-4"
-                                    href="#"
+                <div className="flex-1 grid md:grid-cols-[300px_1fr]">
+                    {username === `${owner}` && (
+                        <div className="border-r flex flex-col w-full md:max-w-[300px]">
+                            <div className="border-b flex items-center p-4 space-x-4">
+                                <div className="flex items-center space-x-2">
+                                    <FileEditIcon className="w-6 h-6 text-gray-500 rounded-lg hover:text-gray-900 dark:hover:text-gray-100" />
+                                    <MoreHorizontalIcon className="w-6 h-6 text-gray-500 rounded-lg hover:text-gray-900 dark:hover:text-gray-100" />
+                                </div>
+                                <Button
+                                    className="ml-auto"
+                                    variant="ghost"
+                                    size="icon"
                                 >
-                                    <Image
-                                        alt="Avatar"
-                                        className="rounded-full"
-                                        height="40"
-                                        src="/placeholder.svg"
-                                        style={{
-                                            aspectRatio: '40/40',
-                                            objectFit: 'cover',
-                                        }}
-                                        width="40"
-                                    />
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold">Alice</h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            I&apos;m on my way!
-                                        </p>
-                                    </div>
-                                    <span className="text-sm">2:14 PM</span>
-                                </Link>
-                            </li>
-                            <li className="p-4">
-                                <Link
-                                    className="flex items-center gap-4 p-4 rounded-lg -m-4"
-                                    href="#"
-                                >
-                                    <Image
-                                        alt="Avatar"
-                                        className="rounded-full"
-                                        height="40"
-                                        src="/placeholder.svg"
-                                        style={{
-                                            aspectRatio: '40/40',
-                                            objectFit: 'cover',
-                                        }}
-                                        width="40"
-                                    />
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold">Bob</h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Check out this link!
-                                        </p>
-                                    </div>
-                                    <span className="text-sm">1:23 PM</span>
-                                </Link>
-                            </li>
-                            <li className="p-4">
-                                <Link
-                                    className="flex items-center gap-4 p-4 rounded-lg -m-4"
-                                    href="#"
-                                >
-                                    <Image
-                                        alt="Avatar"
-                                        className="rounded-full"
-                                        height="40"
-                                        src="/placeholder.svg"
-                                        style={{
-                                            aspectRatio: '40/40',
-                                            objectFit: 'cover',
-                                        }}
-                                        width="40"
-                                    />
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold">
-                                            Charlie
-                                        </h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Let&apos;s meet at the cafe.
-                                        </p>
-                                    </div>
-                                    <span className="text-sm">12:45 PM</span>
-                                </Link>
-                            </li>
-                            <li className="p-4">
-                                <Link
-                                    className="flex items-center gap-4 p-4 rounded-lg -m-4"
-                                    href="#"
-                                >
-                                    <Image
-                                        alt="Avatar"
-                                        className="rounded-full"
-                                        height="40"
-                                        src="/placeholder.svg"
-                                        style={{
-                                            aspectRatio: '40/40',
-                                            objectFit: 'cover',
-                                        }}
-                                        width="40"
-                                    />
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold">David</h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Happy birthday!
-                                        </p>
-                                    </div>
-                                    <span className="text-sm">Yesterday</span>
-                                </Link>
-                            </li>
-                            <li className="p-4">
-                                <Link
-                                    className="flex items-center gap-4 p-4 rounded-lg -m-4"
-                                    href="#"
-                                >
-                                    <Image
-                                        alt="Avatar"
-                                        className="rounded-full"
-                                        height="40"
-                                        src="/placeholder.svg"
-                                        style={{
-                                            aspectRatio: '40/40',
-                                            objectFit: 'cover',
-                                        }}
-                                        width="40"
-                                    />
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold">Eve</h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Why aren&apos;t you replying?
-                                        </p>
-                                    </div>
-                                    <span className="text-sm">2 days ago</span>
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div className="flex flex-col w-full max-h-[70vh]">
-                    <div className="border-b flex items-center p-4 space-x-4">
-                        <div className="flex items-center space-x-2">
-                            <ArrowLeftIcon className="w-6 h-6" />
-                            <h2 className="font-semibold">Alice</h2>
-                        </div>
-                        <Button variant="ghost" size="icon">
-                            <VideoIcon className="w-6 h-6" />
-                            <span className="sr-only">Video call</span>
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                            <PhoneIcon className="w-6 h-6" />
-                            <span className="sr-only">Voice call</span>
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                            <MoreHorizontalIcon className="w-6 h-6" />
-                            <span className="sr-only">More</span>
-                        </Button>
-                    </div>
-                    <div className="flex-1 grid gap-4 p-4">
-                        <div className="flex items-start">
-                            <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
-                                <p>
-                                    Hey, did you want to meet up for lunch
-                                    today? I heard about this new place that
-                                    opened up downtown.
-                                </p>
+                                    <FileEditIcon className="w-6 h-6" />
+                                    <span className="sr-only">New chat</span>
+                                </Button>
                             </div>
-                            <span className="text-sm text-gray-500 self-end ml-2 dark:text-gray-400">
-                                2:30 PM
-                            </span>
-                        </div>
-                        <div className="flex flex-row-reverse items-start">
-                            <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
-                                <p>That sounds great! I&apos;d love to. 😊</p>
+                            <div className="flex-1 overflow-y-auto">
+                                <ul className="divide-y">
+                                    {messages &&
+                                        messages.map((message, index) => (
+                                            <li
+                                                key={index}
+                                                className="bg-gray-100 p-4 dark:bg-gray-900"
+                                            >
+                                                <Link
+                                                    className="flex items-center gap-4 p-4 rounded-lg -m-4"
+                                                    href="#"
+                                                >
+                                                    <Image
+                                                        alt="Avatar"
+                                                        className="rounded-full"
+                                                        height="40"
+                                                        src="/placeholder.svg"
+                                                        style={{
+                                                            aspectRatio:
+                                                                '40/40',
+                                                            objectFit: 'cover',
+                                                        }}
+                                                        width="40"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <h3 className="font-semibold">
+                                                            {message.send_by}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                            {message.text}
+                                                        </p>
+                                                    </div>
+                                                    <span className="text-sm">
+                                                        {message.datetime_from}
+                                                    </span>
+                                                </Link>
+                                            </li>
+                                        ))}{' '}
+                                </ul>
                             </div>
-                            <span className="text-sm text-gray-500 self-end mr-2 dark:text-gray-400">
-                                2:32 PM
-                            </span>
                         </div>
-                        <div className="flex items-start">
-                            <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
-                                <p>
-                                    Awesome! Let&apos;s meet at the entrance of
-                                    the mall at 1 PM.
-                                </p>
+                    )}
+
+                    <div className="flex flex-col w-full h-[calc(100vh-88px)] pb-16">
+                        <div className="border-b flex items-center p-4 space-x-4">
+                            <div className="flex items-center space-x-2">
+                                <ArrowLeftIcon className="w-6 h-6" />
+                                <h2 className="font-semibold">Alice</h2>
                             </div>
-                            <span className="text-sm text-gray-500 self-end ml-2 dark:text-gray-400">
-                                2:35 PM
-                            </span>
+                            <Button variant="ghost" size="icon">
+                                <VideoIcon className="w-6 h-6" />
+                                <span className="sr-only">Video call</span>
+                            </Button>
+                            <Button variant="ghost" size="icon">
+                                <PhoneIcon className="w-6 h-6" />
+                                <span className="sr-only">Voice call</span>
+                            </Button>
+                            <Button variant="ghost" size="icon">
+                                <MoreHorizontalIcon className="w-6 h-6" />
+                                <span className="sr-only">More</span>
+                            </Button>
                         </div>
-                        <div className="flex flex-row-reverse items-start">
-                            <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
-                                <p>See you there! 🎉</p>
+                        <div className="flex-1 p-4 space-y-4 overflow-hidden">
+                            <div className="flex items-start">
+                                <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
+                                    <p>
+                                        Hey, did you want to meet up for lunch
+                                        today? I heard about this new place that
+                                        opened up downtown.
+                                    </p>
+                                </div>
+                                <span className="text-sm text-gray-500 self-end ml-2 dark:text-gray-400">
+                                    2:30 PM
+                                </span>
                             </div>
-                            <span className="text-sm text-gray-500 self-end mr-2 dark:text-gray-400">
-                                2:40 PM
-                            </span>
+                            <div className="flex flex-row-reverse items-start">
+                                <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
+                                    <p>
+                                        That sounds great! I&apos;d love to. 😊
+                                    </p>
+                                </div>
+                                <span className="text-sm text-gray-500 self-end mr-2 dark:text-gray-400">
+                                    2:32 PM
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    <div className="border-t flex items-center p-4 space-x-4">
-                        <Button
-                            className="rounded-full"
-                            variant="ghost"
-                            size="icon"
-                        >
-                            <SmileIcon className="w-6 h-6" />
-                            <span className="sr-only">Insert emoji</span>
-                        </Button>
-                        <Button
-                            className="rounded-full"
-                            variant="ghost"
-                            size="icon"
-                        >
-                            <PaperclipIcon className="w-6 h-6" />
-                            <span className="sr-only">Attach file</span>
-                        </Button>
-                        <Input
-                            accept="image/*"
-                            className="hidden"
-                            id="file"
-                            multiple
-                            type="file"
-                        />
-                        <Label
-                            className="rounded-full cursor-pointer"
-                            htmlFor="file"
-                        >
-                            <CameraIcon className="w-6 h-6" />
-                            <span className="sr-only">Attach photo</span>
-                        </Label>
-                        <Textarea
-                            className="min-h-0 max-h-40 overflow-hidden resize-none"
-                            placeholder="Type a message..."
-                        />
-                        <Button size="sm">
-                            <p className="text-md font-medium">Send</p>
-                        </Button>
+                        <div className="border-t flex items-center p-4 space-x-4 pt-4 fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800">
+                            <Button
+                                className="rounded-full"
+                                variant="ghost"
+                                size="icon"
+                            >
+                                <SmileIcon className="w-6 h-6" />
+                                <span className="sr-only">Insert emoji</span>
+                            </Button>
+                            <Button
+                                className="rounded-full"
+                                variant="ghost"
+                                size="icon"
+                            >
+                                <PaperclipIcon className="w-6 h-6" />
+                                <span className="sr-only">Attach file</span>
+                            </Button>
+                            <Input
+                                accept="image/*"
+                                className="hidden"
+                                id="file"
+                                multiple
+                                type="file"
+                            />
+                            <Label
+                                className="rounded-full cursor-pointer"
+                                htmlFor="file"
+                            >
+                                <CameraIcon className="w-6 h-6" />
+                                <span className="sr-only">Attach photo</span>
+                            </Label>
+                            <Textarea
+                                className="min-h-0 max-h-40 overflow-hidden resize-none"
+                                placeholder="Type a message..."
+                            />
+                            <Button size="sm">
+                                <p className="text-md font-medium">Send</p>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 

@@ -1,12 +1,24 @@
+import { Pool } from 'pg';
 import GlobalStates from '@/components/GlobalStates';
 import { ModeToggle } from '@/components/ModeToggle';
 import { LangToggle } from '@/components/LangToggle';
-import { Pool } from 'pg';
 import { Messenger } from '@/components/Messenger';
 import SignOutForm from '@/components/SignOutForm';
 import LoginOrSignUp from '@/components/LoginOrSignUp';
-import { postgresUserPool } from '@/postgresConfig';
 import crypto from 'crypto';
+
+const owner = process.env.owner;
+const postgres_password = process.env.postgres_password;
+const host = process.env.host;
+const port = process.env.port ? Number(process.env.port) : 5432;
+
+const postgresUserPool = new Pool({
+    host,
+    port,
+    database: `text_${owner}`,
+    user: 'postgres',
+    password: postgres_password,
+});
 
 interface FormData {
     username: string;
@@ -16,20 +28,25 @@ interface FormData {
 let loggedIn: boolean = false;
 let sessionTimeout: NodeJS.Timeout | null = null;
 
+let username: string;
+let password: string;
+
 async function login(
     formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
     'use server';
     const pool = new Pool({
-        host: 'localhost',
-        port: 5432,
-        database: 'text_kuba',
+        host,
+        port,
+        database: `text_${owner}`,
         user: formData.username,
         password: formData.password,
     });
     try {
         const client = await pool.connect();
         client.release();
+        username = formData.username;
+        password = formData.password;
         loggedIn = true;
         resetSessionTimeout();
         return { success: true };
@@ -83,9 +100,9 @@ async function signUp(
 
         // Connect as the new user to create tables
         const newUserPostgresAccount = new Pool({
-            host: 'localhost',
-            port: 5432,
-            database: 'text_kuba',
+            host,
+            port,
+            database: `text_${owner}`,
             user: username,
             password: formData.password,
         });
@@ -112,7 +129,7 @@ async function signUp(
                 name = pgp_sym_encrypt(name::text, '${hashedPassword}'),
                 email = pgp_sym_encrypt(email::text, '${hashedPassword}'),
                 phone_number = pgp_sym_encrypt(phone_number::text, '${hashedPassword}'),
-                avatar = pgp_sym_encrypt(encode(avatar, 'hex'), '${hashedPassword}'),
+                avatar = pgp_sym_encrypt(encode(avatar, 'hex')::text, '${hashedPassword}'),
                 theology = pgp_sym_encrypt(theology::text, '${hashedPassword}'),
                 philosophy = pgp_sym_encrypt(philosophy::text, '${hashedPassword}');
             UPDATE "${username}_schema"."messages_table" SET
@@ -142,7 +159,7 @@ export default async function Home() {
                 </nav>
             </header>
             {loggedIn ? (
-                <Messenger />
+                <Messenger username={username} password={password} />
             ) : (
                 <LoginOrSignUp loginAction={login} signUpAction={signUp} />
             )}
