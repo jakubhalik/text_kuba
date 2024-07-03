@@ -51,6 +51,7 @@ context(`E2E test of all of text_${owner} app functionality`, () => {
 
     it('Basic check of lang switching.', () => {
         cy.get('[data-cy="button_for_dropdown_menu_for_lang_toggle"]').click();
+        cy.wait(1000);
         cy.get(
             '[data-cy="cz_button_in_the_dropdown_menu_for_lang_toggle"]'
         ).click();
@@ -59,6 +60,7 @@ context(`E2E test of all of text_${owner} app functionality`, () => {
         cy.wait(1000);
 
         cy.get('[data-cy="button_for_dropdown_menu_for_lang_toggle"]').click();
+        cy.wait(1000);
         cy.get(
             '[data-cy="us_button_in_the_dropdown_menu_for_lang_toggle"]'
         ).click();

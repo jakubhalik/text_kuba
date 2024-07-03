@@ -118,6 +118,7 @@ export default function LoginOrSignUp({
                             value={data.username}
                             onChange={handleChange}
                             required
+                            data-cy="username_input_placeholder"
                         />
                     </div>
                     <div className="space-y-2">
@@ -129,6 +130,7 @@ export default function LoginOrSignUp({
                             placeholder={texts.password_input_placeholder}
                             ref={passwordRef}
                             required
+                            data-cy="password_input_placeholder"
                         />
                         {!isLogin && (
                             <>
