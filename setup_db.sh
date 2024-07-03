@@ -1,13 +1,11 @@
 #!/bin/bash
 
-# Ask for the user's name/alias
 read -p "Enter your name/alias: " username
 read -sp "Enter password for the 'postgres' user: " postgres_password
 echo
 read -sp "Enter password for '${username}' user: " user_password
 echo
 
-# Detect OS and install PostgreSQL if not installed
 install_postgresql() {
     if [ -f /etc/debian_version ]; then
         echo "Detected Debian-based system."
@@ -22,7 +20,6 @@ install_postgresql() {
     fi
 }
 
-# Check if PostgreSQL is installed
 if ! command -v psql > /dev/null; then
     echo "PostgreSQL is not installed. Installing..."
     install_postgresql
@@ -30,19 +27,16 @@ else
     echo "PostgreSQL is already installed."
 fi
 
-# Initialize and start PostgreSQL service on Arch Linux
 if [ -f /etc/arch-release ]; then
     sudo -u postgres initdb --locale en_US.UTF-8 -D /var/lib/postgres/data
     sudo systemctl enable postgresql
     sudo systemctl start postgresql
 fi
 
-# Start PostgreSQL service on Debian-based systems
 if [ -f /etc/debian_version ]; then
     sudo service postgresql start
 fi
 
-# Detect PostgreSQL data directory
 if [ -f /etc/debian_version ]; then
     PGDATA=$(sudo -u postgres PGPASSWORD=$postgres_password psql -t -P format=unaligned -c "SHOW data_directory;")
 elif [ -f /etc/arch-release ]; then
@@ -52,19 +46,16 @@ else
     exit 1
 fi
 
-# Set password for the postgres user
 sudo -u postgres PGPASSWORD=$postgres_password psql -c "ALTER USER postgres PASSWORD '$postgres_password';"
 
-# Generate SSL certificates
 SSL_DIR="$PGDATA/ssl"
 sudo mkdir -p $SSL_DIR
 sudo openssl req -new -x509 -days 365 -nodes -out $SSL_DIR/server.crt -keyout $SSL_DIR/server.key -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
 sudo chown postgres:postgres $SSL_DIR/server.crt $SSL_DIR/server.key
 sudo chmod 600 $SSL_DIR/server.key
 
-# Secure pg_hba.conf
 PG_HBA="$PGDATA/pg_hba.conf"
-sudo cp $PG_HBA ${PG_HBA}.bak  # Backup original file
+sudo cp $PG_HBA ${PG_HBA}.bak
 
 sudo tee $PG_HBA > /dev/null <<EOF
 # "local" is for Unix domain socket connections only
@@ -83,9 +74,8 @@ host    all             all             192.168.1.0/24          scram-sha-256
 host    all             all             0.0.0.0/0               reject
 EOF
 
-# Secure postgresql.conf
 PG_CONF="$PGDATA/postgresql.conf"
-sudo cp $PG_CONF ${PG_CONF}.bak  # Backup original file
+sudo cp $PG_CONF ${PG_CONF}.bak
 
 sudo tee -a $PG_CONF > /dev/null <<EOF
 
@@ -114,14 +104,12 @@ log_statement = 'all'
 log_min_duration_statement = 1000  # log queries that take longer than 1 second
 EOF
 
-# Restart PostgreSQL to apply changes
 if [ -f /etc/debian_version ]; then
     sudo service postgresql restart
 elif [ -f /etc/arch-release ]; then
     sudo systemctl restart postgresql
 fi
 
-# Set up database and users
 sudo -u postgres PGPASSWORD=$postgres_password psql <<EOF
 -- Drop database if it exists
 DROP DATABASE IF EXISTS text_${username};
@@ -143,19 +131,14 @@ END
 \$do\$;
 EOF
 
-# Create user with the specified password
 sudo -u postgres PGPASSWORD=$postgres_password psql -c "ALTER ROLE ${username} WITH PASSWORD '$user_password';"
 
-# Generate combined password
 combined_password="${username}${user_password}"
 
-# Hash the combined password (SHA-256)
 hashed_password=$(echo -n "$combined_password" | sha256sum | awk '{print $1}')
 
-# Enable pgcrypto extension in the new database
 sudo -u postgres PGPASSWORD=$postgres_password psql -d text_${username} -c "CREATE EXTENSION pgcrypto;"
 
-# Create encrypted tables in the user's database
 sudo -u postgres PGPASSWORD=$postgres_password psql -d text_${username} <<EOF
 -- Create schema
 CREATE SCHEMA "${username}_schema" AUTHORIZATION "${username}";
@@ -207,7 +190,6 @@ GRANT ALL PRIVILEGES ON TABLE "${username}_schema".messages_table TO ${username}
 GRANT ALL PRIVILEGES ON TABLE "${username}_schema".profile_table TO ${username};
 EOF
 
-# Create system user if it doesn't exist
 if ! id -u $username > /dev/null 2>&1; then
     sudo useradd -m $username
 fi

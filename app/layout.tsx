@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { capitalizeFirstLetter } from '@/lib/utils';
+import { ownerString } from '@/postgresConfig';
+
+const ownerNameForMetadata = `Text ${capitalizeFirstLetter(ownerString)}`;
 
 export const metadata: Metadata = {
-    title: 'Text Kuba',
-    description: 'Text Kuba',
+    title: ownerNameForMetadata,
+    description: ownerNameForMetadata,
 };
 
 export default function RootLayout({
