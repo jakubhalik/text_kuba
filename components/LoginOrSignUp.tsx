@@ -95,7 +95,10 @@ export default function LoginOrSignUp({
                     <h1 className="text-3xl font-bold">
                         {isLogin ? texts.login_h : texts.signup_h}
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400">
+                    <p
+                        className="text-gray-500 dark:text-gray-400"
+                        data-cy="welcome_p"
+                    >
                         {texts.welcome_p}
                     </p>
                     <Link

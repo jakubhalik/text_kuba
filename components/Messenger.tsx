@@ -6,15 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
-
-const owner = process.env.owner as string;
-const host = process.env.host as string;
-const port = process.env.port as string;
-const numberifiedPortForTypeSafety = parseInt(port, 10);
+import { host, port, owner } from '@/postgresConfig';
 
 interface Message {
     datetime_from: string;
-    send_by: string;
+    sent_by: string;
     send_to: string;
     text: string;
 }
@@ -24,8 +20,8 @@ async function getDecryptedMessages(
     password: string
 ): Promise<Message[]> {
     const pool = new Pool({
-        host: host,
-        port: numberifiedPortForTypeSafety,
+        host,
+        port,
         database: `text_${owner}`,
         user: username,
         password: password,
@@ -40,13 +36,13 @@ async function getDecryptedMessages(
         .digest('hex');
 
     const query = `
-        SELECT DISTINCT ON (send_by)
+        SELECT DISTINCT ON (sent_by)
             datetime_from,
-            pgp_sym_decrypt(send_by::bytea, $1) as send_by,
+            pgp_sym_decrypt(sent_by::bytea, $1) as sent_by,
             pgp_sym_decrypt(send_to::bytea, $1) as send_to,
             pgp_sym_decrypt(text::bytea, $1) as text
         FROM "${username}_schema".messages_table
-        ORDER BY send_by, datetime_from DESC;
+        ORDER BY sent_by, datetime_from DESC;
     `;
 
     const result = await client.query(query, [hashedPassword]);
@@ -135,7 +131,7 @@ export async function Messenger({
                                                     />
                                                     <div className="flex-1">
                                                         <h3 className="font-semibold">
-                                                            {message.send_by}
+                                                            {message.sent_by}
                                                         </h3>
                                                         <p className="text-sm text-gray-500 dark:text-gray-400">
                                                             {message.text}

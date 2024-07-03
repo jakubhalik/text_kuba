@@ -15,3 +15,21 @@ const languages: { [key: string]: { [key: string]: string } } = {
 export const loadLanguage = (language: string): { [key: string]: string } => {
     return languages[language] || languages.us;
 };
+
+export const profile_table = [
+    'name',
+    'email',
+    'phone_number',
+    'avatar',
+    'theology',
+    'philosophy',
+];
+
+export const messages_table = [
+    'datetime_from',
+    'sent_by',
+    'send_to',
+    'text',
+    'file',
+    'filename',
+];

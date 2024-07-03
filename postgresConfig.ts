@@ -1,10 +1,9 @@
 import { Pool } from 'pg';
 
-const owner = process.env.owner as string;
-const postgres_password = process.env.postgres_password as string;
-const host = process.env.host as string;
-const port = process.env.port as string;
-const numberifiedPortForTypeSafety = parseInt(port, 10);
+export const owner = process.env.owner; // as string;
+export const postgres_password = process.env.postgres_password; // as string;
+export const host = process.env.host; // as string;
+export const port = process.env.port ? Number(process.env.port) : 5432;
 
 if (!owner || !postgres_password || !host || !port) {
     throw new Error(
@@ -13,8 +12,8 @@ if (!owner || !postgres_password || !host || !port) {
 }
 
 export const postgresUserPool = new Pool({
-    host: host,
-    port: numberifiedPortForTypeSafety,
+    host,
+    port,
     database: `text_${owner}`,
     user: 'postgres',
     password: postgres_password,

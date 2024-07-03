@@ -143,10 +143,6 @@ END
 \$do\$;
 EOF
 
-# Ask for password for the user
-read -sp "Enter password for '${username}' user: " user_password
-echo
-
 # Create user with the specified password
 sudo -u postgres PGPASSWORD=$postgres_password psql -c "ALTER ROLE ${username} WITH PASSWORD '$user_password';"
 
@@ -169,9 +165,11 @@ GRANT USAGE ON SCHEMA "${username}_schema" TO ${username};
 
 CREATE TABLE "${username}_schema"."messages_table" (
     datetime_from TIMESTAMPTZ,
-    send_by TEXT,
+    sent_by TEXT,
     send_to TEXT,
-    text TEXT
+    text TEXT,
+    file BYTEA,
+    filename TEXT
 );
 
 CREATE TABLE "${username}_schema"."profile_table" (
@@ -196,15 +194,17 @@ UPDATE "${username}_schema"."profile_table" SET
     philosophy = pgp_sym_encrypt(philosophy::text, '$hashed_password');
 
 UPDATE "${username}_schema"."messages_table" SET
-    send_by = pgp_sym_encrypt(send_by::text, '$hashed_password'),
+    datetime_from = pgp_sym_encrypt(datetime_from::text, '$hashed_password')::text::timestamptz,
+    sent_by = pgp_sym_encrypt(sent_by::text, '$hashed_password'),
     send_to = pgp_sym_encrypt(send_to::text, '$hashed_password'),
-    text = pgp_sym_encrypt(text::text, '$hashed_password');
+    text = pgp_sym_encrypt(text::text, '$hashed_password'),
+    file = pgp_sym_encrypt(encode(file, 'hex'), '$hashed_password'),
+    filename = pgp_sym_encrypt(filename::text, '$hashed_password');
 
-ALTER TABLE kuba_schema.messages_table OWNER TO ${username};
-ALTER TABLE kuba_schema.profile_table OWNER TO ${username};
-GRANT ALL PRIVILEGES ON TABLE kuba_schema.messages_table TO ${username};
-GRANT ALL PRIVILEGES ON TABLE kuba_schema.profile_table TO ${username};
-
+ALTER TABLE "${username}_schema".messages_table OWNER TO ${username};
+ALTER TABLE "${username}_schema".profile_table OWNER TO ${username};
+GRANT ALL PRIVILEGES ON TABLE "${username}_schema".messages_table TO ${username};
+GRANT ALL PRIVILEGES ON TABLE "${username}_schema".profile_table TO ${username};
 EOF
 
 # Create system user if it doesn't exist

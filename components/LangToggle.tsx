@@ -22,19 +22,29 @@ export function LangToggle() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button
+                    variant="outline"
+                    size="icon"
+                    data-cy="button_for_dropdown_menu_for_lang_toggle"
+                >
                     <span className={`fi fi-${language}`}></span>
                     <span className="sr-only">{texts.lang_toggle}</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setLanguage('us')}>
+                <DropdownMenuItem
+                    onClick={() => setLanguage('us')}
+                    data-cy="us_button_in_the_dropdown_menu_for_lang_toggle"
+                >
                     {texts.lang_toggle_english_dropdown_menu_item}
                     <span className="ml-auto">
                         <span className="fi fi-us"></span>
                     </span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage('cz')}>
+                <DropdownMenuItem
+                    onClick={() => setLanguage('cz')}
+                    data-cy="cz_button_in_the_dropdown_menu_for_lang_toggle"
+                >
                     {texts.lang_toggle_czech_dropdown_menu_item}
                     <span className="ml-auto">
                         <span className="fi fi-cz"></span>

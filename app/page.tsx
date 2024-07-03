@@ -6,19 +6,8 @@ import { Messenger } from '@/components/Messenger';
 import SignOutForm from '@/components/SignOutForm';
 import LoginOrSignUp from '@/components/LoginOrSignUp';
 import crypto from 'crypto';
-
-const owner = process.env.owner;
-const postgres_password = process.env.postgres_password;
-const host = process.env.host;
-const port = process.env.port ? Number(process.env.port) : 5432;
-
-const postgresUserPool = new Pool({
-    host,
-    port,
-    database: `text_${owner}`,
-    user: 'postgres',
-    password: postgres_password,
-});
+import { postgresUserPool, host, port, owner } from '@/postgresConfig';
+import { profile_table, messages_table } from '@/lib/utils';
 
 interface FormData {
     username: string;
@@ -111,31 +100,44 @@ async function signUp(
 
         await userClient.query(`
             CREATE TABLE "${username}_schema"."messages_table" (
-                datetime_from TIMESTAMPTZ,
-                send_by TEXT,
-                send_to TEXT,
-                text TEXT
+        ${messages_table.map(
+            (i) => `
+                ${i} ${i === 'datetime_from'
+                    ? 'TIMESTAMPTZ'
+                    : i === 'file'
+                        ? 'BYTEA'
+                        : 'TEXT'
+                }${i !== 'filename' && ', '}`
+        )}
             );
             CREATE TABLE "${username}_schema"."profile_table" (
-                name TEXT,
-                email TEXT,
-                phone_number TEXT,
-                avatar BYTEA,
-                theology TEXT,
-                philosophy TEXT
+        ${profile_table.map(
+            (i) =>
+                `${i} ${i === 'avatar' ? 'BYTEA' : 'TEXT'
+                }${i !== 'philosophy' && ', '}`
+        )}
             );
             INSERT INTO "${username}_schema"."profile_table" (name) VALUES ('${username}');
             UPDATE "${username}_schema"."profile_table" SET
-                name = pgp_sym_encrypt(name::text, '${hashedPassword}'),
-                email = pgp_sym_encrypt(email::text, '${hashedPassword}'),
-                phone_number = pgp_sym_encrypt(phone_number::text, '${hashedPassword}'),
-                avatar = pgp_sym_encrypt(encode(avatar, 'hex')::text, '${hashedPassword}'),
-                theology = pgp_sym_encrypt(theology::text, '${hashedPassword}'),
-                philosophy = pgp_sym_encrypt(philosophy::text, '${hashedPassword}');
+        ${profile_table.map(
+            (i) =>
+                `${i} = pgp_sym_encrypt(
+                    ${i === 'avatar' && `encode(`}
+                        ${i}
+                        ${i === 'avatar' ? `, 'hex')` : '::text'}, '${hashedPassword}')
+                        ${i !== 'philosophy' && ', '}`
+        )}
+            ;
             UPDATE "${username}_schema"."messages_table" SET
-                send_by = pgp_sym_encrypt(send_by::text, '${hashedPassword}'),
-                send_to = pgp_sym_encrypt(send_to::text, '${hashedPassword}'),
-                text = pgp_sym_encrypt(text::text, '${hashedPassword}');
+        ${messages_table.map(
+            (i) => `
+             ${i} = pgp_sym_encrypt(
+                ${i === 'file' && `encode(`}
+                    ${i}
+                    ${i === 'avatar' ? `, 'hex')` : '::text'}, '${hashedPassword}')
+                    ${i !== 'filename' && ', '}`
+        )}
+            ;
         `);
 
         userClient.release();
