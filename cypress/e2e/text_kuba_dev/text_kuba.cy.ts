@@ -1,4 +1,8 @@
-context('E2E test of all of text_kuba app functionality', () => {
+import { owner } from '../../../postgresConfig';
+import us from '../../../lang_us.json';
+import cz from '../../../lang_cz.json';
+
+context(`E2E test of all of text_${owner} app functionality`, () => {
     beforeEach(() => {
         cy.visit('http://localhost:3000');
     });
@@ -50,10 +54,7 @@ context('E2E test of all of text_kuba app functionality', () => {
         cy.get(
             '[data-cy="cz_button_in_the_dropdown_menu_for_lang_toggle"]'
         ).click();
-        cy.get('[data-cy="welcome_p"]').should(
-            'have.text',
-            'Piš si soukromě se svým kamarádem, kterému tato aplikace běží na vlastním serveru s plným šifrováním dat!'
-        );
+        cy.get('[data-cy="welcome_p"]').should('have.text', `${cz.welcome_p}`);
 
         cy.wait(1000);
 
@@ -61,9 +62,6 @@ context('E2E test of all of text_kuba app functionality', () => {
         cy.get(
             '[data-cy="us_button_in_the_dropdown_menu_for_lang_toggle"]'
         ).click();
-        cy.get('[data-cy="welcome_p"]').should(
-            'have.text',
-            'Text privately with your friend running this app on his own server with full encryption!'
-        );
+        cy.get('[data-cy="welcome_p"]').should('have.text', `${us.welcome_p}`);
     });
 });
