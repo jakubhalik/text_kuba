@@ -95,10 +95,7 @@ export default function LoginOrSignUp({
                     <h1 className="text-3xl font-bold">
                         {isLogin ? texts.login_h : texts.signup_h}
                     </h1>
-                    <p
-                        className="text-gray-500 dark:text-gray-400"
-                        data-cy="welcome_p"
-                    >
+                    <p className="text-gray-500 dark:text-gray-400">
                         {texts.welcome_p}
                     </p>
                     <Link
@@ -115,10 +112,10 @@ export default function LoginOrSignUp({
                             id="username"
                             name="username"
                             placeholder={texts.username_input_placeholder}
+                            data-cy="username_input_placeholder"
                             value={data.username}
                             onChange={handleChange}
                             required
-                            data-cy="username_input_placeholder"
                         />
                     </div>
                     <div className="space-y-2">
@@ -128,9 +125,9 @@ export default function LoginOrSignUp({
                             name="password"
                             type="password"
                             placeholder={texts.password_input_placeholder}
+                            data-cy="password_input_placeholder"
                             ref={passwordRef}
                             required
-                            data-cy="password_input_placeholder"
                         />
                         {!isLogin && (
                             <>
@@ -143,7 +140,7 @@ export default function LoginOrSignUp({
                                     type="password"
                                     placeholder={
                                         texts.confirm_password_input_placeholder
-                                    }
+                                    } data-cy="confirm_password_input_placeholder"
                                     ref={confirmPasswordRef}
                                     required
                                 />
