@@ -20,7 +20,8 @@ def add_data_cy_property(file_path):
 
     pattern_inline = re.compile(r'(<[^>]*\{texts\.([a-zA-Z0-9_]+)\}[^>]*)/?>(?!\s*data-cy)')
     pattern_block = re.compile(r'(<([a-zA-Z0-9]+)[^>]*)(>)(\s*\{texts\.([a-zA-Z0-9_]+)\}\s*)(</\2>)')
-    pattern_conditional = re.compile(r'(<([a-zA-Z0-9]+)[^>]*)(>)(\s*\{([^{}]+)\s*\?\s*texts\.([a-zA-Z0-9_]+)\s*:\s*texts\.([a-zA-Z0-9_]+)\}\s*)(</\2>)')
+    pattern_conditional = re.compile(r'(<([a-zA-Z0-9]+)[^>]*)(>)(\s*\{([^{}]+)\s*\?\s*texts\.([a-zA-Z0-9_]+)\s*:\s*texts\.([a-zA-Z0-9_]+)\}\s*)(.*?)(</\2>)', re.DOTALL)
+    pattern_conditional_button = re.compile(r'(<button[^>]*)(>)(\s*\{([^{}]+)\s*\?\s*texts\.([a-zA-Z0-9_]+)\s*:\s*texts\.([a-zA-Z0-9_]+)\}\s*)(.*?)(</button>)', re.DOTALL)
     pattern_property = re.compile(r'(<[^>]*\s)([a-zA-Z0-9_-]+=\{\s*texts\.([a-zA-Z0-9_]+)\s*\})')
 
     data_cy_pattern = re.compile(r'data-cy="([a-zA-Z0-9_]+)"')
@@ -44,7 +45,7 @@ def add_data_cy_property(file_path):
         dynamic_text = match.group(4)
         end_tag = match.group(6)
 
-        if data_cy_pattern.search(start_tag):
+        if 'data-cy=' in start_tag:
             return match.group(0)
 
         return f'{start_tag} data-cy="{dynamic_name}">{dynamic_text}{end_tag}'
@@ -55,12 +56,27 @@ def add_data_cy_property(file_path):
         true_name = match.group(6)
         false_name = match.group(7)
         dynamic_text = match.group(4)
-        end_tag = match.group(8)
+        content_between = match.group(8)
+        end_tag = match.group(9)
 
-        if data_cy_pattern.search(start_tag):
+        if 'data-cy=' in start_tag:
             return match.group(0)
 
-        return f'{start_tag} data-cy={{{condition} ? "{true_name}" : "{false_name}"}}>{dynamic_text}{end_tag}'
+        return f'{start_tag} data-cy={{{condition} ? "{true_name}" : "{false_name}"}}>{dynamic_text}{content_between}{end_tag}'
+
+    def replace_conditional_button(match):
+        start_tag = match.group(1)
+        condition = match.group(4)
+        true_name = match.group(5)
+        false_name = match.group(6)
+        dynamic_text = match.group(3)
+        content_between = match.group(7)
+        end_tag = match.group(8)
+
+        if 'data-cy=' in start_tag:
+            return match.group(0)
+
+        return f'{start_tag} data-cy={{{condition} ? "{true_name}" : "{false_name}"}}>{dynamic_text}{content_between}{end_tag}'
 
     def replace_property(match):
         tag_start = match.group(1)
@@ -75,7 +91,8 @@ def add_data_cy_property(file_path):
     new_content = pattern_inline.sub(replace_inline, content)
     new_content = pattern_block.sub(replace_block, new_content)
     new_content = pattern_conditional.sub(replace_conditional, new_content)
-    new_content = pattern_property.sub(replace_property, content)
+    new_content = pattern_conditional_button.sub(replace_conditional_button, new_content)
+    new_content = pattern_property.sub(replace_property, new_content)
 
     if new_content != content:
         print(f'Changes made to {file_path}:')

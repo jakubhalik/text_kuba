@@ -88,50 +88,69 @@ export default function LoginOrSignUp({
         }
     };
 
+    const switchLS = () => {
+        setError('');
+        setIsLogin(!isLogin);
+    };
+
     return (
         <>
             <div className="mx-auto max-w-sm space-y-6 pt-20 px-4">
                 <div className="space-y-2 text-center">
-                    <h1 className="text-3xl font-bold">
+                    <h1
+                        className="text-3xl font-bold"
+                        data-cy={isLogin ? 'login_h' : 'signup_h'}
+                    >
                         {isLogin ? texts.login_h : texts.signup_h}
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400">
+                    <p
+                        className="text-gray-500 dark:text-gray-400"
+                        data-cy="welcome_p"
+                    >
                         {texts.welcome_p}
                     </p>
                     <Link
                         className="text-sm underline"
                         href="https://github.com/jakubhalik/text_kuba"
+                        data-cy="deploy_link"
                     >
                         {texts.deploy_link}
                     </Link>
                 </div>
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <div className="space-y-2">
-                        <Label htmlFor="username">{texts.username_label}</Label>
+                        <Label htmlFor="username" data-cy="username_label">
+                            {texts.username_label}
+                        </Label>
                         <Input
                             id="username"
                             name="username"
                             placeholder={texts.username_input_placeholder}
-                            data-cy="username_input_placeholder"
                             value={data.username}
                             onChange={handleChange}
                             required
+                            data-cy="username_input_placeholder"
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="password">{texts.password_label}</Label>
+                        <Label htmlFor="password" data-cy="password_label">
+                            {texts.password_label}
+                        </Label>
                         <Input
                             id="password"
                             name="password"
                             type="password"
                             placeholder={texts.password_input_placeholder}
-                            data-cy="password_input_placeholder"
                             ref={passwordRef}
                             required
+                            data-cy="password_input_placeholder"
                         />
                         {!isLogin && (
                             <>
-                                <Label htmlFor="confirm-password">
+                                <Label
+                                    htmlFor="confirm-password"
+                                    data-cy="confirm_password_label"
+                                >
                                     {texts.confirm_password_label}
                                 </Label>
                                 <Input
@@ -140,7 +159,8 @@ export default function LoginOrSignUp({
                                     type="password"
                                     placeholder={
                                         texts.confirm_password_input_placeholder
-                                    } data-cy="confirm_password_input_placeholder"
+                                    }
+                                    data-cy="confirm_password_input_placeholder"
                                     ref={confirmPasswordRef}
                                     required
                                 />
@@ -153,30 +173,32 @@ export default function LoginOrSignUp({
                             <Label
                                 className="text-sm leading-1"
                                 htmlFor="terms"
+                                data-cy="signup_information"
                             >
                                 {texts.signup_information}
                             </Label>
                         </div>
                     )}
-                    <Button type="submit" className="w-full">
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        data-cy={isLogin ? 'login_button' : 'signup_button'}
+                    >
                         {isLogin ? texts.login_button : texts.signup_button}
                     </Button>
                 </form>
             </div>
-            <div className="mt-4 text-center text-sm">
-                {isLogin
-                    ? `${texts.dont_have_account}`
-                    : `${texts.have_account}`}
+            <div
+                className="mt-4 text-center text-sm"
+                data-cy={isLogin ? 'dont_have_account' : 'have_account'}
+            >
+                {isLogin ? texts.dont_have_account : texts.have_account}
                 <button
                     className="underline pl-1"
-                    onClick={() => {
-                        setError('');
-                        setIsLogin(!isLogin);
-                    }}
-                >
-                    {isLogin
-                        ? `${texts.switch_to_sign_up}`
-                        : `${texts.switch_to_login}`}
+                    onClick={switchLS}
+                    data-cy={isLogin ? 'switch_to_sign_up' : 'switch_to_login'}
+                > 
+                    {isLogin ? texts.switch_to_sign_up : texts.switch_to_login}
                 </button>
             </div>
         </>
