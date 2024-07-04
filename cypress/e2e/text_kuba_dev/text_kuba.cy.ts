@@ -182,7 +182,7 @@ context(`E2E test of all of text_${owner} app functionality`, () => {
             );
         });
 
-        ['confirm_password_placeholder'].forEach((key) => {
+        ['confirm_password_input_placeholder'].forEach((key) => {
             cy.get(`[data-cy=${key}]`).should('exist').and('be.visible');
             cy.get(`[data-cy=${key}]`)
                 .invoke('attr', 'placeholder')
@@ -198,7 +198,7 @@ context(`E2E test of all of text_${owner} app functionality`, () => {
                 });
         });
 
-        ['confirm_password_placeholder'].forEach((key) => {
+        ['confirm_password_input_placeholder'].forEach((key) => {
             cy.wait(1000);
             cy.get(`[data-cy=${key}]`).should(
                 'have.attr',
@@ -207,7 +207,7 @@ context(`E2E test of all of text_${owner} app functionality`, () => {
             );
         });
 
-        ['confirm_password_placeholder'].forEach((key) => {
+        ['confirm_password_input_placeholder'].forEach((key) => {
             cy.get(`[data-cy=${key}]`).should(
                 'have.attr',
                 'placeholder',
