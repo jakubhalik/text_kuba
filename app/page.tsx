@@ -82,7 +82,6 @@ async function signUp(
         await client.query(`
             CREATE SCHEMA "${username}_schema" AUTHORIZATION "${username}";
             GRANT ALL ON SCHEMA "${username}_schema" TO "${username}";
-            GRANT USAGE ON SCHEMA "${username}_schema" TO postgres;
         `);
 
         client.release();
@@ -100,43 +99,49 @@ async function signUp(
 
         await userClient.query(`
             CREATE TABLE "${username}_schema"."messages_table" (
-        ${messages_table.map(
-            (i) => `
-                ${i} ${i === 'datetime_from'
-                    ? 'TIMESTAMPTZ'
-                    : i === 'file'
-                        ? 'BYTEA'
-                        : 'TEXT'
-                }${i !== 'filename' && ', '}`
-        )}
+                ${messages_table
+                .map(
+                    (i) => `
+                        ${i} ${i === 'datetime_from'
+                            ? 'TIMESTAMPTZ'
+                            : i === 'file'
+                                ? 'BYTEA'
+                                : 'TEXT'
+                        }${i !== 'filename' ? ', ' : ''}`
+                )
+                .join('')}
             );
+
             CREATE TABLE "${username}_schema"."profile_table" (
-        ${profile_table.map(
-            (i) =>
-                `${i} ${i === 'avatar' ? 'BYTEA' : 'TEXT'
-                }${i !== 'philosophy' && ', '}`
-        )}
+                ${profile_table
+                .map(
+                    (i) =>
+                        `${i} ${i === 'avatar' ? 'BYTEA' : 'TEXT'
+                        }${i !== 'philosophy' ? ', ' : ''}`
+                )
+                .join('')}
             );
+
             INSERT INTO "${username}_schema"."profile_table" (name) VALUES ('${username}');
+
             UPDATE "${username}_schema"."profile_table" SET
-        ${profile_table.map(
-            (i) =>
-                `${i} = pgp_sym_encrypt(
-                    ${i === 'avatar' && `encode(`}
-                        ${i}
-                        ${i === 'avatar' ? `, 'hex')` : '::text'}, '${hashedPassword}')
-                        ${i !== 'philosophy' && ', '}`
-        )}
+                ${profile_table
+                .map(
+                    (i) =>
+                        `${i} = pgp_sym_encrypt(
+                            ${i === 'avatar' ? `encode(${i}, 'hex')` : i}::text, '${hashedPassword}')${i !== 'philosophy' ? ', ' : ''}`
+                )
+                .join('')}
             ;
+
             UPDATE "${username}_schema"."messages_table" SET
-        ${messages_table.map(
-            (i) => `
-             ${i} = pgp_sym_encrypt(
-                ${i === 'file' && `encode(`}
-                    ${i}
-                    ${i === 'avatar' ? `, 'hex')` : '::text'}, '${hashedPassword}')
-                    ${i !== 'filename' && ', '}`
-        )}
+                ${messages_table
+                .map(
+                    (i) => `
+                     ${i} = pgp_sym_encrypt(
+                        ${i === 'file' ? `encode(${i}, 'hex')` : i}::text, '${hashedPassword}')${i === 'datetime_from' ? '::text::timestamptz' : ''}${i !== 'filename' ? ', ' : ''}`
+                )
+                .join('')}
             ;
         `);
 
