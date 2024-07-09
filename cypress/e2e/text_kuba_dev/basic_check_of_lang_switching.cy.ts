@@ -1,5 +1,5 @@
-import cz from "../../../lang_cz.json";
 import us from "../../../lang_us.json";
+import cz from "../../../lang_cz.json";
 context('Basic check of lang switching.', () => {
     beforeEach(() => {
         cy.visit('http://localhost:3000');
