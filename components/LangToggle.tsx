@@ -28,9 +28,7 @@ export function LangToggle() {
                     data-cy="button_for_dropdown_menu_for_lang_toggle"
                 >
                     <span className={`fi fi-${language}`}></span>
-                    <span className="sr-only"> data-cy="lang_toggle">
-    {texts.lang_toggle}
-</span>
+                    <span className="sr-only" data-cy="lang_toggle">{texts.lang_toggle}</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

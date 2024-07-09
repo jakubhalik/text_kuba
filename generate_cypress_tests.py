@@ -16,6 +16,14 @@ os.makedirs(output_dir, exist_ok=True)
 with open(orig_file, 'r') as f:
     content = f.read()
 
+import_pattern = re.compile(r'^import\s+([^;]+)\s+from\s+["\']([^"\']+)["\'];$', re.MULTILINE)
+imports = import_pattern.findall(content)
+import_dict = {}
+for imp in imports:
+    var_names = [name.strip() for name in re.split(r',|{|\}', imp[0]) if name.strip()]
+    for var in var_names:
+        import_dict[var] = f'import {imp[0]} from "{imp[1]}";\n'
+
 it_block_pattern = re.compile(r"(it\('([^']+)'\s*,\s*\(\)\s*=>\s*\{)")
 matches = list(it_block_pattern.finditer(content))
 
@@ -25,16 +33,11 @@ else:
     print(f"Found {len(matches)} 'it' blocks.")
 
 def get_used_imports(block_content):
-    imports = []
-    if 'owner' in block_content:
-        imports.append('import { owner } from "../../../postgresConfig";\n')
-    if 'us.' in block_content:
-        imports.append('import us from "../../../lang_us.json";\n')
-    if 'cz.' in block_content:
-        imports.append('import cz from "../../../lang_cz.json";\n')
-    if 'randomPassword' in block_content or 'randomName' in block_content:
-        imports.append('import { randomPassword, randomName } from "../../../lib/utils";\n')
-    return imports
+    used_imports = set()  # Use a set to avoid duplicates
+    for var, imp in import_dict.items():
+        if re.search(rf'\b{var}\b', block_content):
+            used_imports.add(imp)
+    return list(used_imports)
 
 for i, match in enumerate(matches):
     start_idx = match.start()

@@ -63,3 +63,7 @@ export const randomString = generateRandomString(10);
 export const randomName = generateRandomString(10);
 
 export const randomPassword = generateRandomString(10);
+
+export const differentRandomName = generateRandomString(9);
+
+export const differentRandomPassword = generateRandomString(9);

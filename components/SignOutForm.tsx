@@ -24,7 +24,11 @@ export default function SignOutForm({ action }: SignOutFormProps) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button
+                    variant="outline"
+                    size="icon"
+                    data-cy="button_for_dropdown_menu_for_signout"
+                >
                     <MoreHorizontal className="h-[1.2rem] w-[1.2rem]" />
                     <span className="sr-only" data-cy="more_options_toggle">
                         {texts.more_options_toggle}
@@ -38,6 +42,7 @@ export default function SignOutForm({ action }: SignOutFormProps) {
                         await action();
                         window.location.href = '/';
                     }}
+                    data-cy="signout_button"
                 >
                     {texts.signout_button}
                 </DropdownMenuItem>

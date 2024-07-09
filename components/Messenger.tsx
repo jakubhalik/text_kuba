@@ -39,7 +39,6 @@ async function getDecryptedMessages(
         SELECT DISTINCT ON (sent_by)
             datetime_from,
             pgp_sym_decrypt(sent_by::bytea, $1) as sent_by,
-            pgp_sym_decrypt(send_to::bytea, $1) as send_to,
             pgp_sym_decrypt(text::bytea, $1) as text
         FROM "${username}_schema".messages_table
         ORDER BY sent_by, datetime_from DESC;

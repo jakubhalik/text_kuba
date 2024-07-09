@@ -167,7 +167,11 @@ export default function LoginOrSignUp({
                             </>
                         )}
                     </div>
-                    {error && <p className="text-red-500">{error}</p>}
+                    {error && (
+                        <p className="text-red-500" data-cy="error">
+                            {error}
+                        </p>
+                    )}
                     {!isLogin && (
                         <div className="flex items-center space-x-2 px-1">
                             <Label
@@ -197,7 +201,7 @@ export default function LoginOrSignUp({
                     className="underline pl-1"
                     onClick={switchLS}
                     data-cy={isLogin ? 'switch_to_sign_up' : 'switch_to_login'}
-                > 
+                >
                     {isLogin ? texts.switch_to_sign_up : texts.switch_to_login}
                 </button>
             </div>

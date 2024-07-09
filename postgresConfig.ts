@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 
 export const owner = process.env.owner; // as string;
+export const ownerPassword = process.env.owner_password;
 export const ownerString = owner as string;
 export const postgres_password = process.env.postgres_password; // as string;
 export const host = process.env.host; // as string;

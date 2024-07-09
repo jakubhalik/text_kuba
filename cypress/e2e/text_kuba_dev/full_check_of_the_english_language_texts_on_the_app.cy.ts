@@ -1,3 +1,4 @@
+import us from "../../../lang_us.json";
 context('Full check of the english language texts on the app.', () => {
     beforeEach(() => {
         cy.visit('http://localhost:3000');
