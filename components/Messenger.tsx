@@ -87,13 +87,24 @@ export async function Messenger({
                         <span className="sr-only">Search</span>
                     </Button>
                 </div>
-                <div className="flex-1 grid md:grid-cols-[300px_1fr]">
+                <div
+                    className={
+                        username === `${owner}`
+                            ? 'flex-1 grid md:grid-cols-[300px_1fr]'
+                            : 'flex'
+                    }
+                >
                     {username === `${owner}` && (
                         <div className="border-r flex flex-col w-full md:max-w-[300px]">
                             <div className="border-b flex items-center p-4 space-x-4">
                                 <div className="flex items-center space-x-2">
-                                    <FileEditIcon className="w-6 h-6 text-gray-500 rounded-lg hover:text-gray-900 dark:hover:text-gray-100" />
-                                    <MoreHorizontalIcon className="w-6 h-6 text-gray-500 rounded-lg hover:text-gray-900 dark:hover:text-gray-100" />
+                                    <Button
+                                        className="ml-auto rounded-[50px]"
+                                        variant="ghost"
+                                        size="icon"
+                                    >
+                                        <MoreHorizontalIcon className="w-6 h-6 rounded-lg" />
+                                    </Button>
                                 </div>
                                 <Button
                                     className="ml-auto"
