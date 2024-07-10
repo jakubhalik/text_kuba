@@ -1,4 +1,4 @@
-# READ THE BASH SCRIPTS BEFORE RUNNING THEM! - U don't want to delete your databases on accident.
+# READ THE BASH SCRIPTS BEFORE RUNNING THEM! - U don't want to delete your databases on an accident.
 
 # This project is NOT fininshed yet, it is still a work in progress
 
