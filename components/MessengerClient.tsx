@@ -1,103 +1,47 @@
-import { Pool } from 'pg';
-import crypto from 'crypto';
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { host, port, owner } from '@/postgresConfig';
+import Link from 'next/link';
+import SelectedUserHeading from './SelectedUserHeading';
+import MessageInput from './MessageInput';
 import { Message, User } from '../lib/utils';
-import Chat from './Chat';
 
-interface MessagesResult {
+const owner = process.env.owner;
+
+interface ClientMessengerProps {
+    username: string;
+    password: string;
     sidebarMessages: Message[];
     chatMessages: Message[];
     users: User[];
+    selectedUser: string;
 }
 
-async function getDecryptedMessages(
-    username: string,
-    password: string
-): Promise<MessagesResult> {
-    'use server';
-    const pool = new Pool({
-        host,
-        port: Number(port),
-        database: `text_${owner}`,
-        user: username,
-        password: password,
-    });
-
-    const client = await pool.connect();
-
-    const combinedPassword = `${username}${password}`;
-    const hashedPassword = crypto
-        .createHash('sha256')
-        .update(combinedPassword)
-        .digest('hex');
-
-    const queryForSidebar = `
-        SELECT DISTINCT ON (sent_by)
-            datetime_from,
-            pgp_sym_decrypt(sent_by::bytea, $1) as sent_by,
-            pgp_sym_decrypt(text::bytea, $1) as text
-        FROM "${username}_schema".messages_table
-        ORDER BY sent_by, datetime_from DESC;
-    `;
-
-    const queryForChat = `
-        SELECT
-            datetime_from,
-            pgp_sym_decrypt(sent_by::bytea, $1) as sent_by,
-            pgp_sym_decrypt(send_to::bytea, $1) as send_to,
-            pgp_sym_decrypt(text::bytea, $1) as text
-        FROM "${username}_schema".messages_table
-        ORDER BY datetime_from ASC;
-    `;
-
-    const queryForUsers = `
-        SELECT rolname AS username
-        FROM pg_roles
-        WHERE rolname NOT LIKE 'pg_%'
-          AND rolname NOT IN ('postgres', 'pg_signal_backend', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_monitor', 'pg_read_all_stats', 'pg_database_owner');
-    `;
-
-    const [resultForSidebar, resultForChat, resultForUsers] = await Promise.all(
-        [
-            client.query(queryForSidebar, [hashedPassword]),
-            client.query(queryForChat, [hashedPassword]),
-            client.query(queryForUsers),
-        ]
+export default function ClientMessenger({
+    username,
+    password,
+    sidebarMessages,
+    chatMessages,
+    users,
+    selectedUser: initialSelectedUser,
+}: ClientMessengerProps) {
+    const [selectedUser, setSelectedUser] =
+        useState<string>(initialSelectedUser);
+    const [filteredChatMessages, setFilteredChatMessages] = useState<Message[]>(
+        []
     );
 
-    client.release();
-
-    return {
-        sidebarMessages: resultForSidebar.rows,
-        chatMessages: resultForChat.rows,
-        users: resultForUsers.rows,
-    };
-}
-
-interface MessengerProps {
-    username: string;
-    password: string;
-}
-
-let selectedUser: string | null = null;
-
-async function updateSelectedUser(newSelectedUser: string) {
-    'use server';
-    selectedUser = newSelectedUser;
-    return selectedUser;
-}
-
-export async function Messenger({ username, password }: MessengerProps) {
-    const { sidebarMessages, chatMessages, users } = await getDecryptedMessages(
-        username,
-        password
-    );
-
-    if (!selectedUser) {
-        selectedUser = sidebarMessages[0]?.sent_by || users[0]?.username;
-    }
+    useEffect(() => {
+        setFilteredChatMessages(
+            chatMessages.filter(
+                (message) =>
+                    message.sent_by === selectedUser ||
+                    message.send_to === selectedUser
+            )
+        );
+    }, [selectedUser, chatMessages]);
 
     return (
         <div className="h-screen flex flex-col">
@@ -126,12 +70,8 @@ export async function Messenger({ username, password }: MessengerProps) {
                 </Button>
             </div>
             <div className="flex-1 grid md:grid-cols-[300px_1fr]">
-                <Chat
-                    sidebarMessages={sidebarMessages}
-                    users={users}
-                    onUserSelect={updateSelectedUser}
-                    conditionalForOwner={username === `${owner}`}
-                    iconsAndMoreForUpperSidebar={
+                {username === `${owner}` && (
+                    <div className="border-r flex flex-col w-full md:max-w-[300px]">
                         <div className="border-b flex items-center p-4 space-x-4">
                             <div className="flex items-center space-x-2">
                                 <Button
@@ -151,28 +91,102 @@ export async function Messenger({ username, password }: MessengerProps) {
                                 <span className="sr-only">New chat</span>
                             </Button>
                         </div>
-                    }
-                    ArrowLeftIcon={<ArrowLeftIcon className="w-6 h-6" />}
-                    buttonsIconsAndMoreForUpperChat={
-                        <>
-                            <Button variant="ghost" size="icon">
-                                <VideoIcon className="w-6 h-6" />
-                                <span className="sr-only">Video call</span>
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                                <PhoneIcon className="w-6 h-6" />
-                                <span className="sr-only">Voice call</span>
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                                <MoreHorizontalIcon className="w-6 h-6" />
-                                <span className="sr-only">More</span>
-                            </Button>
-                        </>
-                    }
-                    chatMessages={chatMessages}
-                    onSendMessage={updateSelectedUser}
-                    username={username}
-                />
+                        <div className="flex-1 overflow-y-auto">
+                            <ul className="divide-y">
+                                {users.map((user, index) => (
+                                    <li
+                                        key={index}
+                                        className="bg-gray-100 p-4 dark:bg-gray-900"
+                                        onClick={() =>
+                                            setSelectedUser(user.username)
+                                        }
+                                    >
+                                        <Link
+                                            className="flex items-center gap-4 p-4 rounded-lg"
+                                            href={`/?selectedUser=${user.username}`}
+                                        >
+                                            <Image
+                                                alt="Avatar"
+                                                className="rounded-full"
+                                                height="40"
+                                                src="/placeholder.svg"
+                                                style={{
+                                                    aspectRatio: '40/40',
+                                                    objectFit: 'cover',
+                                                }}
+                                                width="40"
+                                            />
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold">
+                                                    {user.username}
+                                                </h3>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    {sidebarMessages.find(
+                                                        (message) =>
+                                                            message.sent_by ===
+                                                            user.username
+                                                    )?.text ||
+                                                        'No messages yet'}
+                                                </p>
+                                            </div>
+                                            <span className="text-sm">
+                                                {sidebarMessages.find(
+                                                    (message) =>
+                                                        message.sent_by ===
+                                                        user.username
+                                                )?.datetime_from || ''}
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                )}
+                <div className="flex flex-col w-full h-[calc(100vh-88px)] pb-16">
+                    <div className="border-b flex items-center p-4 space-x-4">
+                        <div className="flex items-center space-x-2">
+                            <SelectedUserHeading selectedUser={selectedUser} />
+                        </div>
+                        <Button variant="ghost" size="icon">
+                            <VideoIcon className="w-6 h-6" />
+                            <span className="sr-only">Video call</span>
+                        </Button>
+                        <Button variant="ghost" size="icon">
+                            <PhoneIcon className="w-6 h-6" />
+                            <span className="sr-only">Voice call</span>
+                        </Button>
+                        <Button variant="ghost" size="icon">
+                            <MoreHorizontalIcon className="w-6 h-6" />
+                            <span className="sr-only">More</span>
+                        </Button>
+                    </div>
+                    <div className="flex-1 p-4 space-y-4 overflow-hidden">
+                        {filteredChatMessages &&
+                            filteredChatMessages.length > 0 ? (
+                            filteredChatMessages.map((message, index) => (
+                                <div
+                                    key={index}
+                                    className={`flex ${message.sent_by === username ? 'flex-row-reverse' : ''} items-start`}
+                                >
+                                    <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
+                                        <p>{message.text}</p>
+                                    </div>
+                                    <span className="text-sm text-gray-500 self-end ml-2 dark:text-gray-400">
+                                        {message.datetime_from}
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            <div>No messages yet</div>
+                        )}
+                    </div>
+                    <MessageInput
+                        username={username}
+                        password={password}
+                        sendTo={selectedUser}
+                    />
+                </div>
             </div>
         </div>
     );
