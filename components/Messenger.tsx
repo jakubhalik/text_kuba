@@ -83,10 +83,9 @@ interface MessengerProps {
 
 let selectedUser: string | null = null;
 
-async function updateSelectedUser(newSelectedUser: string) {
+async function updateSelectedUser(newSelectedUser: string): Promise<void> {
     'use server';
     selectedUser = newSelectedUser;
-    return selectedUser;
 }
 
 export async function Messenger({ username, password }: MessengerProps) {
@@ -152,7 +151,7 @@ export async function Messenger({ username, password }: MessengerProps) {
                             </Button>
                         </div>
                     }
-                    ArrowLeftIcon={<ArrowLeftIcon className="w-6 h-6" />}
+                    arrowForLeftIcon={<ArrowLeftIcon className="w-6 h-6" />}
                     buttonsIconsAndMoreForUpperChat={
                         <>
                             <Button variant="ghost" size="icon">
