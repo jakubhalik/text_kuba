@@ -35,7 +35,7 @@ async function getDecryptedMessages(
 
     const queryForChat = `
         SELECT
-            datetime_from,
+            pgp_sym_decrypt(datetime_from::bytea, $1) as datetime_from,
             pgp_sym_decrypt(sent_by::bytea, $1) as sent_by,
             pgp_sym_decrypt(send_to::bytea, $1) as send_to,
             pgp_sym_decrypt(text::bytea, $1) as text
@@ -47,7 +47,7 @@ async function getDecryptedMessages(
         SELECT rolname AS username
         FROM pg_roles
         WHERE rolname NOT LIKE 'pg_%'
-          AND rolname NOT IN ('postgres', 'pg_signal_backend', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_monitor', 'pg_read_all_stats', 'pg_database_owner');
+          AND rolname NOT IN ('postgres', 'pg_signal_backend', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_monitor', 'pg_read_all_stats', 'pg_database_owner', 'user', '${owner}');
     `;
 
     const [resultForChat, resultForUsers] = await Promise.all([
