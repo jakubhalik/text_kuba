@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Message, User } from '../lib/utils';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
@@ -13,7 +13,8 @@ interface ChatProps {
         username: string,
         password: string,
         sendTo: string,
-        messageText: string
+        messageText: string,
+        file?: File | null
     ) => void;
     conditionalForOwner: boolean;
     iconsAndMoreForUpperSidebar: React.ReactNode;
@@ -35,9 +36,11 @@ export default function Chat({
     onSendMessage,
     username,
     password,
+    paperclipIcon,
 }: ChatProps) {
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
     const [newMessage, setNewMessage] = useState('');
+    const [file, setFile] = useState<File | null>(null);
     const [localChatMessages, setLocalChatMessages] =
         useState<Message[]>(chatMessages);
 
@@ -76,7 +79,7 @@ export default function Chat({
     };
 
     const handleSendMessage = async () => {
-        if (newMessage.trim() !== '') {
+        if (newMessage.trim() !== '' || file) {
             const newMsg: Message = {
                 datetime_from: new Date().toLocaleString(),
                 sent_by: username,
@@ -86,9 +89,16 @@ export default function Chat({
 
             setLocalChatMessages([...localChatMessages, newMsg]);
 
-            onSendMessage(username, password, selectedUser!, newMessage);
+            onSendMessage(username, password, selectedUser!, newMessage, file);
 
             setNewMessage('');
+            setFile(null);
+        }
+    };
+
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setFile(e.target.files[0]);
         }
     };
 
@@ -135,6 +145,8 @@ export default function Chat({
                     buttonsIconsAndMoreForUpperChat
                 }
                 username={username}
+                handleFileChange={handleFileChange}
+                paperclipIcon={paperclipIcon}
             />
         );
     }
@@ -154,6 +166,8 @@ export default function Chat({
             arrowForLeftIcon={arrowForLeftIcon}
             buttonsIconsAndMoreForUpperChat={buttonsIconsAndMoreForUpperChat}
             username={username}
+            handleFileChange={handleFileChange}
+            paperclipIcon={paperclipIcon}
         />
     );
 }
@@ -172,6 +186,8 @@ interface ChatComponentProps {
     arrowForLeftIcon: React.ReactNode;
     buttonsIconsAndMoreForUpperChat: React.ReactNode;
     username: string;
+    handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    paperclipIcon: React.ReactNode;
 }
 
 function ChatComponent({
@@ -188,6 +204,8 @@ function ChatComponent({
     arrowForLeftIcon,
     buttonsIconsAndMoreForUpperChat,
     username,
+    handleFileChange,
+    paperclipIcon,
 }: ChatComponentProps) {
     return (
         <>
@@ -266,6 +284,15 @@ function ChatComponent({
                             >
                                 <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
                                     <p>{message.text}</p>
+                                    {message.file && (
+                                        <a
+                                            href={`data:application/octet-stream;base64,${message.file}`}
+                                            download={message.filename}
+                                            className="text-blue-500 underline"
+                                        >
+                                            {message.filename}
+                                        </a>
+                                    )}
                                 </div>
                                 <span className="text-sm text-gray-500 self-end ml-2 dark:text-gray-400 pr-2">
                                     {new Date(
@@ -285,6 +312,17 @@ function ChatComponent({
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                     />
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                        <input
+                            type="file"
+                            onChange={handleFileChange}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            id="file-upload"
+                        />
+                        <Button variant="ghost" size="icon">
+                            {paperclipIcon}
+                        </Button>
+                    </label>{' '}
                     <Button size="sm" onClick={handleSendMessage}>
                         <p className="text-md font-medium">Send</p>
                     </Button>

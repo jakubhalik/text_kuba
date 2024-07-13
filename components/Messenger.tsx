@@ -38,7 +38,9 @@ async function getDecryptedMessages(
             pgp_sym_decrypt(datetime_from::bytea, $1) as datetime_from,
             pgp_sym_decrypt(sent_by::bytea, $1) as sent_by,
             pgp_sym_decrypt(send_to::bytea, $1) as send_to,
-            pgp_sym_decrypt(text::bytea, $1) as text
+            pgp_sym_decrypt(text::bytea, $1) as text,
+            pgp_sym_decrypt(file::bytea, $1) as file,
+            pgp_sym_decrypt(filename::bytea, $1) as filename
         FROM "${username}_schema".messages_table
         ORDER BY datetime_from ASC;
     `;
@@ -84,7 +86,8 @@ async function sendMessage(
     username: string,
     password: string,
     sendTo: string,
-    messageText: string
+    messageText: string,
+    file: File | null = null
 ): Promise<void> {
     'use server';
 
@@ -112,10 +115,26 @@ async function sendMessage(
 
     const postgresClient = await postgresUserPool.connect();
 
+    let fileBuffer = null;
+    let fileName = null;
+
+    if (file) {
+        fileBuffer = await file.arrayBuffer();
+        fileName = file.name;
+    }
+
     await client.query(
-        `INSERT INTO "${username}_schema".messages_table (datetime_from, sent_by, send_to, text) VALUES
-        (pgp_sym_encrypt($1::text, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2))`,
-        [datetimeFrom, hashedPassword, username, sendTo, messageText]
+        `INSERT INTO "${username}_schema".messages_table (datetime_from, sent_by, send_to, text, file, filename) VALUES
+        (pgp_sym_encrypt($1::text, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2), pgp_sym_encrypt($6, $2), pgp_sym_encrypt($7, $2))`,
+        [
+            datetimeFrom,
+            hashedPassword,
+            username,
+            sendTo,
+            messageText,
+            fileBuffer,
+            fileName,
+        ]
     );
 
     await postgresClient.query(`
@@ -136,9 +155,17 @@ async function sendMessage(
         .digest('hex');
 
     await postgresClient.query(
-        `INSERT INTO "postgres_schema".messages_table (datetime_from, sent_by, send_to, text) VALUES
-        (pgp_sym_encrypt($1, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2))`,
-        [datetimeFrom, postgresHashedPassword, username, sendTo, messageText]
+        `INSERT INTO "postgres_schema".messages_table (datetime_from, sent_by, send_to, text, file, filename) VALUES
+        (pgp_sym_encrypt($1, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2), pgp_sym_encrypt($6, $2), pgp_sym_encrypt($7, $2))`,
+        [
+            datetimeFrom,
+            postgresHashedPassword,
+            username,
+            sendTo,
+            messageText,
+            fileBuffer,
+            fileName,
+        ]
     );
 
     client.release();
@@ -224,6 +251,7 @@ export async function Messenger({ username, password }: MessengerProps) {
                     onSendMessage={sendMessage}
                     username={username}
                     password={password}
+                    paperclipIcon={<PaperclipIcon className="w-6 h-6" />}
                 />
             </div>
         </div>
