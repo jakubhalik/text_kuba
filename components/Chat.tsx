@@ -41,23 +41,37 @@ export default function Chat({
     const [localChatMessages, setLocalChatMessages] =
         useState<Message[]>(chatMessages);
 
-    useEffect(() => {
-        const savedUser = localStorage.getItem('selectedUser');
-        const initialUser = savedUser || users[0]?.username;
-        setSelectedUser(initialUser);
-        if (initialUser) {
-            onUserSelect(initialUser);
-        }
-    }, [onUserSelect, users]);
+    const owner = process.env.NEXT_PUBLIC_OWNER;
+
+    const stringifiedOwner = String(owner);
 
     useEffect(() => {
-        if (selectedUser) {
-            localStorage.setItem('selectedUser', selectedUser);
+        if (username === stringifiedOwner) {
+            const savedUser = localStorage.getItem('selectedUser');
+
+            const initialUser = savedUser || users[0]?.username;
+
+            setSelectedUser(initialUser);
+
+            if (initialUser) {
+                onUserSelect(initialUser);
+            }
+        } else {
+            setSelectedUser(stringifiedOwner);
         }
-    }, [selectedUser]);
+    }, [onUserSelect, users, owner, username, stringifiedOwner]);
+
+    useEffect(() => {
+        if (username === owner) {
+            if (selectedUser) {
+                localStorage.setItem('selectedUser', selectedUser);
+            }
+        }
+    }, [selectedUser, owner, username]);
 
     const handleUserClick = async (username: string) => {
         setSelectedUser(username);
+
         await onUserSelect(username);
     };
 
@@ -72,7 +86,8 @@ export default function Chat({
 
             setLocalChatMessages([...localChatMessages, newMsg]);
 
-            await onSendMessage(username, password, selectedUser!, newMessage);
+            onSendMessage(username, password, selectedUser!, newMessage);
+
             setNewMessage('');
         }
     };

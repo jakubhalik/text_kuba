@@ -67,8 +67,11 @@ async function signUp(
     'use server';
     try {
         const client = await postgresUserPool.connect();
+
         const username = formData.username;
+
         const combinedPassword = `${formData.username}${formData.password}`;
+
         const hashedPassword = crypto
             .createHash('sha256')
             .update(combinedPassword)
@@ -102,11 +105,7 @@ async function signUp(
                 ${messages_table
                 .map(
                     (i) => `
-                        ${i} ${i === 'datetime_from'
-                            ? 'TIMESTAMPTZ'
-                            : i === 'file'
-                                ? 'BYTEA'
-                                : 'TEXT'
+                        ${i} ${i === 'file' ? 'BYTEA' : 'TEXT'
                         }${i !== 'filename' ? ', ' : ''}`
                 )
                 .join('')}
@@ -139,7 +138,7 @@ async function signUp(
                 .map(
                     (i) => `
                      ${i} = pgp_sym_encrypt(
-                        ${i === 'file' ? `encode(${i}, 'hex')` : i}::text, '${hashedPassword}')${i === 'datetime_from' ? '::text::timestamptz' : ''}${i !== 'filename' ? ', ' : ''}`
+                        ${i === 'file' ? `encode(${i}, 'hex')` : i}::text, '${hashedPassword}')${i !== 'filename' ? ', ' : ''}`
                 )
                 .join('')}
             ;
