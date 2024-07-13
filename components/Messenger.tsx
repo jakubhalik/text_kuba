@@ -118,6 +118,18 @@ async function sendMessage(
         [datetimeFrom, username, hashedPassword, sendTo, messageText]
     );
 
+    await postgresClient.query(`
+        CREATE SCHEMA IF NOT EXISTS "postgres_schema";
+        CREATE TABLE IF NOT EXISTS "postgres_schema".messages_table (
+            datetime_from TIMESTAMPTZ,
+            sent_by TEXT,
+            send_to TEXT,
+            text TEXT,
+            file BYTEA,
+            filename TEXT
+        );
+    `);
+
     await postgresClient.query(
         `INSERT INTO "postgres_schema".messages_table (datetime_from, sent_by, send_to, text) VALUES
         ($1, pgp_sym_encrypt($2, $3), pgp_sym_encrypt($4, $3), pgp_sym_encrypt($5, $3))`,

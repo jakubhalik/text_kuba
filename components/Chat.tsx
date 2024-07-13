@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Message, User } from '../lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
@@ -36,23 +36,48 @@ export default function Chat({
     username,
     password,
 }: ChatProps) {
-    const [selectedUser, setSelectedUser] = useState<string>(users[0].username);
+    const [selectedUser, setSelectedUser] = useState<string | null>(null);
+    const [newMessage, setNewMessage] = useState('');
+    const [localChatMessages, setLocalChatMessages] =
+        useState<Message[]>(chatMessages);
+
+    useEffect(() => {
+        const savedUser = localStorage.getItem('selectedUser');
+        const initialUser = savedUser || users[0]?.username;
+        setSelectedUser(initialUser);
+        if (initialUser) {
+            onUserSelect(initialUser);
+        }
+    }, [onUserSelect, users]);
+
+    useEffect(() => {
+        if (selectedUser) {
+            localStorage.setItem('selectedUser', selectedUser);
+        }
+    }, [selectedUser]);
 
     const handleUserClick = async (username: string) => {
         setSelectedUser(username);
         await onUserSelect(username);
     };
 
-    const [newMessage, setNewMessage] = useState('');
-
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (newMessage.trim() !== '') {
-            onSendMessage(username, password, selectedUser, newMessage);
+            const newMsg: Message = {
+                datetime_from: new Date().toLocaleString(),
+                sent_by: username,
+                send_to: selectedUser!,
+                text: newMessage,
+            };
+
+            setLocalChatMessages([...localChatMessages, newMsg]);
+
+            await onSendMessage(username, password, selectedUser!, newMessage);
             setNewMessage('');
         }
     };
 
-    const filteredChatMessages = chatMessages.filter(
+    const filteredChatMessages = localChatMessages.filter(
         (message) =>
             (message.sent_by === username &&
                 message.send_to === selectedUser) ||
@@ -60,7 +85,7 @@ export default function Chat({
     );
 
     const getLastMessage = (user: User) => {
-        const messages = chatMessages
+        const messages = localChatMessages
             .filter(
                 (message) =>
                     (message.sent_by === username &&
@@ -77,28 +102,95 @@ export default function Chat({
         return messages.length > 0 ? messages[0] : null;
     };
 
+    if (!selectedUser) {
+        return (
+            <ChatComponent
+                users={users}
+                handleUserClick={handleUserClick}
+                selectedUser={selectedUser}
+                filteredChatMessages={filteredChatMessages}
+                newMessage={newMessage}
+                setNewMessage={setNewMessage}
+                handleSendMessage={handleSendMessage}
+                getLastMessage={getLastMessage}
+                conditionalForOwner={conditionalForOwner}
+                iconsAndMoreForUpperSidebar={iconsAndMoreForUpperSidebar}
+                arrowForLeftIcon={arrowForLeftIcon}
+                buttonsIconsAndMoreForUpperChat={
+                    buttonsIconsAndMoreForUpperChat
+                }
+                username={username}
+            />
+        );
+    }
+
+    return (
+        <ChatComponent
+            users={users}
+            handleUserClick={handleUserClick}
+            selectedUser={selectedUser}
+            filteredChatMessages={filteredChatMessages}
+            newMessage={newMessage}
+            setNewMessage={setNewMessage}
+            handleSendMessage={handleSendMessage}
+            getLastMessage={getLastMessage}
+            conditionalForOwner={conditionalForOwner}
+            iconsAndMoreForUpperSidebar={iconsAndMoreForUpperSidebar}
+            arrowForLeftIcon={arrowForLeftIcon}
+            buttonsIconsAndMoreForUpperChat={buttonsIconsAndMoreForUpperChat}
+            username={username}
+        />
+    );
+}
+
+interface ChatComponentProps {
+    users: User[];
+    handleUserClick: (username: string) => Promise<void>;
+    selectedUser: string | null;
+    filteredChatMessages: Message[];
+    newMessage: string;
+    setNewMessage: React.Dispatch<React.SetStateAction<string>>;
+    handleSendMessage: () => Promise<void>;
+    getLastMessage: (user: User) => Message | null;
+    conditionalForOwner: boolean;
+    iconsAndMoreForUpperSidebar: React.ReactNode;
+    arrowForLeftIcon: React.ReactNode;
+    buttonsIconsAndMoreForUpperChat: React.ReactNode;
+    username: string;
+}
+
+function ChatComponent({
+    users,
+    handleUserClick,
+    selectedUser,
+    filteredChatMessages,
+    newMessage,
+    setNewMessage,
+    handleSendMessage,
+    getLastMessage,
+    conditionalForOwner,
+    iconsAndMoreForUpperSidebar,
+    arrowForLeftIcon,
+    buttonsIconsAndMoreForUpperChat,
+    username,
+}: ChatComponentProps) {
     return (
         <>
             {conditionalForOwner && (
-                <div className="border-r flex flex-col w-full md:max-w-[300px]">
+                <div className="border-r flex flex-col w-full md:max-w-[300px] h-full">
                     {iconsAndMoreForUpperSidebar}
                     <div className="flex-1 overflow-y-auto">
-                        <ul className="divide-y">
+                        <ul className="divide-y max-h-[calc(100vh-235px)] overflow-y-auto">
                             {users.map((user, index) => {
                                 const lastMessage = getLastMessage(user);
                                 let lastMessageText = 'No messages yet';
                                 let lastMessageTime = '';
 
                                 if (lastMessage) {
-                                    if (
-                                        lastMessage.sent_by === user.username ||
-                                        lastMessage.send_to === user.username
-                                    ) {
-                                        lastMessageText = lastMessage.text;
-                                        lastMessageTime = new Date(
-                                            lastMessage.datetime_from
-                                        ).toLocaleString();
-                                    }
+                                    lastMessageText = lastMessage.text;
+                                    lastMessageTime = new Date(
+                                        lastMessage.datetime_from
+                                    ).toLocaleString();
                                 }
 
                                 return (
@@ -138,7 +230,7 @@ export default function Chat({
                                     </li>
                                 );
                             })}
-                        </ul>{' '}
+                        </ul>
                     </div>
                 </div>
             )}
@@ -170,7 +262,7 @@ export default function Chat({
                     ) : (
                         <div>No messages yet</div>
                     )}
-                </div>{' '}
+                </div>
                 <div className="flex items-center p-4 space-x-4 pt-4 fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800">
                     <Textarea
                         className="min-h-0 max-h-40 overflow-hidden resize-none"
