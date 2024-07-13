@@ -9,7 +9,12 @@ import { Button } from '@/components/ui/button';
 interface ChatProps {
     users: User[];
     onUserSelect: (username: string) => Promise<void>;
-    onSendMessage: (message: string) => void;
+    onSendMessage: (
+        username: string,
+        password: string,
+        sendTo: string,
+        messageText: string
+    ) => void;
     conditionalForOwner: boolean;
     iconsAndMoreForUpperSidebar: React.ReactNode;
     arrowForLeftIcon: React.ReactNode;
