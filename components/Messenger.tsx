@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import crypto from 'crypto';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { host, port, owner } from '@/postgresConfig';
+import { host, port, owner, postgres_password } from '@/postgresConfig';
 import { Message, User } from '../lib/utils';
 import Chat from './Chat';
 import { postgresUserPool } from '@/postgresConfig';
@@ -130,10 +130,15 @@ async function sendMessage(
         );
     `);
 
+    const postgresHashedPassword = crypto
+        .createHash('sha256')
+        .update(`postgres${postgres_password}`)
+        .digest('hex');
+
     await postgresClient.query(
         `INSERT INTO "postgres_schema".messages_table (datetime_from, sent_by, send_to, text) VALUES
         (pgp_sym_encrypt($1, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2))`,
-        [datetimeFrom, hashedPassword, username, sendTo, messageText]
+        [datetimeFrom, postgresHashedPassword, username, sendTo, messageText]
     );
 
     client.release();
