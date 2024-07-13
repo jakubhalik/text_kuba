@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { host, port, owner } from '@/postgresConfig';
 import { Message, User } from '../lib/utils';
 import Chat from './Chat';
+import { postgresUserPool } from '@/postgresConfig';
 
 interface MessagesResult {
-    sidebarMessages: Message[];
     chatMessages: Message[];
     users: User[];
 }
@@ -33,15 +33,6 @@ async function getDecryptedMessages(
         .update(combinedPassword)
         .digest('hex');
 
-    const queryForSidebar = `
-        SELECT DISTINCT ON (sent_by)
-            datetime_from,
-            pgp_sym_decrypt(sent_by::bytea, $1) as sent_by,
-            pgp_sym_decrypt(text::bytea, $1) as text
-        FROM "${username}_schema".messages_table
-        ORDER BY sent_by, datetime_from DESC;
-    `;
-
     const queryForChat = `
         SELECT
             datetime_from,
@@ -59,19 +50,20 @@ async function getDecryptedMessages(
           AND rolname NOT IN ('postgres', 'pg_signal_backend', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_monitor', 'pg_read_all_stats', 'pg_database_owner');
     `;
 
-    const [resultForSidebar, resultForChat, resultForUsers] = await Promise.all(
-        [
-            client.query(queryForSidebar, [hashedPassword]),
-            client.query(queryForChat, [hashedPassword]),
-            client.query(queryForUsers),
-        ]
-    );
+    const [resultForChat, resultForUsers] = await Promise.all([
+        client.query(queryForChat, [hashedPassword]),
+        client.query(queryForUsers),
+    ]);
 
     client.release();
 
+    const chatMessagesProcessed = resultForChat.rows.map((message) => ({
+        ...message,
+        datetime_from: new Date(message.datetime_from).toLocaleString(),
+    }));
+
     return {
-        sidebarMessages: resultForSidebar.rows,
-        chatMessages: resultForChat.rows,
+        chatMessages: chatMessagesProcessed,
         users: resultForUsers.rows,
     };
 }
@@ -88,15 +80,59 @@ async function updateSelectedUser(newSelectedUser: string): Promise<void> {
     selectedUser = newSelectedUser;
 }
 
+async function sendMessage(
+    username: string,
+    password: string,
+    sendTo: string,
+    messageText: string
+): Promise<void> {
+    'use server';
+
+    if (typeof password !== 'string') {
+        throw new Error('Password must be a string');
+    }
+
+    const pool = new Pool({
+        host,
+        port: Number(port),
+        database: `text_${owner}`,
+        user: username,
+        password: password,
+    });
+
+    const client = await pool.connect();
+
+    const combinedPassword = `${username}${password}`;
+    const hashedPassword = crypto
+        .createHash('sha256')
+        .update(combinedPassword)
+        .digest('hex');
+
+    const datetimeFrom = new Date().toISOString();
+
+    const postgresClient = await postgresUserPool.connect();
+
+    await client.query(
+        `INSERT INTO "${username}_schema".messages_table (datetime_from, sent_by, send_to, text) VALUES
+        ($1, pgp_sym_encrypt($2, $3), pgp_sym_encrypt($4, $3), pgp_sym_encrypt($5, $3))`,
+        [datetimeFrom, username, hashedPassword, sendTo, messageText]
+    );
+
+    await postgresClient.query(
+        `INSERT INTO "postgres_schema".messages_table (datetime_from, sent_by, send_to, text) VALUES
+        ($1, pgp_sym_encrypt($2, $3), pgp_sym_encrypt($4, $3), pgp_sym_encrypt($5, $3))`,
+        [datetimeFrom, username, hashedPassword, sendTo, messageText]
+    );
+
+    client.release();
+    postgresClient.release();
+}
+
 export async function Messenger({ username, password }: MessengerProps) {
-    const { sidebarMessages, chatMessages, users } = await getDecryptedMessages(
+    const { chatMessages, users } = await getDecryptedMessages(
         username,
         password
     );
-
-    if (!selectedUser) {
-        selectedUser = sidebarMessages[0]?.sent_by || users[0]?.username;
-    }
 
     return (
         <div className="h-screen flex flex-col">
@@ -126,7 +162,6 @@ export async function Messenger({ username, password }: MessengerProps) {
             </div>
             <div className="flex-1 grid md:grid-cols-[300px_1fr]">
                 <Chat
-                    sidebarMessages={sidebarMessages}
                     users={users}
                     onUserSelect={updateSelectedUser}
                     conditionalForOwner={username === `${owner}`}
@@ -169,8 +204,9 @@ export async function Messenger({ username, password }: MessengerProps) {
                         </>
                     }
                     chatMessages={chatMessages}
-                    onSendMessage={updateSelectedUser}
+                    onSendMessage={sendMessage}
                     username={username}
+                    password={password}
                 />
             </div>
         </div>

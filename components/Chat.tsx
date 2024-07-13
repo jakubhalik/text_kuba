@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
 interface ChatProps {
-    sidebarMessages: Message[];
     users: User[];
     onUserSelect: (username: string) => Promise<void>;
     onSendMessage: (message: string) => void;
@@ -17,10 +16,10 @@ interface ChatProps {
     buttonsIconsAndMoreForUpperChat: React.ReactNode;
     chatMessages: Message[];
     username: string;
+    password: string;
 }
 
 export default function Chat({
-    sidebarMessages,
     users,
     onUserSelect,
     conditionalForOwner,
@@ -30,25 +29,47 @@ export default function Chat({
     chatMessages,
     onSendMessage,
     username,
+    password,
 }: ChatProps) {
     const [selectedUser, setSelectedUser] = useState<string>(users[0].username);
 
     const handleUserClick = async (username: string) => {
         setSelectedUser(username);
         await onUserSelect(username);
-        console.log(
-            'selected user got updated from the the handleUserClick function in the Sidebar component: ',
-            username
-        );
     };
 
     const [newMessage, setNewMessage] = useState('');
 
     const handleSendMessage = () => {
         if (newMessage.trim() !== '') {
-            onSendMessage(newMessage);
+            onSendMessage(username, password, selectedUser, newMessage);
             setNewMessage('');
         }
+    };
+
+    const filteredChatMessages = chatMessages.filter(
+        (message) =>
+            (message.sent_by === username &&
+                message.send_to === selectedUser) ||
+            (message.sent_by === selectedUser && message.send_to === username)
+    );
+
+    const getLastMessage = (user: User) => {
+        const messages = chatMessages
+            .filter(
+                (message) =>
+                    (message.sent_by === username &&
+                        message.send_to === user.username) ||
+                    (message.sent_by === user.username &&
+                        message.send_to === username)
+            )
+            .sort(
+                (a, b) =>
+                    new Date(b.datetime_from).getTime() -
+                    new Date(a.datetime_from).getTime()
+            );
+
+        return messages.length > 0 ? messages[0] : null;
     };
 
     return (
@@ -58,51 +79,61 @@ export default function Chat({
                     {iconsAndMoreForUpperSidebar}
                     <div className="flex-1 overflow-y-auto">
                         <ul className="divide-y">
-                            {users.map((user, index) => (
-                                <li
-                                    key={index}
-                                    className="bg-gray-100 p-4 dark:bg-gray-900"
-                                >
-                                    <div
-                                        className="flex items-center gap-4 p-4 rounded-lg cursor-pointer"
-                                        onClick={() =>
-                                            handleUserClick(user.username)
-                                        }
+                            {users.map((user, index) => {
+                                const lastMessage = getLastMessage(user);
+                                let lastMessageText = 'No messages yet';
+                                let lastMessageTime = '';
+
+                                if (lastMessage) {
+                                    if (
+                                        lastMessage.sent_by === user.username ||
+                                        lastMessage.send_to === user.username
+                                    ) {
+                                        lastMessageText = lastMessage.text;
+                                        lastMessageTime = new Date(
+                                            lastMessage.datetime_from
+                                        ).toLocaleString();
+                                    }
+                                }
+
+                                return (
+                                    <li
+                                        key={index}
+                                        className="bg-gray-100 p-4 dark:bg-gray-900"
                                     >
-                                        <Image
-                                            alt="Avatar"
-                                            className="rounded-full"
-                                            height="40"
-                                            src="/placeholder.svg"
-                                            style={{
-                                                aspectRatio: '40/40',
-                                                objectFit: 'cover',
-                                            }}
-                                            width="40"
-                                        />
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold">
-                                                {user.username}
-                                            </h3>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                {sidebarMessages.find(
-                                                    (message) =>
-                                                        message.sent_by ===
-                                                        user.username
-                                                )?.text || 'No messages yet'}
-                                            </p>
+                                        <div
+                                            className="flex items-center gap-4 p-4 rounded-lg cursor-pointer"
+                                            onClick={() =>
+                                                handleUserClick(user.username)
+                                            }
+                                        >
+                                            <Image
+                                                alt="Avatar"
+                                                className="rounded-full"
+                                                height="40"
+                                                src="/placeholder.svg"
+                                                style={{
+                                                    aspectRatio: '40/40',
+                                                    objectFit: 'cover',
+                                                }}
+                                                width="40"
+                                            />
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold">
+                                                    {user.username}
+                                                </h3>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    {lastMessageText}
+                                                </p>
+                                            </div>
+                                            <span className="text-sm">
+                                                {lastMessageTime}
+                                            </span>
                                         </div>
-                                        <span className="text-sm">
-                                            {sidebarMessages.find(
-                                                (message) =>
-                                                    message.sent_by ===
-                                                    user.username
-                                            )?.datetime_from || ''}
-                                        </span>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
+                                    </li>
+                                );
+                            })}
+                        </ul>{' '}
                     </div>
                 </div>
             )}
@@ -115,8 +146,8 @@ export default function Chat({
                     {buttonsIconsAndMoreForUpperChat}
                 </div>
                 <div className="flex-1 p-4 space-y-4 overflow-hidden">
-                    {chatMessages && chatMessages.length > 0 ? (
-                        chatMessages.map((message, index) => (
+                    {filteredChatMessages && filteredChatMessages.length > 0 ? (
+                        filteredChatMessages.map((message, index) => (
                             <div
                                 key={index}
                                 className={`flex ${message.sent_by === username ? 'flex-row-reverse' : ''} items-start`}
@@ -124,15 +155,17 @@ export default function Chat({
                                 <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
                                     <p>{message.text}</p>
                                 </div>
-                                <span className="text-sm text-gray-500 self-end ml-2 dark:text-gray-400">
-                                    {message.datetime_from}
+                                <span className="text-sm text-gray-500 self-end ml-2 dark:text-gray-400 pr-2">
+                                    {new Date(
+                                        message.datetime_from
+                                    ).toLocaleString()}
                                 </span>
                             </div>
                         ))
                     ) : (
                         <div>No messages yet</div>
                     )}
-                </div>
+                </div>{' '}
                 <div className="flex items-center p-4 space-x-4 pt-4 fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800">
                     <Textarea
                         className="min-h-0 max-h-40 overflow-hidden resize-none"
