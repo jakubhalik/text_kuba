@@ -147,7 +147,7 @@ CREATE SCHEMA "${username}_schema" AUTHORIZATION "${username}";
 GRANT USAGE ON SCHEMA "${username}_schema" TO ${username};
 
 CREATE TABLE "${username}_schema"."messages_table" (
-    datetime_from TIMESTAMPTZ,
+    datetime_from TEXT,
     sent_by TEXT,
     send_to TEXT,
     text TEXT,
@@ -177,7 +177,7 @@ UPDATE "${username}_schema"."profile_table" SET
     philosophy = pgp_sym_encrypt(philosophy::text, '$hashed_password');
 
 UPDATE "${username}_schema"."messages_table" SET
-    datetime_from = pgp_sym_encrypt(datetime_from::text, '$hashed_password')::text::timestamptz,
+    datetime_from = pgp_sym_encrypt(datetime_from::text, '$hashed_password'),
     sent_by = pgp_sym_encrypt(sent_by::text, '$hashed_password'),
     send_to = pgp_sym_encrypt(send_to::text, '$hashed_password'),
     text = pgp_sym_encrypt(text::text, '$hashed_password'),

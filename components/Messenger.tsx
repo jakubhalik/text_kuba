@@ -114,14 +114,14 @@ async function sendMessage(
 
     await client.query(
         `INSERT INTO "${username}_schema".messages_table (datetime_from, sent_by, send_to, text) VALUES
-        ($1, pgp_sym_encrypt($2, $3), pgp_sym_encrypt($4, $3), pgp_sym_encrypt($5, $3))`,
-        [datetimeFrom, username, hashedPassword, sendTo, messageText]
+        (pgp_sym_encrypt($1::text, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2))`,
+        [datetimeFrom, hashedPassword, username, sendTo, messageText]
     );
 
     await postgresClient.query(`
         CREATE SCHEMA IF NOT EXISTS "postgres_schema";
         CREATE TABLE IF NOT EXISTS "postgres_schema".messages_table (
-            datetime_from TIMESTAMPTZ,
+            datetime_from TEXT,
             sent_by TEXT,
             send_to TEXT,
             text TEXT,
@@ -132,8 +132,8 @@ async function sendMessage(
 
     await postgresClient.query(
         `INSERT INTO "postgres_schema".messages_table (datetime_from, sent_by, send_to, text) VALUES
-        ($1, pgp_sym_encrypt($2, $3), pgp_sym_encrypt($4, $3), pgp_sym_encrypt($5, $3))`,
-        [datetimeFrom, username, hashedPassword, sendTo, messageText]
+        (pgp_sym_encrypt($1, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2))`,
+        [datetimeFrom, hashedPassword, username, sendTo, messageText]
     );
 
     client.release();
