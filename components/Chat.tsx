@@ -184,39 +184,17 @@ export default function Chat({
         );
     };
 
-    if (!selectedUser) {
-        return (
-            <ChatComponent
-                users={users}
-                handleUserClick={handleUserClick}
-                selectedUser={selectedUser}
-                filteredChatMessages={filteredChatMessages}
-                newMessage={newMessage}
-                setNewMessage={setNewMessage}
-                handleSendMessage={handleSendMessage}
-                getLastMessage={getLastMessage}
-                conditionalForOwner={conditionalForOwner}
-                iconsAndMoreForUpperSidebar={iconsAndMoreForUpperSidebar}
-                arrowForLeftIcon={arrowForLeftIcon}
-                buttonsIconsAndMoreForUpperChat={
-                    buttonsIconsAndMoreForUpperChat
-                }
-                username={username}
-                handleFileChange={handleFileChange}
-                paperclipIcon={paperclipIcon}
-                createBlobUrl={createBlobUrl}
-                isImageFile={isImageFile}
-                filePreview={filePreview}
-                file={file}
-            />
-        );
-    }
-
     return (
         <ChatComponent
             users={users}
             handleUserClick={handleUserClick}
-            selectedUser={selectedUser}
+            selectedUser={
+                !conditionalForOwner
+                    ? owner
+                    : !selectedUser
+                        ? users[0]?.username
+                        : selectedUser
+            }
             filteredChatMessages={filteredChatMessages}
             newMessage={newMessage}
             setNewMessage={setNewMessage}
@@ -348,8 +326,9 @@ function ChatComponent({
                     {buttonsIconsAndMoreForUpperChat}
                 </div>
 
-                <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-                    {filteredChatMessages && filteredChatMessages.length > 0 ? (
+                <div className="flex-1 p-4 pb-10 space-y-4 overflow-y-auto">
+                    {filteredChatMessages &&
+                        filteredChatMessages.length > 0 &&
                         filteredChatMessages.map((message, index) => (
                             <div
                                 key={index}
@@ -400,10 +379,7 @@ function ChatComponent({
                                     ).toLocaleString()}
                                 </span>
                             </div>
-                        ))
-                    ) : (
-                        <div>No messages yet</div>
-                    )}
+                        ))}
                 </div>
 
                 <div className="flex items-center p-4 space-x-4 pt-4 fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800">
@@ -414,8 +390,8 @@ function ChatComponent({
                                     src={filePreview}
                                     alt="File Preview"
                                     className="rounded"
-                                    width={50}
-                                    height={50}
+                                    width="50"
+                                    height="50"
                                 />
                             </div>
                         ) : (

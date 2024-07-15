@@ -14,6 +14,7 @@ import {
     postgres_password,
 } from '@/postgresConfig';
 import { profile_table, messages_table } from '@/lib/utils';
+import { cookies } from 'next/headers';
 
 interface FormData {
     username: string;
@@ -118,12 +119,14 @@ async function login(
 
         client.release();
 
-        username = formData.username;
-        password = formData.password;
+        const sessionData = {
+            username: formData.username,
+            password: formData.password,
+        };
 
-        loggedIn = true;
-
-        resetSessionTimeout();
+        cookies().set('session', JSON.stringify(sessionData), {
+            maxAge: 24 * 60 * 60, // 1 day
+        });
 
         await transferMessagesToUser(username, password);
 
@@ -137,18 +140,7 @@ async function login(
 
 async function signOut(): Promise<void> {
     'use server';
-    loggedIn = false;
-    sessionTimeout && clearTimeout(sessionTimeout);
-}
-
-function resetSessionTimeout(): void {
-    sessionTimeout && clearTimeout(sessionTimeout);
-    sessionTimeout = setTimeout(
-        () => {
-            loggedIn = false;
-        },
-        30 * 60 * 60 * 1000
-    ); // 30 hours
+    cookies().delete('session');
 }
 
 async function signUp(
@@ -245,7 +237,17 @@ async function signUp(
 }
 
 export default async function Home() {
-    loggedIn && resetSessionTimeout();
+    const session = cookies().get('session');
+    let loggedIn = false;
+    let username = '';
+    let password = '';
+
+    if (session) {
+        const sessionData = JSON.parse(session.value);
+        username = sessionData.username;
+        password = sessionData.password;
+        loggedIn = true;
+    }
 
     return (
         <GlobalStates>
