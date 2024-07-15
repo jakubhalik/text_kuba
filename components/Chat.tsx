@@ -82,21 +82,23 @@ export default function Chat({
 
     const handleSendMessage = async () => {
         if (newMessage.trim() !== '' || file) {
-            const newMsg: Message = {
-                datetime_from: new Date().toLocaleString(),
-                sent_by: username,
-                send_to: selectedUser!,
-                text: newMessage,
-            };
-
-            setLocalChatMessages([...localChatMessages, newMsg]);
-
             let fileBase64 = null;
             let fileName = null;
             if (file) {
                 fileBase64 = await toBase64(file);
                 fileName = file.name;
             }
+
+            const newMsg: Message = {
+                datetime_from: new Date().toLocaleString(),
+                sent_by: username,
+                send_to: selectedUser!,
+                text: newMessage,
+                file: fileBase64,
+                filename: fileName,
+            };
+
+            setLocalChatMessages([...localChatMessages, newMsg]);
 
             onSendMessage(
                 username,
@@ -152,14 +154,27 @@ export default function Chat({
     };
 
     const createBlobUrl = (base64Data: string) => {
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        try {
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray]);
+            return URL.createObjectURL(blob);
+        } catch (error) {
+            console.error('Invalid base64 string:', error);
+            return '';
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray]);
-        return URL.createObjectURL(blob);
+    };
+
+    const isImageFile = (filename: string | null) => {
+        if (!filename) return false;
+        const extension = filename.split('.').pop()?.toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
+            extension!
+        );
     };
 
     if (!selectedUser) {
@@ -183,6 +198,7 @@ export default function Chat({
                 handleFileChange={handleFileChange}
                 paperclipIcon={paperclipIcon}
                 createBlobUrl={createBlobUrl}
+                isImageFile={isImageFile}
             />
         );
     }
@@ -205,6 +221,7 @@ export default function Chat({
             handleFileChange={handleFileChange}
             paperclipIcon={paperclipIcon}
             createBlobUrl={createBlobUrl}
+            isImageFile={isImageFile}
         />
     );
 }
@@ -226,6 +243,7 @@ interface ChatComponentProps {
     handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
     paperclipIcon: React.ReactNode;
     createBlobUrl: (base64Data: string) => string;
+    isImageFile: (filename: string | null) => boolean;
 }
 
 function ChatComponent({
@@ -245,6 +263,7 @@ function ChatComponent({
     handleFileChange,
     paperclipIcon,
     createBlobUrl,
+    isImageFile,
 }: ChatComponentProps) {
     return (
         <>
@@ -306,7 +325,7 @@ function ChatComponent({
                     </div>
                 </div>
             )}
-            <div className="flex flex-col w-full h-[calc(100vh-88px)] pb-16">
+            <div className="flex flex-col w-full h-[calc(100vh-88px)] pb-[75px]">
                 <div className="border-b flex items-center p-4 space-x-4">
                     <div className="flex items-center space-x-2">
                         {arrowForLeftIcon}
@@ -327,15 +346,39 @@ function ChatComponent({
                             >
                                 <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
                                     <p>{message.text}</p>
-                                    {message.file && (
-                                        <a
-                                            href={createBlobUrl(message.file)}
-                                            download={message.filename}
-                                            className="text-blue-500 underline"
-                                        >
-                                            {message.filename}
-                                        </a>
-                                    )}
+                                    {message.file &&
+                                        (isImageFile(message.filename) ? (
+                                            <>
+                                                <Image
+                                                    src={createBlobUrl(
+                                                        message.file
+                                                    )}
+                                                    alt={message.filename}
+                                                    className="max-w-full h-auto rounded mt-2"
+                                                    width="300"
+                                                    height="300"
+                                                />
+                                                <a
+                                                    href={createBlobUrl(
+                                                        message.file
+                                                    )}
+                                                    download={message.filename}
+                                                    className="text-blue-500 underline block mt-2"
+                                                >
+                                                    Download Image
+                                                </a>
+                                            </>
+                                        ) : (
+                                            <a
+                                                href={createBlobUrl(
+                                                    message.file
+                                                )}
+                                                download={message.filename}
+                                                className="text-blue-500 underline"
+                                            >
+                                                {message.filename}
+                                            </a>
+                                        ))}
                                 </div>
                                 <span className="text-sm text-gray-500 self-end ml-2 dark:text-gray-400 pr-2">
                                     {new Date(
@@ -362,10 +405,8 @@ function ChatComponent({
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             id="file-upload"
                         />
-                        <Button variant="ghost" size="icon">
-                            {paperclipIcon}
-                        </Button>
-                    </div>{' '}
+                        {paperclipIcon}
+                    </div>
                     <Button size="sm" onClick={handleSendMessage}>
                         <p className="text-[15px] font-medium">Send</p>
                     </Button>
