@@ -204,7 +204,13 @@ export async function Messenger({ username, password }: MessengerProps) {
                     <span className="sr-only">Search</span>
                 </Button>
             </div>
-            <div className="flex-1 grid md:grid-cols-[300px_1fr]">
+            <div
+                className={
+                    username === `${owner}`
+                        ? 'flex-1 grid md:grid-cols-[300px_1fr]'
+                        : 'flex'
+                }
+            >
                 <Chat
                     users={users}
                     onUserSelect={updateSelectedUser}

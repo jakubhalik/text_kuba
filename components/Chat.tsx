@@ -43,6 +43,7 @@ export default function Chat({
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
     const [newMessage, setNewMessage] = useState('');
     const [file, setFile] = useState<File | null>(null);
+    const [filePreview, setFilePreview] = useState<string | null>(null);
     const [localChatMessages, setLocalChatMessages] =
         useState<Message[]>(chatMessages);
 
@@ -111,6 +112,7 @@ export default function Chat({
 
             setNewMessage('');
             setFile(null);
+            setFilePreview(null); // Clear the file preview after sending
         }
     };
 
@@ -125,6 +127,8 @@ export default function Chat({
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             setFile(e.target.files[0]);
+            const fileUrl = URL.createObjectURL(e.target.files[0]);
+            setFilePreview(fileUrl); // Set the file preview URL
         }
     };
 
@@ -154,6 +158,9 @@ export default function Chat({
     };
 
     const createBlobUrl = (base64Data: string) => {
+        if (base64Data.startsWith('data:')) {
+            return base64Data; // If it's already a base64 URL, return it directly
+        }
         try {
             const byteCharacters = atob(base64Data);
             const byteNumbers = new Array(byteCharacters.length);
@@ -199,6 +206,8 @@ export default function Chat({
                 paperclipIcon={paperclipIcon}
                 createBlobUrl={createBlobUrl}
                 isImageFile={isImageFile}
+                filePreview={filePreview}
+                file={file}
             />
         );
     }
@@ -222,6 +231,8 @@ export default function Chat({
             paperclipIcon={paperclipIcon}
             createBlobUrl={createBlobUrl}
             isImageFile={isImageFile}
+            filePreview={filePreview}
+            file={file}
         />
     );
 }
@@ -244,6 +255,7 @@ interface ChatComponentProps {
     paperclipIcon: React.ReactNode;
     createBlobUrl: (base64Data: string) => string;
     isImageFile: (filename: string | null) => boolean;
+    filePreview: string | null;
 }
 
 function ChatComponent({
@@ -264,6 +276,8 @@ function ChatComponent({
     paperclipIcon,
     createBlobUrl,
     isImageFile,
+    filePreview,
+    file,
 }: ChatComponentProps) {
     return (
         <>
@@ -391,9 +405,26 @@ function ChatComponent({
                         <div>No messages yet</div>
                     )}
                 </div>
+
                 <div className="flex items-center p-4 space-x-4 pt-4 fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800">
+                    {filePreview &&
+                        (isImageFile(file?.name) ? (
+                            <div className="flex-shrink-0">
+                                <Image
+                                    src={filePreview}
+                                    alt="File Preview"
+                                    className="rounded"
+                                    width={50}
+                                    height={50}
+                                />
+                            </div>
+                        ) : (
+                            <div className="flex-shrink-0 text-sm text-blue-500">
+                                {file?.name}
+                            </div>
+                        ))}
                     <Textarea
-                        className="min-h-0 max-h-40 overflow-hidden resize-none"
+                        className="min-h-0 max-h-40 overflow-hidden resize-none flex-1"
                         placeholder="Type a message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
