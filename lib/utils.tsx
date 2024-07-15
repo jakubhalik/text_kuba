@@ -81,6 +81,8 @@ export interface Message {
     sent_by: string;
     send_to: string;
     text: string;
+    file: ArrayBuffer | null;
+    filename: string | null;
 }
 
 export interface User {

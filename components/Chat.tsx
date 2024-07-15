@@ -14,7 +14,8 @@ interface ChatProps {
         password: string,
         sendTo: string,
         messageText: string,
-        file?: File | null
+        fileBase64?: string | null,
+        fileName?: string | null
     ) => void;
     conditionalForOwner: boolean;
     iconsAndMoreForUpperSidebar: React.ReactNode;
@@ -23,6 +24,7 @@ interface ChatProps {
     chatMessages: Message[];
     username: string;
     password: string;
+    paperclipIcon: React.ReactNode;
 }
 
 export default function Chat({
@@ -89,12 +91,34 @@ export default function Chat({
 
             setLocalChatMessages([...localChatMessages, newMsg]);
 
-            onSendMessage(username, password, selectedUser!, newMessage, file);
+            let fileBase64 = null;
+            let fileName = null;
+            if (file) {
+                fileBase64 = await toBase64(file);
+                fileName = file.name;
+            }
+
+            onSendMessage(
+                username,
+                password,
+                selectedUser!,
+                newMessage,
+                fileBase64,
+                fileName
+            );
 
             setNewMessage('');
             setFile(null);
         }
     };
+
+    const toBase64 = (file: File): Promise<string | ArrayBuffer | null> =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -127,6 +151,17 @@ export default function Chat({
         return messages.length > 0 ? messages[0] : null;
     };
 
+    const createBlobUrl = (base64Data: string) => {
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray]);
+        return URL.createObjectURL(blob);
+    };
+
     if (!selectedUser) {
         return (
             <ChatComponent
@@ -147,6 +182,7 @@ export default function Chat({
                 username={username}
                 handleFileChange={handleFileChange}
                 paperclipIcon={paperclipIcon}
+                createBlobUrl={createBlobUrl}
             />
         );
     }
@@ -168,6 +204,7 @@ export default function Chat({
             username={username}
             handleFileChange={handleFileChange}
             paperclipIcon={paperclipIcon}
+            createBlobUrl={createBlobUrl}
         />
     );
 }
@@ -188,6 +225,7 @@ interface ChatComponentProps {
     username: string;
     handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
     paperclipIcon: React.ReactNode;
+    createBlobUrl: (base64Data: string) => string;
 }
 
 function ChatComponent({
@@ -206,6 +244,7 @@ function ChatComponent({
     username,
     handleFileChange,
     paperclipIcon,
+    createBlobUrl,
 }: ChatComponentProps) {
     return (
         <>
@@ -275,18 +314,22 @@ function ChatComponent({
                     </div>
                     {buttonsIconsAndMoreForUpperChat}
                 </div>
-                <div className="flex-1 p-4 space-y-4 overflow-hidden">
+
+                <div className="flex-1 p-4 space-y-4 overflow-y-auto">
                     {filteredChatMessages && filteredChatMessages.length > 0 ? (
                         filteredChatMessages.map((message, index) => (
                             <div
                                 key={index}
-                                className={`flex ${message.sent_by === username ? 'flex-row-reverse' : ''} items-start`}
+                                className={`flex ${message.sent_by === username
+                                        ? 'flex-row-reverse'
+                                        : ''
+                                    } items-start`}
                             >
                                 <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
                                     <p>{message.text}</p>
                                     {message.file && (
                                         <a
-                                            href={`data:application/octet-stream;base64,${message.file}`}
+                                            href={createBlobUrl(message.file)}
                                             download={message.filename}
                                             className="text-blue-500 underline"
                                         >
@@ -312,7 +355,7 @@ function ChatComponent({
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                     />
-                    <label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="relative inline-block">
                         <input
                             type="file"
                             onChange={handleFileChange}
@@ -322,9 +365,9 @@ function ChatComponent({
                         <Button variant="ghost" size="icon">
                             {paperclipIcon}
                         </Button>
-                    </label>{' '}
+                    </div>{' '}
                     <Button size="sm" onClick={handleSendMessage}>
-                        <p className="text-md font-medium">Send</p>
+                        <p className="text-[15px] font-medium">Send</p>
                     </Button>
                 </div>
             </div>
