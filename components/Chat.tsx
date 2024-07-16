@@ -89,6 +89,10 @@ export default function Chat({
                 fileBase64 = await toBase64(file);
                 fileName = file.name;
             }
+            if (file) {
+                const fileBase64 = await toBase64(file);
+                const fileName = file.name;
+            }
 
             const newMsg: Message = {
                 datetime_from: new Date().toLocaleString(),

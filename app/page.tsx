@@ -126,6 +126,8 @@ async function login(
 
         cookies().set('session', JSON.stringify(sessionData), {
             maxAge: 24 * 60 * 60, // 1 day
+            httpOnly: true,
+            sameSite: 'Strict',
         });
 
         await transferMessagesToUser(username, password);
