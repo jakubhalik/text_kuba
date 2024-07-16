@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, ChangeEvent } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,7 @@ export default function MessageInput({
             {filePreview &&
                 (isImageFile(file?.name) ? (
                     <div className="flex-shrink-0">
-                        <img
+                        <Image
                             src={filePreview}
                             alt="File Preview"
                             className="rounded"

@@ -296,7 +296,7 @@ function ChatComponent({
                                     {message.file &&
                                         (isImageFile(message.filename) ? (
                                             <>
-                                                <Image
+                                                <img
                                                     src={createBlobUrl(
                                                         message.file
                                                     )}
