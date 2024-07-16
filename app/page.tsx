@@ -24,9 +24,6 @@ interface FormData {
 let loggedIn: boolean = false;
 let sessionTimeout: NodeJS.Timeout | null = null;
 
-let username: string;
-let password: string;
-
 async function transferMessagesToUser(
     username: string,
     password: string
@@ -50,10 +47,18 @@ async function transferMessagesToUser(
         WHERE pgp_sym_decrypt(send_to::bytea, $1) = $2;
     `;
 
+    console.log(
+        'Executing query with hashed password:',
+        postgresHashedPassword
+    );
+    console.log('Looking for messages sent to:', username);
+
     const resultForMessages = await client.query(queryForMessages, [
         postgresHashedPassword,
         username,
     ]);
+
+    console.log('Query result:', resultForMessages.rows);
 
     if (resultForMessages.rows.length === 0) {
         console.log('No messages to transfer.');
@@ -124,13 +129,13 @@ async function login(
             password: formData.password,
         };
 
+        await transferMessagesToUser(formData.username, formData.password);
+
         cookies().set('session', JSON.stringify(sessionData), {
             maxAge: 24 * 60 * 60, // 1 day
             httpOnly: true,
             sameSite: 'Strict',
         });
-
-        await transferMessagesToUser(username, password);
 
         return { success: true };
     } catch (error) {
