@@ -1,6 +1,6 @@
 # End to End Uniquely Encrypted Messaging App
 
-###### The main components of the application are right now in the app and components folder and the setup_db.sh for the setup of the database logic and 2 main user roles
+#### The main components of the application are right now in the app and components directories and the setup_db.sh for the setup of the database logic and 2 main user roles
 
 # READ THE BASH SCRIPTS BEFORE RUNNING THEM! - U don't want to delete your databases on an accident.
 
