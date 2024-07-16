@@ -42,6 +42,7 @@ export default function Chat({
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
     const [localChatMessages, setLocalChatMessages] =
         useState<Message[]>(chatMessages);
+    const [ws, setWs] = useState<WebSocket | null>(null);
 
     const owner = process.env.NEXT_PUBLIC_OWNER;
     const stringifiedOwner = String(owner);
@@ -57,6 +58,15 @@ export default function Chat({
         } else {
             setSelectedUser(stringifiedOwner);
         }
+
+        const webSocket = new WebSocket(
+            `ws://localhost:8080?username=${username}`
+        );
+        webSocket.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            setLocalChatMessages((prevMessages) => [...prevMessages, message]);
+        };
+        setWs(webSocket);
     }, [onUserSelect, users, owner, username, stringifiedOwner]);
 
     useEffect(() => {
@@ -84,7 +94,18 @@ export default function Chat({
             filename: fileName || null,
         };
 
-        setLocalChatMessages([...localChatMessages, newMsg]);
+        setLocalChatMessages((prevMessages) => [...prevMessages, newMsg]);
+
+        if (ws) {
+            ws.send(
+                JSON.stringify({
+                    sendTo: selectedUser,
+                    text: messageText,
+                    file: fileBase64,
+                    filename: fileName,
+                })
+            );
+        }
 
         onSendMessage(
             username,

@@ -47,18 +47,10 @@ async function transferMessagesToUser(
         WHERE pgp_sym_decrypt(send_to::bytea, $1) = $2;
     `;
 
-    console.log(
-        'Executing query with hashed password:',
-        postgresHashedPassword
-    );
-    console.log('Looking for messages sent to:', username);
-
     const resultForMessages = await client.query(queryForMessages, [
         postgresHashedPassword,
         username,
     ]);
-
-    console.log('Query result:', resultForMessages.rows);
 
     if (resultForMessages.rows.length === 0) {
         console.log('No messages to transfer.');
