@@ -7,6 +7,7 @@
 ### For running the application (In only dev mode so far)
 
 ```bash
+# The script below right now supports only Arch Linux or Debian Linux
 ./setup_db.sh # Or run things for your postgres db based on what is inside manually
 
 bun wsServer.js

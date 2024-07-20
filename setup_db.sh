@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root or use sudo"
+  exit
+fi
+
 read -p "Enter your name/alias: " username
 read -sp "Enter password for the 'postgres' user: " postgres_password
 echo
@@ -9,11 +14,11 @@ echo
 install_postgresql() {
     if [ -f /etc/debian_version ]; then
         echo "Detected Debian-based system."
-        sudo apt update
-        sudo apt install -y postgresql
+        apt update
+        apt install -y postgresql
     elif [ -f /etc/arch-release ]; then
         echo "Detected Arch-based system."
-        sudo pacman -Sy --noconfirm postgresql
+        pacman -Sy --noconfirm postgresql
     else
         echo "Unsupported OS. Please use Debian-based or Arch-based system."
         exit 1
@@ -28,17 +33,17 @@ else
 fi
 
 if [ -f /etc/arch-release ]; then
-    sudo -u postgres initdb --locale en_US.UTF-8 -D /var/lib/postgres/data
-    sudo systemctl enable postgresql
-    sudo systemctl start postgresql
+    -u postgres initdb --locale en_US.UTF-8 -D /var/lib/postgres/data
+    systemctl enable postgresql
+    systemctl start postgresql
 fi
 
 if [ -f /etc/debian_version ]; then
-    sudo service postgresql start
+    service postgresql start
 fi
 
 if [ -f /etc/debian_version ]; then
-    PGDATA=$(sudo -u postgres PGPASSWORD=$postgres_password psql -t -P format=unaligned -c "SHOW data_directory;")
+    PGDATA=$(-u postgres PGPASSWORD=$postgres_password psql -t -P format=unaligned -c "SHOW data_directory;")
 elif [ -f /etc/arch-release ]; then
     PGDATA="/var/lib/postgres/data"
 else
@@ -46,18 +51,18 @@ else
     exit 1
 fi
 
-sudo -u postgres PGPASSWORD=$postgres_password psql -c "ALTER USER postgres PASSWORD '$postgres_password';"
+-u postgres PGPASSWORD=$postgres_password psql -c "ALTER USER postgres PASSWORD '$postgres_password';"
 
 SSL_DIR="$PGDATA/ssl"
-sudo mkdir -p $SSL_DIR
-sudo openssl req -new -x509 -days 365 -nodes -out $SSL_DIR/server.crt -keyout $SSL_DIR/server.key -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
-sudo chown postgres:postgres $SSL_DIR/server.crt $SSL_DIR/server.key
-sudo chmod 600 $SSL_DIR/server.key
+mkdir -p $SSL_DIR
+openssl req -new -x509 -days 365 -nodes -out $SSL_DIR/server.crt -keyout $SSL_DIR/server.key -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
+chown postgres:postgres $SSL_DIR/server.crt $SSL_DIR/server.key
+chmod 600 $SSL_DIR/server.key
 
 PG_HBA="$PGDATA/pg_hba.conf"
-sudo cp $PG_HBA ${PG_HBA}.bak
+cp $PG_HBA ${PG_HBA}.bak
 
-sudo tee $PG_HBA > /dev/null <<EOF
+tee $PG_HBA > /dev/null <<EOF
 # "local" is for Unix domain socket connections only
 local   all             all                                     scram-sha-256
 
@@ -75,9 +80,9 @@ host    all             all             0.0.0.0/0               reject
 EOF
 
 PG_CONF="$PGDATA/postgresql.conf"
-sudo cp $PG_CONF ${PG_CONF}.bak
+cp $PG_CONF ${PG_CONF}.bak
 
-sudo tee -a $PG_CONF > /dev/null <<EOF
+tee -a $PG_CONF > /dev/null <<EOF
 
 # Connection settings
 listen_addresses = 'localhost'  # change to '*' to allow remote connections
@@ -105,12 +110,12 @@ log_min_duration_statement = 1000  # log queries that take longer than 1 second
 EOF
 
 if [ -f /etc/debian_version ]; then
-    sudo service postgresql restart
+    service postgresql restart
 elif [ -f /etc/arch-release ]; then
-    sudo systemctl restart postgresql
+    systemctl restart postgresql
 fi
 
-sudo -u postgres PGPASSWORD=$postgres_password psql <<EOF
+-u postgres PGPASSWORD=$postgres_password psql <<EOF
 -- Drop database if it exists
 DROP DATABASE IF EXISTS text_${username};
 
@@ -131,15 +136,15 @@ END
 \$do\$;
 EOF
 
-sudo -u postgres PGPASSWORD=$postgres_password psql -c "ALTER ROLE ${username} WITH PASSWORD '$user_password';"
+-u postgres PGPASSWORD=$postgres_password psql -c "ALTER ROLE ${username} WITH PASSWORD '$user_password';"
 
 combined_password="${username}${user_password}"
 
 hashed_password=$(echo -n "$combined_password" | sha256sum | awk '{print $1}')
 
-sudo -u postgres PGPASSWORD=$postgres_password psql -d text_${username} -c "CREATE EXTENSION pgcrypto;"
+-u postgres PGPASSWORD=$postgres_password psql -d text_${username} -c "CREATE EXTENSION pgcrypto;"
 
-sudo -u postgres PGPASSWORD=$postgres_password psql -d text_${username} <<EOF
+-u postgres PGPASSWORD=$postgres_password psql -d text_${username} <<EOF
 -- Create schema
 CREATE SCHEMA "${username}_schema" AUTHORIZATION "${username}";
 
@@ -191,7 +196,7 @@ GRANT ALL PRIVILEGES ON TABLE "${username}_schema".profile_table TO ${username};
 EOF
 
 if ! id -u $username > /dev/null 2>&1; then
-    sudo useradd -m $username
+    useradd -m $username
 fi
 
 echo "Script execution completed."
