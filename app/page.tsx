@@ -21,9 +21,6 @@ interface FormData {
     password: string;
 }
 
-let loggedIn: boolean = false;
-let sessionTimeout: NodeJS.Timeout | null = null;
-
 async function transferMessagesToUser(
     username: string,
     password: string
