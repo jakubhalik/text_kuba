@@ -24,6 +24,7 @@ interface FormData {
 }
 
 let loggedIn: boolean = false;
+let userUsername: string;
 
 async function decryptWithPublicKey(
     publicKeyArmored: string,
@@ -160,6 +161,7 @@ async function signUp(
         userClient.release();
 
         console.log('signUp - End');
+        userUsername = username;
         return await login({
             username: decryptedUsername,
             encryptedUsername,
@@ -181,8 +183,7 @@ async function login(
     console.log('FormData:', formData);
 
     const client = await postgresUserPool.connect();
-    const { username, encryptedUsername, encryptedPassword, publicKey } =
-        formData;
+    const { username, encryptedUsername, encryptedPassword } = formData;
 
     const postgresCombinedPassword = `postgres${postgres_password}`;
     const postgresHashedPassword = crypto
@@ -258,6 +259,7 @@ async function login(
         )('session', JSON.stringify(sessionData), cookieOptions);
 
         console.log('login - End');
+        userUsername = username;
         return { success: true };
     } catch (error) {
         console.error('Database connection error:', error);
@@ -274,8 +276,11 @@ async function signOut(): Promise<void> {
 export default async function Home() {
     const session = cookies().get('session');
 
+    console.log('Asking for if session');
     if (session) {
+        console.log('Session: ', session);
         const sessionData = JSON.parse(session.value);
+        console.log('Session Data: ', sessionData);
         const client = await postgresUserPool.connect();
 
         const postgresCombinedPassword = `postgres${postgres_password}`;
@@ -284,27 +289,43 @@ export default async function Home() {
             .update(postgresCombinedPassword)
             .digest('hex');
 
+        console.log('Mutable variable of the userUsername: ', userUsername);
+
         const result = await client.query(
             `SELECT pgp_sym_decrypt(public_key::bytea, $1) AS public_key FROM postgres_schema.public_keys WHERE username = $2`,
-            [postgresHashedPassword, sessionData.username]
+            [postgresHashedPassword, userUsername]
         );
+
+        console.log('Result: ', result);
 
         if (result.rows.length > 0) {
             const decryptedPublicKey = result.rows[0].public_key;
+
+            console.log('Session data username: ', sessionData.username);
+            console.log('Session data password: ', sessionData.password);
+
+            console.log('Decrypted public key: ', decryptedPublicKey);
 
             const decryptedUsername = await decryptWithPublicKey(
                 decryptedPublicKey,
                 sessionData.username
             );
+
+            console.log('Decrypted username: ', decryptedUsername);
+
             const decryptedPassword = await decryptWithPublicKey(
                 decryptedPublicKey,
                 sessionData.password
             );
 
+            console.log('Decrypted Password: ', decryptedPassword);
+
             if (
-                sessionData.username === decryptedUsername &&
-                sessionData.password === decryptedPassword
+                decryptedUsername &&
+                decryptedPassword &&
+                decryptedUsername === userUsername
             ) {
+                console.log('loggedIn turned true');
                 loggedIn = true;
             }
         }
