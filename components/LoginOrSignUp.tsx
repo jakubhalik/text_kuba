@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from './GlobalStates';
 import { loadLanguage } from '@/lib/utils';
 import * as openpgp from 'openpgp';
+import { getCookie, setCookie } from 'cookies-next';
 
 interface FormData {
     username: string;
     encryptedUsername: string;
     encryptedPassword: string;
-    publicKey: string;
+    publicKey?: string;
 }
 
 export default function LoginOrSignUp({
@@ -55,48 +56,99 @@ export default function LoginOrSignUp({
         }
 
         try {
-            const { privateKey, publicKey } = await openpgp.generateKey({
-                type: 'ecc',
-                curve: 'curve25519',
-                userIDs: [{ name: data.username }],
-            });
+            if (isLogin) {
+                const privateKeyArmored = getCookie('privateKey') as string;
+                console.log('Private key armored: ', privateKeyArmored);
+                if (!privateKeyArmored) {
+                    setError('Private key not found in cookies');
+                    return;
+                }
 
-            const publicKeyArmored = publicKey;
-            const privateKeyArmored = privateKey;
-
-            const encryptedUsername = await openpgp.sign({
-                message: await openpgp.createMessage({ text: data.username }),
-                signingKeys: await openpgp.readPrivateKey({
+                const privateKey = await openpgp.readPrivateKey({
                     armoredKey: privateKeyArmored,
-                }),
-                format: 'armored',
-            });
+                });
 
-            const encryptedPassword = await openpgp.sign({
-                message: await openpgp.createMessage({ text: getPassword() }),
-                signingKeys: await openpgp.readPrivateKey({
-                    armoredKey: privateKeyArmored,
-                }),
-                format: 'armored',
-            });
+                const encryptedUsername = await openpgp.sign({
+                    message: await openpgp.createMessage({
+                        text: data.username,
+                    }),
+                    signingKeys: privateKey,
+                    format: 'armored',
+                });
 
-            document.cookie = `privateKey=${privateKeyArmored}; path=/; secure; HttpOnly; SameSite=Strict`;
+                const encryptedPassword = await openpgp.sign({
+                    message: await openpgp.createMessage({
+                        text: getPassword(),
+                    }),
+                    signingKeys: privateKey,
+                    format: 'armored',
+                });
 
-            const formData: FormData = {
-                username: data.username, // unencrypted username for public_keys table
-                encryptedUsername: encryptedUsername as string,
-                encryptedPassword: encryptedPassword as string,
-                publicKey: publicKeyArmored,
-            };
+                const formData: FormData = {
+                    username: data.username,
+                    encryptedUsername: encryptedUsername as string,
+                    encryptedPassword: encryptedPassword as string,
+                };
 
-            const result = isLogin
-                ? await loginAction(formData)
-                : await signUpAction(formData);
-
-            if (result.success) {
-                window.location.href = '/';
+                const result = await loginAction(formData);
+                if (result.success) {
+                    window.location.href = '/';
+                } else {
+                    setError(texts.login_failed);
+                }
             } else {
-                setError(isLogin ? texts.login_failed : texts.signup_failed);
+                // Sign-up logic
+                const { privateKey, publicKey } = await openpgp.generateKey({
+                    type: 'ecc',
+                    curve: 'curve25519',
+                    userIDs: [{ name: data.username }],
+                });
+
+                const publicKeyArmored = publicKey;
+                const privateKeyArmored = privateKey;
+
+                const encryptedUsername = await openpgp.sign({
+                    message: await openpgp.createMessage({
+                        text: data.username,
+                    }),
+                    signingKeys: await openpgp.readPrivateKey({
+                        armoredKey: privateKeyArmored,
+                    }),
+                    format: 'armored',
+                });
+
+                const encryptedPassword = await openpgp.sign({
+                    message: await openpgp.createMessage({
+                        text: getPassword(),
+                    }),
+                    signingKeys: await openpgp.readPrivateKey({
+                        armoredKey: privateKeyArmored,
+                    }),
+                    format: 'armored',
+                });
+
+                setCookie('privateKey', privateKeyArmored, {
+                    path: '/',
+                    secure: true,
+                    sameSite: 'strict',
+                });
+
+                const checkForTheCookie = getCookie('privateKey') as string;
+                console.log('Cookie got set and got: ', checkForTheCookie);
+
+                const formData: FormData = {
+                    username: data.username,
+                    encryptedUsername: encryptedUsername as string,
+                    encryptedPassword: encryptedPassword as string,
+                    publicKey: publicKeyArmored,
+                };
+
+                const result = await signUpAction(formData);
+                if (result.success) {
+                    window.location.href = '/';
+                } else {
+                    setError(texts.signup_failed);
+                }
             }
         } catch (error) {
             console.error('Encryption error:', error);
