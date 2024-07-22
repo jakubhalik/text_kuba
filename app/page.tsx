@@ -142,6 +142,12 @@ async function signUp(
 
         console.log('User Hashed Password:', hashedPassword);
 
+        const encryptedDecryptedUsername = await openpgp.encrypt({
+            message: await openpgp.createMessage({ text: decryptedUsername }),
+            encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+            format: 'armored',
+        });
+
         await userClient.query(`
             CREATE TABLE "${decryptedUsername}_schema"."messages_table" (
                 ${messages_table.map((i) => `${i} ${i === 'file' ? 'BYTEA' : 'TEXT'}${i !== 'filename' ? ', ' : ''}`).join('')}
@@ -149,7 +155,7 @@ async function signUp(
             CREATE TABLE "${decryptedUsername}_schema"."profile_table" (
                 ${profile_table.map((i) => `${i} ${i === 'avatar' ? 'BYTEA' : 'TEXT'}${i !== 'philosophy' ? ', ' : ''}`).join('')}
             );
-            INSERT INTO "${decryptedUsername}_schema"."profile_table" (name) VALUES ('${decryptedUsername}');
+            INSERT INTO "${decryptedUsername}_schema"."profile_table" (name) VALUES ('${encryptedDecryptedUsername}');
             UPDATE "${decryptedUsername}_schema"."profile_table" SET
                 ${profile_table.map((i) => `${i} = pgp_sym_encrypt(${i === 'avatar' ? `encode(${i}, 'hex')` : i}::text, '${hashedPassword}')${i !== 'philosophy' ? ', ' : ''}`).join('')}
             ;
