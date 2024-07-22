@@ -1,41 +1,19 @@
 'use client';
 
+import { useState, useRef, ChangeEvent, FormEvent } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChangeEvent, useRef, useState } from 'react';
 import { useLanguage } from './GlobalStates';
 import { loadLanguage } from '@/lib/utils';
+import * as openpgp from 'openpgp';
 
 interface FormData {
     username: string;
-    password: string;
+    encryptedUsername: string;
+    encryptedPassword: string;
+    publicKey: string;
 }
-
-const useSecureFormState = (initialData: { username: string }) => {
-    const [data, setData] = useState(initialData);
-
-    const passwordRef = useRef<HTMLInputElement>(null);
-    const confirmPasswordRef = useRef<HTMLInputElement>(null);
-
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setData((prevData) => ({ ...prevData, [name]: value }));
-    };
-
-    const getPassword = () => passwordRef.current?.value || '';
-    const getConfirmPassword = () => confirmPasswordRef.current?.value || '';
-
-    return [
-        data,
-        handleChange,
-        passwordRef,
-        confirmPasswordRef,
-        getPassword,
-        getConfirmPassword,
-    ] as const;
-};
 
 export default function LoginOrSignUp({
     loginAction,
@@ -50,47 +28,80 @@ export default function LoginOrSignUp({
 }) {
     const { language } = useLanguage();
     const texts = loadLanguage(language);
-
     const [isLogin, setIsLogin] = useState<boolean>(true);
-
-    const [
-        data,
-        handleChange,
-        passwordRef,
-        confirmPasswordRef,
-        getPassword,
-        getConfirmPassword,
-    ] = useSecureFormState({
+    const [data, setData] = useState<FormData>({
         username: '',
+        encryptedUsername: '',
+        encryptedPassword: '',
+        publicKey: '',
     });
-    const [error, setError] = useState('');
+    const [error, setError] = useState<string>('');
+    const passwordRef = useRef<HTMLInputElement>(null);
+    const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setData((prevData) => ({ ...prevData, [name]: value }));
+    };
+
+    const getPassword = () => passwordRef.current?.value || '';
+    const getConfirmPassword = () => confirmPasswordRef.current?.value || '';
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData: FormData = {
-            username: data.username,
-            password: getPassword(),
-        };
-
         if (!isLogin && getPassword() !== getConfirmPassword()) {
             setError(texts.password_mismatch);
             return;
         }
 
-        const result = isLogin
-            ? await loginAction(formData)
-            : await signUpAction(formData);
+        try {
+            const { privateKey, publicKey } = await openpgp.generateKey({
+                type: 'ecc',
+                curve: 'curve25519',
+                userIDs: [{ name: data.username }],
+            });
 
-        if (result.success) {
-            window.location.href = '/'; // Redirect to reload the page and trigger the logged-in state
-        } else {
-            setError(isLogin ? texts.login_failed : texts.signup_failed);
+            const publicKeyArmored = publicKey;
+            const privateKeyArmored = privateKey;
+
+            const encryptedUsername = await openpgp.sign({
+                message: await openpgp.createMessage({ text: data.username }),
+                signingKeys: await openpgp.readPrivateKey({
+                    armoredKey: privateKeyArmored,
+                }),
+                format: 'armored',
+            });
+
+            const encryptedPassword = await openpgp.sign({
+                message: await openpgp.createMessage({ text: getPassword() }),
+                signingKeys: await openpgp.readPrivateKey({
+                    armoredKey: privateKeyArmored,
+                }),
+                format: 'armored',
+            });
+
+            document.cookie = `privateKey=${privateKeyArmored}; path=/; secure; HttpOnly; SameSite=Strict`;
+
+            const formData: FormData = {
+                username: data.username, // unencrypted username for public_keys table
+                encryptedUsername: encryptedUsername as string,
+                encryptedPassword: encryptedPassword as string,
+                publicKey: publicKeyArmored,
+            };
+
+            const result = isLogin
+                ? await loginAction(formData)
+                : await signUpAction(formData);
+
+            if (result.success) {
+                window.location.href = '/';
+            } else {
+                setError(isLogin ? texts.login_failed : texts.signup_failed);
+            }
+        } catch (error) {
+            console.error('Encryption error:', error);
+            setError('Encryption error');
         }
-    };
-
-    const switchLS = () => {
-        setError('');
-        setIsLogin(!isLogin);
     };
 
     return (
@@ -109,13 +120,6 @@ export default function LoginOrSignUp({
                     >
                         {texts.welcome_p}
                     </p>
-                    <Link
-                        className="text-sm underline"
-                        href="https://github.com/jakubhalik/text_kuba"
-                        data-cy="deploy_link"
-                    >
-                        {texts.deploy_link}
-                    </Link>
                 </div>
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <div className="space-y-2">
@@ -199,7 +203,7 @@ export default function LoginOrSignUp({
                 {isLogin ? texts.dont_have_account : texts.have_account}
                 <button
                     className="underline pl-1"
-                    onClick={switchLS}
+                    onClick={() => setIsLogin(!isLogin)}
                     data-cy={isLogin ? 'switch_to_sign_up' : 'switch_to_login'}
                 >
                     {isLogin ? texts.switch_to_sign_up : texts.switch_to_login}
