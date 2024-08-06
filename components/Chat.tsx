@@ -40,18 +40,24 @@ export default function Chat({
     paperclipIcon,
 }: ChatProps) {
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
+
     const [localChatMessages, setLocalChatMessages] =
         useState<Message[]>(chatMessages);
+
     const [ws, setWs] = useState<WebSocket | null>(null);
 
     const owner = process.env.NEXT_PUBLIC_OWNER;
+
     const stringifiedOwner = String(owner);
 
     useEffect(() => {
         if (username === stringifiedOwner) {
             const savedUser = localStorage.getItem('selectedUser');
+
             const initialUser = savedUser || users[0]?.username;
+
             setSelectedUser(initialUser);
+
             if (initialUser) {
                 onUserSelect(initialUser);
             }
@@ -62,11 +68,15 @@ export default function Chat({
         const webSocket = new WebSocket(
             `ws://localhost:8080?username=${username}`
         );
+
         webSocket.onmessage = (event) => {
             const message = JSON.parse(event.data);
+
             setLocalChatMessages((prevMessages) => [...prevMessages, message]);
         };
+
         setWs(webSocket);
+
     }, [onUserSelect, users, owner, username, stringifiedOwner]);
 
     useEffect(() => {
@@ -77,6 +87,7 @@ export default function Chat({
 
     const handleUserClick = async (username: string) => {
         setSelectedUser(username);
+
         await onUserSelect(username);
     };
 
@@ -119,17 +130,23 @@ export default function Chat({
 
     const filteredChatMessages = localChatMessages.filter(
         (message) =>
+
             (message.sent_by === username &&
                 message.send_to === selectedUser) ||
+
             (message.sent_by === selectedUser && message.send_to === username)
+
     );
 
     const getLastMessage = (user: User) => {
         const messages = localChatMessages
+
             .filter(
                 (message) =>
+
                     (message.sent_by === username &&
                         message.send_to === user.username) ||
+
                     (message.sent_by === user.username &&
                         message.send_to === username)
             )
@@ -143,30 +160,43 @@ export default function Chat({
     };
 
     const createBlobUrl = (base64Data: string) => {
+
         if (base64Data.startsWith('data:')) {
             return base64Data;
         }
+
         try {
             const byteCharacters = atob(base64Data);
+
             const byteNumbers = new Array(byteCharacters.length);
+
             for (let i = 0; i < byteCharacters.length; i++) {
                 byteNumbers[i] = byteCharacters.charCodeAt(i);
             }
+
             const byteArray = new Uint8Array(byteNumbers);
+
             const blob = new Blob([byteArray]);
+
             return URL.createObjectURL(blob);
+
         } catch (error) {
             console.error('Invalid base64 string:', error);
+
             return '';
         }
     };
 
     const isImageFile = (filename: string | null) => {
+
         if (!filename) return false;
+
         const extension = filename.split('.').pop()?.toLowerCase();
+
         return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
             extension!
         );
+
     };
 
     return (

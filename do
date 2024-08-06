@@ -13,7 +13,7 @@ When logged in you will get a popup that if you close you can always open again 
 The popup will remind you the specifications of the key logic and how important it now is that you never loose your private key.
 Because if you do loose your private key, you will never be capable to sign back into your account and it will never be recoverable. 
 Now this seems horrendous, all the other apps let you forget all your passwords all the time, but you cannot forget your password and loose your private key, that is the only way you can have true security in the application you are using, this is the only way we cannot possibly have a backdoor into your account.
-The view of the keys will be hidden at first, you can display it clearly by clicking a button, but do it only when your monitor/screen is not being recorder in any way.
+The view of the keys will be hidden at first, you can display it clearly by clicking a button, but do it only when your monitor/screen is not being recorded in any way.
 You will also get to copy the keys without even displaying them in the page.
 The private key will get saved into your strict cookies for this page, if you have allowed it for the ease of logging in in the future, but even then you absolutely should save your private key in some secure password manager, ideally in more of them over backup devices, so you can be sure of not loosing a private key.
 Someone getting your private key is not such a big deal as it might seem, because with it alone one cannot really do anything to you.
