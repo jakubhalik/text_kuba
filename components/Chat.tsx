@@ -1,9 +1,16 @@
 'use client';
 
 import Image from 'next/image';
+
 import { Message, User } from '../lib/utils';
+
 import { useState, useEffect } from 'react';
+
 import MessageInput from './MessageInput';
+
+import * as openpgp from 'openpgp';
+
+import { getCookie } from 'cookies-next';
 
 interface ChatProps {
     users: User[];
@@ -65,8 +72,10 @@ export default function Chat({
             setSelectedUser(stringifiedOwner);
         }
 
+        const webSocketPort = process.env.NEXT_PUBLIC_WEB_SOCKET_PORT;
+
         const webSocket = new WebSocket(
-            `ws://localhost:8080?username=${username}`
+            `${webSocketPort}?username=${username}`
         );
 
         webSocket.onmessage = (event) => {
@@ -107,11 +116,42 @@ export default function Chat({
 
         setLocalChatMessages((prevMessages) => [...prevMessages, newMsg]);
 
+        const publicKey = getCookie('publicKey') as string;
+
+        console.log('public key: ', publicKey);
+
+        const encryptedMessageText = await openpgp.encrypt({
+            message: await openpgp.createMessage({ text: messageText }),
+            encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+            format: 'armored',
+        }) as string;
+
+        console.log('encrypted message text: ', encryptedMessageText);
+
+        // This block is for a client side test
+
+        const privateKeyArmored = getCookie('privateKey') as string;
+        const privateKey = await openpgp.readPrivateKey({
+            armoredKey: privateKeyArmored,
+        });
+        const decryptedEncryptedMessageText = await openpgp.decrypt({
+            message: await openpgp.readMessage({
+                armoredMessage: encryptedMessageText,
+            }),
+            decryptionKeys: privateKey
+        })
+        console.log(
+            'The decrypted encrypted message text only here on the client for test: ', 
+            decryptedEncryptedMessageText
+        );
+
+        // This block is for a client side test
+        
         if (ws) {
             ws.send(
                 JSON.stringify({
                     sendTo: selectedUser,
-                    text: messageText,
+                    text: encryptedMessageText,
                     file: fileBase64,
                     filename: fileName,
                 })
@@ -122,7 +162,7 @@ export default function Chat({
             username,
             password,
             selectedUser!,
-            messageText,
+            encryptedMessageText,
             fileBase64,
             fileName
         );
@@ -262,6 +302,7 @@ function ChatComponent({
     isImageFile,
     handleSendMessage,
 }: ChatComponentProps) {
+
     return (
         <>
             {conditionalForOwner && (
