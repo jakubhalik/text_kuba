@@ -145,6 +145,12 @@ export default function LoginOrSignUp({
                     sameSite: 'strict',
                 });
 
+                setCookie('publicKey', publicKeyArmored, {
+                    path: '/',
+                    secure: true,
+                    sameSite: 'strict',
+                });
+
                 const checkForTheCookie = getCookie('privateKey') as string;
                 console.log('Cookie got set and got: ', checkForTheCookie);
 
