@@ -21,39 +21,52 @@ export default function LoginOrSignUp({
     ) => Promise<{ success: boolean; error?: string }>;
 }) {
     const { language } = useLanguage();
+    
     const texts = loadLanguage(language);
+
     const [isLogin, setIsLogin] = useState<boolean>(true);
+
     const [data, setData] = useState<FormData>({
         username: '',
         encryptedUsername: '',
         encryptedPassword: '',
         publicKey: '',
     });
+
     const [error, setError] = useState<string>('');
+
     const passwordRef = useRef<HTMLInputElement>(null);
+
     const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
+
         setData((prevData) => ({ ...prevData, [name]: value }));
     };
 
     const getPassword = () => passwordRef.current?.value || '';
+
     const getConfirmPassword = () => confirmPasswordRef.current?.value || '';
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
         if (!isLogin && getPassword() !== getConfirmPassword()) {
             setError(texts.password_mismatch);
+
             return;
         }
 
         try {
             if (isLogin) {
                 const privateKeyArmored = getCookie('privateKey') as string;
+
                 console.log('Private key armored: ', privateKeyArmored);
+
                 if (!privateKeyArmored) {
                     setError('Private key not found in cookies');
+
                     return;
                 }
 
@@ -62,18 +75,24 @@ export default function LoginOrSignUp({
                 });
 
                 const encryptedUsername = await openpgp.sign({
+
                     message: await openpgp.createMessage({
                         text: data.username,
                     }),
+
                     signingKeys: privateKey,
+
                     format: 'armored',
                 });
 
                 const encryptedPassword = await openpgp.sign({
+
                     message: await openpgp.createMessage({
                         text: getPassword(),
                     }),
+
                     signingKeys: privateKey,
+
                     format: 'armored',
                 });
 
@@ -242,7 +261,7 @@ export default function LoginOrSignUp({
                 </form>
             </div>
             <div
-                className="mt-4 text-center text-sm"
+                className="mt-4 text-center text-sm pb-8"
                 data-cy={isLogin ? 'dont_have_account' : 'have_account'}
             >
                 {isLogin ? texts.dont_have_account : texts.have_account}

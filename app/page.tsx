@@ -1,10 +1,17 @@
 import GlobalStates from '@/components/GlobalStates';
+
 import { ModeToggle } from '@/components/ModeToggle';
+
 import { LangToggle } from '@/components/LangToggle';
+
 import SignOutForm from '@/components/SignOutForm';
+
 import LoginOrSignUp from '@/components/LoginOrSignUp';
+
 import { Pool } from 'pg';
+
 import crypto from 'crypto';
+
 import {
     postgresUserPool,
     host,
@@ -12,12 +19,21 @@ import {
     owner,
     postgresHashedPassword
 } from '@/postgresConfig';
+
 import { profile_table, messages_table, FormData } from '@/lib/utils';
+
 import { cookies } from 'next/headers';
+
 import * as openpgp from 'openpgp';
 
+import { Messenger } from '@/components/Messenger';
+
 let loggedIn: boolean = false;
+
 let userUsername: string;
+
+let decryptedUsernameForMessenger: string;
+let decryptedPasswordForMessenger: string;
 
 async function decryptWithPublicKey(
     publicKeyArmored: string,
@@ -41,13 +57,17 @@ async function decryptWithPublicKey(
         });
 
         const { verified } = verificationResult.signatures[0];
+
         await verified;
 
         const decrypted = message.getText();
 
         console.log('Decrypted Text:', decrypted);
+
         console.log('decryptWithPublicKey - End');
+
         return decrypted as string;
+
     } catch (error) {
         console.error('Error in decryptWithPublicKey:', error);
         throw error;
@@ -94,6 +114,7 @@ async function signUp(
             publicKey ? publicKey : '',
             encryptedUsername
         );
+
         const decryptedPassword = await decryptWithPublicKey(
             publicKey ? publicKey : '',
             encryptedPassword
@@ -154,14 +175,16 @@ async function signUp(
         userClient.release();
 
         console.log('signUp - End');
-        userUsername = username;
+
         return await login({
             username: decryptedUsername,
             encryptedUsername,
             encryptedPassword,
         });
+
     } catch (error) {
         console.error('SignUp error:', error);
+
         return { success: false, error: 'Sign up failed.' };
     }
 }
@@ -223,6 +246,7 @@ async function login(
 
     try {
         const userClient = await pool.connect();
+
         userClient.release();
 
         const sessionData = {
@@ -238,15 +262,23 @@ async function login(
 
         (
             cookies().set as unknown as (
+
                 key: string,
+
                 value: string,
+
                 cookie?: Partial<ResponseCookie>
+
             ) => void
+
         )('session', JSON.stringify(sessionData), cookieOptions);
 
         console.log('login - End');
+
         userUsername = username;
+
         return { success: true };
+
     } catch (error) {
         console.error('Database connection error:', error);
         return { success: false, error: 'Invalid credentials.' };
@@ -255,7 +287,9 @@ async function login(
 
 async function signOut(): Promise<void> {
     'use server';
+
     loggedIn = false;
+
     cookies().delete('session');
 }
 
@@ -263,10 +297,14 @@ export default async function Home() {
     const session = cookies().get('session');
 
     console.log('Asking for if session');
+
     if (session) {
         console.log('Session: ', session);
+
         const sessionData = JSON.parse(session.value);
+
         console.log('Session Data: ', sessionData);
+
         const client = await postgresUserPool.connect();
 
         console.log('Mutable variable of the userUsername: ', userUsername);
@@ -282,20 +320,27 @@ export default async function Home() {
             const decryptedPublicKey = result.rows[0].public_key;
 
             console.log('Session data username: ', sessionData.username);
+
             console.log('Session data password: ', sessionData.password);
 
             console.log('Decrypted public key: ', decryptedPublicKey);
 
             const decryptedUsername = await decryptWithPublicKey(
+
                 decryptedPublicKey,
+
                 sessionData.username
+
             );
 
             console.log('Decrypted username: ', decryptedUsername);
 
             const decryptedPassword = await decryptWithPublicKey(
+
                 decryptedPublicKey,
+
                 sessionData.password
+
             );
 
             console.log('Decrypted Password: ', decryptedPassword);
@@ -305,8 +350,13 @@ export default async function Home() {
                 decryptedPassword &&
                 decryptedUsername === userUsername
             ) {
+
                 console.log('loggedIn turned true');
+
                 loggedIn = true;
+
+                decryptedUsernameForMessenger = decryptedUsername;
+                decryptedPasswordForMessenger = decryptedPassword;
             }
         }
 
@@ -322,7 +372,7 @@ export default async function Home() {
                 </nav>
             </header>
             {loggedIn ? (
-                <span>Logged in</span>
+                <Messenger username={decryptedUsernameForMessenger} password={decryptedPasswordForMessenger} />
             ) : (
                 <LoginOrSignUp loginAction={login} signUpAction={signUp} />
             )}
