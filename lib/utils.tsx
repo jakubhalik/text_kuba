@@ -89,6 +89,13 @@ export interface User {
     username: string;
 }
 
+export interface FormData {
+    username: string;
+    encryptedUsername: string;
+    encryptedPassword: string;
+    publicKey?: string;
+}
+
 export function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
