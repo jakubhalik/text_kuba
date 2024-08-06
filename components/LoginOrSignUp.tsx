@@ -5,16 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from './GlobalStates';
-import { loadLanguage } from '@/lib/utils';
+import { loadLanguage, FormData } from '@/lib/utils';
 import * as openpgp from 'openpgp';
 import { getCookie, setCookie } from 'cookies-next';
-
-interface FormData {
-    username: string;
-    encryptedUsername: string;
-    encryptedPassword: string;
-    publicKey?: string;
-}
 
 export default function LoginOrSignUp({
     loginAction,

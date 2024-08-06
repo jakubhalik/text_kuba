@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import crypto from 'crypto';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { host, port, owner, postgres_password } from '@/postgresConfig';
+import { host, port, owner, postgresHashedPassword } from '@/postgresConfig';
 import { Message, User } from '../lib/utils';
 import Chat from './Chat';
 import { postgresUserPool } from '@/postgresConfig';
@@ -39,7 +39,7 @@ async function getDecryptedMessages(
             pgp_sym_decrypt(sent_by::bytea, $1) as sent_by,
             pgp_sym_decrypt(send_to::bytea, $1) as send_to,
             pgp_sym_decrypt(text::bytea, $1) as text,
-            pgp_sym_decrypt_bytea(file::bytea, $1) as file,
+            pgp_sym_decrypt(file::bytea, $1) as file,
             pgp_sym_decrypt(filename::bytea, $1) as filename
         FROM "${username}_schema".messages_table
         ORDER BY datetime_from ASC;
@@ -52,23 +52,39 @@ async function getDecryptedMessages(
           AND rolname NOT IN ('postgres', 'pg_signal_backend', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_monitor', 'pg_read_all_stats', 'pg_database_owner', 'user', '${owner}');
     `;
 
-    const [resultForChat, resultForUsers] = await Promise.all([
-        client.query(queryForChat, [hashedPassword]),
-        client.query(queryForUsers),
-    ]);
+    try {
+        const [resultForChat, resultForUsers] = await Promise.all([
+            client.query(queryForChat, [hashedPassword]),
+            client.query(queryForUsers),
+        ]);
 
-    client.release();
+        client.release();
 
-    const chatMessagesProcessed = resultForChat.rows.map((message) => ({
-        ...message,
-        datetime_from: new Date(message.datetime_from).toLocaleString(),
-        file: message.file ? message.file.toString('base64') : null,
-    }));
+        const chatMessagesProcessed = resultForChat.rows.map((message) => {
+            let file = null;
+            if (message.file) {
+                try {
+                    file = `data:image/*;base64,${message.file.toString('base64')}`;
+                } catch (e) {
+                    console.error('Error converting file to base64:', e);
+                }
+            }
+            return {
+                ...message,
+                datetime_from: new Date(message.datetime_from).toLocaleString(),
+                file,
+            };
+        });
 
-    return {
-        chatMessages: chatMessagesProcessed,
-        users: resultForUsers.rows,
-    };
+        return {
+            chatMessages: chatMessagesProcessed,
+            users: resultForUsers.rows,
+        };
+    } catch (error) {
+        console.error('Error decrypting messages:', error);
+        client.release();
+        throw new Error('Failed to decrypt messages');
+    }
 }
 
 interface MessengerProps {
@@ -149,11 +165,6 @@ async function sendMessage(
         );
     `);
 
-    const postgresHashedPassword = crypto
-        .createHash('sha256')
-        .update(`postgres${postgres_password}`)
-        .digest('hex');
-
     await postgresClient.query(
         `INSERT INTO "postgres_schema".messages_table (datetime_from, sent_by, send_to, text, file, filename) VALUES
         (pgp_sym_encrypt($1, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2), pgp_sym_encrypt_bytea($6, $2), pgp_sym_encrypt($7::text, $2))`,
@@ -200,7 +211,6 @@ export async function Messenger({ username, password }: MessengerProps) {
                     </div>
                 </div>
                 <Button className="ml-auto" variant="ghost" size="icon">
-                    <SearchIcon className="w-4 h-4" />
                     <span className="sr-only">Search</span>
                 </Button>
             </div>
@@ -223,7 +233,7 @@ export async function Messenger({ username, password }: MessengerProps) {
                                     variant="ghost"
                                     size="icon"
                                 >
-                                    <MoreHorizontalIcon className="w-6 h-6 rounded-lg" />
+                                    <span className="sr-only">More</span>
                                 </Button>
                             </div>
                             <Button
@@ -231,24 +241,20 @@ export async function Messenger({ username, password }: MessengerProps) {
                                 variant="ghost"
                                 size="icon"
                             >
-                                <FileEditIcon className="w-6 h-6" />
                                 <span className="sr-only">New chat</span>
                             </Button>
                         </div>
                     }
-                    arrowForLeftIcon={<ArrowLeftIcon className="w-6 h-6" />}
+                    arrowForLeftIcon={<span className="sr-only">Back</span>}
                     buttonsIconsAndMoreForUpperChat={
                         <>
                             <Button variant="ghost" size="icon">
-                                <VideoIcon className="w-6 h-6" />
                                 <span className="sr-only">Video call</span>
                             </Button>
                             <Button variant="ghost" size="icon">
-                                <PhoneIcon className="w-6 h-6" />
                                 <span className="sr-only">Voice call</span>
                             </Button>
                             <Button variant="ghost" size="icon">
-                                <MoreHorizontalIcon className="w-6 h-6" />
                                 <span className="sr-only">More</span>
                             </Button>
                         </>
@@ -257,7 +263,7 @@ export async function Messenger({ username, password }: MessengerProps) {
                     onSendMessage={sendMessage}
                     username={username}
                     password={password}
-                    paperclipIcon={<PaperclipIcon className="w-5 h-5" />}
+                    paperclipIcon={<span className="sr-only">Attach</span>}
                 />
             </div>
         </div>

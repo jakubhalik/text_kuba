@@ -10,18 +10,11 @@ import {
     host,
     port,
     owner,
-    postgres_password,
+    postgresHashedPassword
 } from '@/postgresConfig';
-import { profile_table, messages_table } from '@/lib/utils';
+import { profile_table, messages_table, FormData } from '@/lib/utils';
 import { cookies } from 'next/headers';
 import * as openpgp from 'openpgp';
-
-interface FormData {
-    username: string;
-    encryptedUsername: string;
-    encryptedPassword: string;
-    publicKey: string;
-}
 
 let loggedIn: boolean = false;
 let userUsername: string;
@@ -48,9 +41,9 @@ async function decryptWithPublicKey(
         });
 
         const { verified } = verificationResult.signatures[0];
-        await verified; // Wait for verification to complete
+        await verified;
 
-        const decrypted = message.getText(); // Retrieve the text from the message
+        const decrypted = message.getText();
 
         console.log('Decrypted Text:', decrypted);
         console.log('decryptWithPublicKey - End');
@@ -72,12 +65,6 @@ async function signUp(
         const client = await postgresUserPool.connect();
         const { username, encryptedUsername, encryptedPassword, publicKey } =
             formData;
-
-        const postgresCombinedPassword = `postgres${postgres_password}`;
-        const postgresHashedPassword = crypto
-            .createHash('sha256')
-            .update(postgresCombinedPassword)
-            .digest('hex');
 
         console.log('Postgres Hashed Password:', postgresHashedPassword);
 
@@ -104,11 +91,11 @@ async function signUp(
         );
 
         const decryptedUsername = await decryptWithPublicKey(
-            publicKey,
+            publicKey ? publicKey : '',
             encryptedUsername
         );
         const decryptedPassword = await decryptWithPublicKey(
-            publicKey,
+            publicKey ? publicKey : '',
             encryptedPassword
         );
 
@@ -144,7 +131,7 @@ async function signUp(
 
         const encryptedDecryptedUsername = await openpgp.encrypt({
             message: await openpgp.createMessage({ text: decryptedUsername }),
-            encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+            encryptionKeys: await openpgp.readKey({ armoredKey: publicKey! }),
             format: 'armored',
         });
 
@@ -172,7 +159,6 @@ async function signUp(
             username: decryptedUsername,
             encryptedUsername,
             encryptedPassword,
-            publicKey,
         });
     } catch (error) {
         console.error('SignUp error:', error);
@@ -190,12 +176,6 @@ async function login(
 
     const client = await postgresUserPool.connect();
     const { username, encryptedUsername, encryptedPassword } = formData;
-
-    const postgresCombinedPassword = `postgres${postgres_password}`;
-    const postgresHashedPassword = crypto
-        .createHash('sha256')
-        .update(postgresCombinedPassword)
-        .digest('hex');
 
     console.log('Postgres Hashed Password:', postgresHashedPassword);
 
@@ -288,12 +268,6 @@ export default async function Home() {
         const sessionData = JSON.parse(session.value);
         console.log('Session Data: ', sessionData);
         const client = await postgresUserPool.connect();
-
-        const postgresCombinedPassword = `postgres${postgres_password}`;
-        const postgresHashedPassword = crypto
-            .createHash('sha256')
-            .update(postgresCombinedPassword)
-            .digest('hex');
 
         console.log('Mutable variable of the userUsername: ', userUsername);
 
