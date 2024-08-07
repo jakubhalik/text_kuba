@@ -103,11 +103,15 @@ export default function LoginOrSignUp({
                 };
 
                 const result = await loginAction(formData);
+
                 if (result.success) {
+
                     window.location.href = '/';
+
                 } else {
                     setError(texts.login_failed);
                 }
+
             } else {
                 // Sign-up logic
                 const { privateKey, publicKey } = await openpgp.generateKey({
@@ -169,8 +173,8 @@ export default function LoginOrSignUp({
                 }
             }
         } catch (error) {
-            console.error('Encryption error:', error);
-            setError('Encryption error');
+            // Encryption error
+            setError(texts.login_failed);
         }
     };
 

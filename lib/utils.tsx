@@ -1,7 +1,10 @@
 import { type ClassValue, clsx } from 'clsx';
+
 import { twMerge } from 'tailwind-merge';
+
 import lang_us from '../lang_us.json';
 import lang_cz from '../lang_cz.json';
+
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -95,6 +98,7 @@ export interface FormData {
     encryptedPassword: string;
     publicKey?: string;
 }
+
 
 export function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
     return (

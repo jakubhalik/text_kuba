@@ -28,6 +28,10 @@ import * as openpgp from 'openpgp';
 
 import { Messenger } from '@/components/Messenger';
 
+import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
+
+
+
 let loggedIn: boolean = false;
 
 let userUsername: string;
@@ -35,54 +39,20 @@ let userUsername: string;
 let decryptedUsernameForMessenger: string;
 let decryptedPasswordForMessenger: string;
 
-async function decryptWithPublicKey(
-    publicKeyArmored: string,
-    encryptedText: string
-): Promise<string> {
-    try {
-        console.log('decryptWithPublicKey - Start');
-        console.log('Public Key:', publicKeyArmored);
-        console.log('Encrypted Text:', encryptedText);
-
-        const publicKey = await openpgp.readKey({
-            armoredKey: publicKeyArmored,
-        });
-        const message = await openpgp.readMessage({
-            armoredMessage: encryptedText,
-        });
-
-        const verificationResult = await openpgp.verify({
-            message,
-            verificationKeys: [publicKey],
-        });
-
-        const { verified } = verificationResult.signatures[0];
-
-        await verified;
-
-        const decrypted = message.getText();
-
-        console.log('Decrypted Text:', decrypted);
-
-        console.log('decryptWithPublicKey - End');
-
-        return decrypted as string;
-
-    } catch (error) {
-        console.error('Error in decryptWithPublicKey:', error);
-        throw error;
-    }
-}
-
 async function signUp(
     formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+
     'use server';
+
     try {
+
         console.log('signUp - Start');
+
         console.log('FormData:', formData);
 
         const client = await postgresUserPool.connect();
+
         const { username, encryptedUsername, encryptedPassword, publicKey } =
             formData;
 
@@ -101,33 +71,55 @@ async function signUp(
         );
 
         if (existingUser.rows.length > 0) {
+
             console.error('Username already exists');
-            return { success: false, error: 'Username already exists.' };
+
+            return { success: false, error: 'Username already exists' };
+
         }
 
         await client.query(
-            `INSERT INTO postgres_schema.public_keys (username, public_key) VALUES ($1, pgp_sym_encrypt($2, $3))`,
+            `INSERT INTO postgres_schema.public_keys 
+                (
+                    username, public_key
+                ) 
+            VALUES 
+                (
+                    $1, pgp_sym_encrypt($2, $3)
+                )`,
             [username, publicKey, postgresHashedPassword]
         );
 
         const decryptedUsername = await decryptWithPublicKey(
+
             publicKey ? publicKey : '',
+
             encryptedUsername
+
         );
 
         const decryptedPassword = await decryptWithPublicKey(
+
             publicKey ? publicKey : '',
+
             encryptedPassword
+
         );
 
         console.log('Decrypted Username:', decryptedUsername);
+
         console.log('Decrypted Password:', decryptedPassword);
 
         await client.query(`
+
             CREATE USER "${decryptedUsername}" WITH PASSWORD '${decryptedPassword}';
+
             GRANT "user" TO "${decryptedUsername}";
+
             CREATE SCHEMA "${decryptedUsername}_schema" AUTHORIZATION "${decryptedUsername}";
+
             GRANT ALL ON SCHEMA "${decryptedUsername}_schema" TO "${decryptedUsername}";
+
         `);
 
         client.release();
@@ -143,6 +135,7 @@ async function signUp(
         const userClient = await newUserPostgresAccount.connect();
 
         const userCombinedPassword = `${decryptedUsername}${decryptedPassword}`;
+
         const hashedPassword = crypto
             .createHash('sha256')
             .update(userCombinedPassword)
@@ -151,24 +144,69 @@ async function signUp(
         console.log('User Hashed Password:', hashedPassword);
 
         const encryptedDecryptedUsername = await openpgp.encrypt({
+
             message: await openpgp.createMessage({ text: decryptedUsername }),
+
             encryptionKeys: await openpgp.readKey({ armoredKey: publicKey! }),
+
             format: 'armored',
+
         });
 
+        // If this does not work, just throw each query on 1 line 
+            // and put space between the first $ vars
+
         await userClient.query(`
+
             CREATE TABLE "${decryptedUsername}_schema"."messages_table" (
-                ${messages_table.map((i) => `${i} ${i === 'file' ? 'BYTEA' : 'TEXT'}${i !== 'filename' ? ', ' : ''}`).join('')}
+                ${messages_table.map((i) => 
+                    `
+                        ${i} 
+                        ${i === 'file' ? 'BYTEA' : 'TEXT'}
+                        ${i !== 'filename' ? ', ' : ''}
+                    `
+                ).join('')}
             );
+
             CREATE TABLE "${decryptedUsername}_schema"."profile_table" (
-                ${profile_table.map((i) => `${i} ${i === 'avatar' ? 'BYTEA' : 'TEXT'}${i !== 'philosophy' ? ', ' : ''}`).join('')}
+                ${profile_table.map((i) => 
+                    `
+                        ${i} 
+                        ${i === 'avatar' ? 'BYTEA' : 'TEXT'}
+                        ${i !== 'philosophy' ? ', ' : ''}`).join('')}
             );
-            INSERT INTO "${decryptedUsername}_schema"."profile_table" (name) VALUES ('${encryptedDecryptedUsername}');
+
+            INSERT INTO "${decryptedUsername}_schema"."profile_table" (name) 
+                VALUES ('${encryptedDecryptedUsername}');
+
             UPDATE "${decryptedUsername}_schema"."profile_table" SET
-                ${profile_table.map((i) => `${i} = pgp_sym_encrypt(${i === 'avatar' ? `encode(${i}, 'hex')` : i}::text, '${hashedPassword}')${i !== 'philosophy' ? ', ' : ''}`).join('')}
+                ${profile_table.map((i) => 
+                    `
+                        ${i} = pgp_sym_encrypt(
+                            ${i === 'avatar' ? `encode(
+                                ${i}
+                            , 'hex')` : i}
+                            ::text, 
+                            '${hashedPassword}'
+                        )
+                        ${i !== 'philosophy' ? ', ' : ''}
+                    `
+                ).join('')}
             ;
+
             UPDATE "${decryptedUsername}_schema"."messages_table" SET
-                ${messages_table.map((i) => `${i} = pgp_sym_encrypt(${i === 'file' ? `encode(${i}, 'hex')` : i}::text, '${hashedPassword}')${i !== 'filename' ? ', ' : ''}`).join('')}
+                ${messages_table.map((i) => 
+                    `
+                        ${i} = pgp_sym_encrypt(
+                            ${i === 'file' ? `encode(
+                                ${i}
+                            , 'hex')` : i}
+                            ::text, 
+                            '${hashedPassword}'
+                        )
+                        ${i !== 'filename' ? ', ' : ''}
+                    `
+                ).join('')}
             ;
         `);
 
@@ -192,38 +230,54 @@ async function signUp(
 async function login(
     formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+
     'use server';
 
     console.log('login - Start');
+
     console.log('FormData:', formData);
 
     const client = await postgresUserPool.connect();
+
     const { username, encryptedUsername, encryptedPassword } = formData;
 
     console.log('Postgres Hashed Password:', postgresHashedPassword);
 
     const result = await client.query(
-        `SELECT pgp_sym_decrypt(public_key::bytea, $1) AS public_key FROM postgres_schema.public_keys WHERE username = $2`,
+        `SELECT pgp_sym_decrypt(public_key::bytea, $1) 
+            AS public_key FROM postgres_schema.public_keys 
+                WHERE username = $2`,
         [postgresHashedPassword, username]
     );
 
     if (result.rows.length === 0) {
+
         console.log('User not found');
+
         return { success: false, error: 'User not found.' };
+
     }
 
     const decryptedPublicKey = result.rows[0].public_key;
 
     const decryptedUsername = await decryptWithPublicKey(
+        
         decryptedPublicKey,
+
         encryptedUsername
+
     );
+
     const decryptedPassword = await decryptWithPublicKey(
+
         decryptedPublicKey,
+
         encryptedPassword
+
     );
 
     console.log('Decrypted Username:', decryptedUsername);
+
     console.log('Decrypted Password:', decryptedPassword);
 
     const pool = new Pool({
@@ -245,13 +299,17 @@ async function login(
     };
 
     try {
+
         const userClient = await pool.connect();
 
         userClient.release();
 
         const sessionData = {
+
             username: encryptedUsername,
+
             password: encryptedPassword,
+
         };
 
         const cookieOptions: Partial<ResponseCookie> = {
@@ -280,8 +338,11 @@ async function login(
         return { success: true };
 
     } catch (error) {
+
         console.error('Database connection error:', error);
+
         return { success: false, error: 'Invalid credentials.' };
+
     }
 }
 
@@ -310,13 +371,21 @@ export default async function Home() {
         console.log('Mutable variable of the userUsername: ', userUsername);
 
         const result = await client.query(
-            `SELECT pgp_sym_decrypt(public_key::bytea, $1) AS public_key FROM postgres_schema.public_keys WHERE username = $2`,
+            `SELECT 
+                pgp_sym_decrypt(public_key::bytea, $1) 
+                AS 
+                public_key 
+                    FROM 
+                    postgres_schema.public_keys 
+                        WHERE 
+                        username = $2`,
             [postgresHashedPassword, userUsername]
         );
 
         console.log('Result: ', result);
 
         if (result.rows.length > 0) {
+
             const decryptedPublicKey = result.rows[0].public_key;
 
             console.log('Session data username: ', sessionData.username);
@@ -357,11 +426,15 @@ export default async function Home() {
 
                 decryptedUsernameForMessenger = decryptedUsername;
                 decryptedPasswordForMessenger = decryptedPassword;
+
             }
+
         }
 
         client.release();
+
     }
+
     return (
         <GlobalStates>
             <header className="flex pr-4 py-4 border-b">
