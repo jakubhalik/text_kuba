@@ -24,4 +24,6 @@ But even tho one cannot do anything with your private key alone, if you suspect 
 
 When you login in the default mode the process of logging in will continue only if a private key is in your cookies, if you have selected the no-cookies mode, you will have to input the private key, into the input on the page with the credentials for it to on your device only encrypt the name and password so it can be sent on to the server where it will be decrypted with the public key that is saved under your name. If either there is not even a public key with the name you are trying to login with or a sign in in the postgres pool cannot happen with the decrypted credentials decrypted via the public key you will get a wrong credentials error.
 
+The public keys will be in a postgres_schema
+
 During sign up and login you will get a loading bar in the place of the error message so you know your new request was sent.

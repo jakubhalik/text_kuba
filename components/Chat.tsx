@@ -14,10 +14,9 @@ import { getCookie } from 'cookies-next';
 
 interface ChatProps {
     users: User[];
-    onUserSelect: (username: string) => Promise<void>;
+    // onUserSelect: (username: string) => Promise<void>;
     onSendMessage: (
         username: string,
-        password: string,
         sendTo: string,
         messageText: string,
         fileBase64?: string | null,
@@ -29,13 +28,12 @@ interface ChatProps {
     buttonsIconsAndMoreForUpperChat: React.ReactNode;
     chatMessages: Message[];
     username: string;
-    password: string;
     paperclipIcon: React.ReactNode;
 }
 
 export default function Chat({
     users,
-    onUserSelect,
+    // onUserSelect,
     conditionalForOwner,
     iconsAndMoreForUpperSidebar,
     arrowForLeftIcon,
@@ -43,10 +41,40 @@ export default function Chat({
     chatMessages,
     onSendMessage,
     username,
-    password,
     paperclipIcon,
 }: ChatProps) {
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
+
+    console.log('chat messages as u get them from the server: ', chatMessages);
+
+    const privateKeyArmored = getCookie('privateKey') as string;
+
+    const privateKey = openpgp.readPrivateKey({
+        armoredKey: privateKeyArmored,
+    });
+
+    const decryptedEncryptedMessageText = openpgp.decrypt({
+        message: openpgp.readMessage({
+            armoredMessage: chatMessages[0].text,
+        }),
+        decryptionKeys: privateKey
+    })
+
+    const decryptedEncryptedFile = chatMessages[0].file ? openpgp.decrypt({
+        message: openpgp.readMessage({
+            armoredMessage: chatMessages[0].file,
+        }),
+        decryptionKeys: privateKey
+    }) : null
+
+    const decryptedEncryptedFileName = chatMessages[0].filename ? openpgp.decrypt({
+        message: openpgp.readMessage({
+            armoredMessage: chatMessages[0].filename,
+        }),
+        decryptionKeys: privateKey
+    }) : null
+
+    // Change all of chatMessages's text, file, filename props to the decrypted ones to then use those edited chatMessages in the setting state below for the localChatMessages    
 
     const [localChatMessages, setLocalChatMessages] =
         useState<Message[]>(chatMessages);
@@ -65,9 +93,10 @@ export default function Chat({
 
             setSelectedUser(initialUser);
 
-            if (initialUser) {
+            /* if (initialUser) {
                 onUserSelect(initialUser);
-            }
+            } */
+
         } else {
             setSelectedUser(stringifiedOwner);
         }
@@ -86,23 +115,29 @@ export default function Chat({
 
         setWs(webSocket);
 
-    }, [onUserSelect, users, owner, username, stringifiedOwner]);
+    }, [/* onUserSelect, */ users, owner, username, stringifiedOwner]);
 
     useEffect(() => {
+
         if (username === owner && selectedUser) {
+
             localStorage.setItem('selectedUser', selectedUser);
+
         }
+
     }, [selectedUser, owner, username]);
 
     const handleUserClick = async (username: string) => {
+
         setSelectedUser(username);
 
-        await onUserSelect(username);
+        // await onUserSelect(username);
+
     };
 
     const handleSendMessage = async (
         messageText: string,
-        fileBase64?: string | null,
+        fileBase64?: ArrayBuffer | null,
         fileName?: string | null
     ) => {
         const newMsg: Message = {
@@ -121,14 +156,40 @@ export default function Chat({
         console.log('public key: ', publicKey);
 
         const encryptedMessageText = await openpgp.encrypt({
+
             message: await openpgp.createMessage({ text: messageText }),
+
             encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+
             format: 'armored',
+
         }) as string;
 
-        console.log('encrypted message text: ', encryptedMessageText);
+        const encryptedFile = fileBase64 ? await openpgp.encrypt({
 
-        // This block is for a client side test
+            message: await openpgp.createMessage({ text: fileBase64 }),
+
+            encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+
+            format: 'armored',
+
+        }) as string : null;
+
+        const encryptedFileName = fileName ? await openpgp.encrypt({
+
+            message: await openpgp.createMessage({ text: fileName }),
+
+            encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+
+            format: 'armored',
+
+        }) as string : null;
+
+        console.log('encrypted message text: ', encryptedMessageText);
+        console.log('encrypted file: ', encryptedFile);
+        console.log('encrypted filename: ', encryptedFileName);
+
+        // This block is for a client side test ->
 
         const privateKeyArmored = getCookie('privateKey') as string;
         const privateKey = await openpgp.readPrivateKey({
@@ -140,31 +201,54 @@ export default function Chat({
             }),
             decryptionKeys: privateKey
         })
+        const decryptedEncryptedFile = encryptedFile ? await openpgp.decrypt({
+            message: await openpgp.readMessage({
+                armoredMessage: encryptedFile,
+            }),
+            decryptionKeys: privateKey
+        }) : null
+        const decryptedEncryptedFileName = encryptedFileName ? await openpgp.decrypt({
+            message: await openpgp.readMessage({
+                armoredMessage: encryptedFileName,
+            }),
+            decryptionKeys: privateKey
+        }) : null
         console.log(
             'The decrypted encrypted message text only here on the client for test: ', 
             decryptedEncryptedMessageText
         );
+        console.log(
+            'The decrypted encrypted file only here on the client for test: ', 
+            decryptedEncryptedFile
+        )
+        console.log(
+            'The decrypted encrypted filename only here on the client for test: ',
+            decryptedEncryptedFileName
+        )
 
-        // This block is for a client side test
+        // This block is for a client side test <-
         
         if (ws) {
             ws.send(
                 JSON.stringify({
+
                     sendTo: selectedUser,
                     text: encryptedMessageText,
-                    file: fileBase64,
-                    filename: fileName,
+                    file: encryptedFile,
+                    filename: encryptedFileName,
+
                 })
             );
         }
 
         onSendMessage(
+
             username,
-            password,
             selectedUser!,
             encryptedMessageText,
-            fileBase64,
-            fileName
+            encryptedFile,
+            encryptedFileName
+
         );
     };
 

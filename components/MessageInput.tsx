@@ -19,48 +19,71 @@ export default function MessageInput({
     paperclipIcon,
 }: MessageInputProps) {
     const [newMessage, setNewMessage] = useState('');
+
     const [file, setFile] = useState<File | null>(null);
+
     const [filePreview, setFilePreview] = useState<string | null>(null);
 
     const handleSendMessage = async () => {
+
         if (newMessage.trim() !== '' || file) {
+
             let fileBase64 = null;
+
             let fileName = null;
+
             if (file) {
                 fileBase64 = await toBase64(file);
+
                 fileName = file.name;
             }
 
             onSendMessage(newMessage, fileBase64, fileName);
 
             setNewMessage('');
+
             setFile(null);
+
             setFilePreview(null);
         }
     };
 
     const toBase64 = (file: File): Promise<string | ArrayBuffer | null> =>
+
         new Promise((resolve, reject) => {
             const reader = new FileReader();
+
             reader.readAsDataURL(file);
+
             reader.onload = () => resolve(reader.result);
+
             reader.onerror = (error) => reject(error);
         });
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+
         if (e.target.files && e.target.files.length > 0) {
+
             setFile(e.target.files[0]);
+
             const fileUrl = URL.createObjectURL(e.target.files[0]);
+
             setFilePreview(fileUrl);
+
         }
+
     };
 
     const isImageFile = (filename: string | null) => {
+
         if (!filename) return false;
+
         const extension = filename.split('.').pop()?.toLowerCase();
+
         return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
             extension!
         );
+
     };
 
     return (

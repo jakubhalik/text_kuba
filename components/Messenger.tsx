@@ -1,11 +1,28 @@
 import { Pool } from 'pg';
+
 import crypto from 'crypto';
+
 import Image from 'next/image';
+
 import { Button } from '@/components/ui/button';
+
 import { host, port, owner, postgresHashedPassword } from '@/postgresConfig';
+
 import { Message, User } from '../lib/utils';
+
 import Chat from './Chat';
+
 import { postgresUserPool } from '@/postgresConfig';
+
+import { PaperclipIcon } from '../lib/utils';
+
+import { cookies } from 'next/headers';
+
+import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
+
+
+
+
 
 interface MessagesResult {
     chatMessages: Message[];
@@ -16,7 +33,9 @@ async function getDecryptedMessages(
     username: string,
     password: string
 ): Promise<MessagesResult> {
+
     'use server';
+
     const pool = new Pool({
         host,
         port: Number(port),
@@ -49,42 +68,71 @@ async function getDecryptedMessages(
         SELECT rolname AS username
         FROM pg_roles
         WHERE rolname NOT LIKE 'pg_%'
-          AND rolname NOT IN ('postgres', 'pg_signal_backend', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_monitor', 'pg_read_all_stats', 'pg_database_owner', 'user', '${owner}');
+            AND rolname NOT IN (
+                'postgres', 'pg_signal_backend', 'pg_read_all_settings', 'pg_read_all_stats', 
+                'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 
+                'pg_execute_server_program', 'pg_monitor', 'pg_read_all_stats', 
+                'pg_database_owner', 'user', '${owner}'
+            );
     `;
 
     try {
         const [resultForChat, resultForUsers] = await Promise.all([
+
             client.query(queryForChat, [hashedPassword]),
+
             client.query(queryForUsers),
+
         ]);
 
         client.release();
 
         const chatMessagesProcessed = resultForChat.rows.map((message) => {
+
             let file = null;
+
             if (message.file) {
+
                 try {
+
                     file = `data:image/*;base64,${message.file.toString('base64')}`;
+
                 } catch (e) {
+
                     console.error('Error converting file to base64:', e);
+
                 }
             }
+
             return {
+
                 ...message,
+
                 datetime_from: new Date(message.datetime_from).toLocaleString(),
+
                 file,
+
             };
         });
 
         return {
+
             chatMessages: chatMessagesProcessed,
+
             users: resultForUsers.rows,
+
         };
+
     } catch (error) {
+
         console.error('Error decrypting messages:', error);
+
         client.release();
+
         throw new Error('Failed to decrypt messages');
+
     }
+
 }
 
 interface MessengerProps {
@@ -92,101 +140,176 @@ interface MessengerProps {
     password: string;
 }
 
-let selectedUser: string | null = null;
+/* let selectedUser: string | null = null;
 
 async function updateSelectedUser(newSelectedUser: string): Promise<void> {
+
     'use server';
+
     selectedUser = newSelectedUser;
-}
+
+} */
 
 async function sendMessage(
     username: string,
-    password: string,
     sendTo: string,
     messageText: string,
     fileBase64: string | null = null,
     fileName: string | null = null
 ): Promise<void> {
+
     'use server';
 
-    if (typeof password !== 'string') {
-        throw new Error('Password must be a string');
-    }
+    const session = cookies().get('session');
 
-    const pool = new Pool({
-        host,
-        port: Number(port),
-        database: `text_${owner}`,
-        user: username,
-        password: password,
-    });
-
-    const client = await pool.connect();
-
-    const combinedPassword = `${username}${password}`;
-    const hashedPassword = crypto
-        .createHash('sha256')
-        .update(combinedPassword)
-        .digest('hex');
-
-    const datetimeFrom = new Date().toISOString();
+    const sessionData = JSON.parse(session!.value);
 
     const postgresClient = await postgresUserPool.connect();
 
-    let fileBuffer = null;
-    if (fileBase64) {
-        const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
-        fileBuffer = Buffer.from(base64Data, 'base64');
+    const result = await postgresClient.query(
+        `SELECT 
+            pgp_sym_decrypt(public_key::bytea, $1) 
+            AS 
+            public_key 
+                FROM 
+                postgres_schema.public_keys 
+                    WHERE 
+                    username = $2`,
+        [postgresHashedPassword, username]
+    );
+
+    if (result.rows.length > 0) {
+
+        const decryptedPublicKey = result.rows[0].public_key;
+
+        const decryptedPassword = await decryptWithPublicKey(
+
+            decryptedPublicKey,
+
+            sessionData.password
+
+        );
+
+        const password = decryptedPassword;
+
+        if (typeof password !== 'string') {
+
+            throw new Error('Password must be a string');
+
+        }
+
+        const pool = new Pool({
+            host,
+            port: Number(port),
+            database: `text_${owner}`,
+            user: username,
+            password: password,
+        });
+
+        const client = await pool.connect();
+
+        const combinedPassword = `${username}${password}`;
+        const hashedPassword = crypto
+            .createHash('sha256')
+            .update(combinedPassword)
+            .digest('hex');
+
+        const datetimeFrom = new Date().toISOString();
+
+        let fileBuffer = null;
+
+        if (fileBase64) {
+
+            const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
+
+            fileBuffer = Buffer.from(base64Data, 'base64');
+
+        }
+
+        await client.query(
+            `INSERT INTO "${username}_schema".messages_table (
+                datetime_from, 
+                sent_by, 
+                send_to, 
+                text, 
+                file, 
+                filename
+            ) VALUES
+            (
+                pgp_sym_encrypt($1::text, $2), 
+                pgp_sym_encrypt($3, $2), 
+                pgp_sym_encrypt($4, $2), 
+                pgp_sym_encrypt($5, $2), 
+                pgp_sym_encrypt_bytea($6, $2), 
+                pgp_sym_encrypt($7::text, $2)
+            )`,
+            [
+                datetimeFrom,
+                hashedPassword,
+                username,
+                sendTo,
+                messageText,
+                fileBuffer,
+                fileName,
+            ]
+        );
+
+        await postgresClient.query(`
+            CREATE SCHEMA IF NOT EXISTS "postgres_schema";
+            CREATE TABLE IF NOT EXISTS "postgres_schema".messages_table (
+                datetime_from TEXT,
+                sent_by TEXT,
+                send_to TEXT,
+                text TEXT,
+                file BYTEA,
+                filename TEXT
+            );
+        `);
+
+        await postgresClient.query(
+            `INSERT INTO "postgres_schema".messages_table (
+                datetime_from, 
+                sent_by, 
+                send_to, 
+                text, 
+                file, 
+                filename
+            ) VALUES
+            (
+                pgp_sym_encrypt($1, $2), 
+                pgp_sym_encrypt($3, $2), 
+                pgp_sym_encrypt($4, $2), 
+                pgp_sym_encrypt($5, $2), 
+                pgp_sym_encrypt_bytea($6, $2), 
+                pgp_sym_encrypt($7::text, $2)
+            )`,
+            [
+                datetimeFrom,
+                postgresHashedPassword,
+                username,
+                sendTo,
+                messageText,
+                fileBuffer,
+                fileName,
+            ]
+        );
+
+        client.release();
+
     }
 
-    await client.query(
-        `INSERT INTO "${username}_schema".messages_table (datetime_from, sent_by, send_to, text, file, filename) VALUES
-        (pgp_sym_encrypt($1::text, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2), pgp_sym_encrypt_bytea($6, $2), pgp_sym_encrypt($7::text, $2))`,
-        [
-            datetimeFrom,
-            hashedPassword,
-            username,
-            sendTo,
-            messageText,
-            fileBuffer,
-            fileName,
-        ]
-    );
-
-    await postgresClient.query(`
-        CREATE SCHEMA IF NOT EXISTS "postgres_schema";
-        CREATE TABLE IF NOT EXISTS "postgres_schema".messages_table (
-            datetime_from TEXT,
-            sent_by TEXT,
-            send_to TEXT,
-            text TEXT,
-            file BYTEA,
-            filename TEXT
-        );
-    `);
-
-    await postgresClient.query(
-        `INSERT INTO "postgres_schema".messages_table (datetime_from, sent_by, send_to, text, file, filename) VALUES
-        (pgp_sym_encrypt($1, $2), pgp_sym_encrypt($3, $2), pgp_sym_encrypt($4, $2), pgp_sym_encrypt($5, $2), pgp_sym_encrypt_bytea($6, $2), pgp_sym_encrypt($7::text, $2))`,
-        [
-            datetimeFrom,
-            postgresHashedPassword,
-            username,
-            sendTo,
-            messageText,
-            fileBuffer,
-            fileName,
-        ]
-    );
-
-    client.release();
     postgresClient.release();
+
 }
 
 export async function Messenger({ username, password }: MessengerProps) {
+
     const { chatMessages, users } = await getDecryptedMessages(
+
         username,
+
         password
+
     );
 
     return (
@@ -223,7 +346,7 @@ export async function Messenger({ username, password }: MessengerProps) {
             >
                 <Chat
                     users={users}
-                    onUserSelect={updateSelectedUser}
+                    // onUserSelect={updateSelectedUser}
                     conditionalForOwner={username === `${owner}`}
                     iconsAndMoreForUpperSidebar={
                         <div className="border-b flex items-center p-4 space-x-4">
@@ -262,8 +385,12 @@ export async function Messenger({ username, password }: MessengerProps) {
                     chatMessages={chatMessages}
                     onSendMessage={sendMessage}
                     username={username}
-                    password={password}
-                    paperclipIcon={<span className="sr-only">Attach</span>}
+                    paperclipIcon={
+                        <>
+                            <PaperclipIcon className="w-5 h-5" />
+                            <span className="sr-only">Attach</span>
+                        </>
+                    }
                 />
             </div>
         </div>
