@@ -62,6 +62,8 @@ export default function LoginOrSignUp({
 
         try {
             if (isLogin) {
+                setSubmitLoading(true);
+
                 const privateKeyArmored = getCookie('privateKey') as string;
 
                 console.log('Private key armored: ', privateKeyArmored);
@@ -107,15 +109,21 @@ export default function LoginOrSignUp({
                 const result = await loginAction(formData);
 
                 if (result.success) {
+                    setSubmitLoading(false);
 
                     return;
 
                 } else {
+                    setSubmitLoading(false);
+
                     setError(texts.login_failed);
                 }
 
             } else {
                 // Sign-up logic
+                
+                setSubmitLoading(true);
+
                 const { privateKey, publicKey } = await openpgp.generateKey({
                     type: 'ecc',
                     curve: 'curve25519',
@@ -168,11 +176,18 @@ export default function LoginOrSignUp({
                 };
 
                 const result = await signUpAction(formData);
+
                 if (result.success) {
+                    setSubmitLoading(false);
+
                     return;
+
                 } else {
+                    setSubmitLoading(false);
+
                     setError(texts.signup_failed);
                 }
+
             }
         } catch (error) {
             // Encryption error
@@ -247,11 +262,36 @@ export default function LoginOrSignUp({
                             </>
                         )}
                     </div>
-                    {error && (
-                        <p className="text-red-500" data-cy="error">
-                            {error}
-                        </p>
-                    )}
+                    {!submitLoading ? 
+                        error && (
+                            <p className="text-red-500" data-cy="error">
+                                {error}
+                            </p>
+                        ) 
+                    :
+                        <div className="flex justify-center mt-4">
+                            <svg
+                                className="animate-spin h-8 w-8 text-blue-500"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                ></circle>
+                                <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291l-2.293 2.293a1 1 0 001.414 1.414L8 18.414A8.001 8.001 0 016 17.291z"
+                                ></path>
+                            </svg>
+                        </div>
+                    }
                     {!isLogin && (
                         <div className="flex items-center space-x-2 px-1">
                             <Label
