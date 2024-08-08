@@ -168,7 +168,8 @@ export default function LoginOrSignUp({
 
                 const result = await signUpAction(formData);
                 if (result.success) {
-                    window.location.href = '/';
+                    // window.location.href = '/';
+                    return;
                 } else {
                     setError(texts.signup_failed);
                 }

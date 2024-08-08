@@ -89,28 +89,11 @@ async function getDecryptedMessages(
 
         const chatMessagesProcessed = resultForChat.rows.map((message) => {
 
-            let file = null;
-
-            if (message.file) {
-
-                try {
-
-                    file = `data:image/*;base64,${message.file.toString('base64')}`;
-
-                } catch (e) {
-
-                    console.error('Error converting file to base64:', e);
-
-                }
-            }
-
             return {
 
                 ...message,
 
                 datetime_from: new Date(message.datetime_from).toLocaleString(),
-
-                file,
 
             };
         });
@@ -154,7 +137,7 @@ async function sendMessage(
     username: string,
     sendTo: string,
     messageText: string,
-    fileBase64: string | null = null,
+    file: string | null = null,
     fileName: string | null = null
 ): Promise<void> {
 
@@ -216,16 +199,6 @@ async function sendMessage(
 
         const datetimeFrom = new Date().toISOString();
 
-        let fileBuffer = null;
-
-        if (fileBase64) {
-
-            const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
-
-            fileBuffer = Buffer.from(base64Data, 'base64');
-
-        }
-
         await client.query(
             `INSERT INTO "${username}_schema".messages_table (
                 datetime_from, 
@@ -240,7 +213,7 @@ async function sendMessage(
                 pgp_sym_encrypt($3, $2), 
                 pgp_sym_encrypt($4, $2), 
                 pgp_sym_encrypt($5, $2), 
-                pgp_sym_encrypt_bytea($6, $2), 
+                pgp_sym_encrypt($6, $2), 
                 pgp_sym_encrypt($7::text, $2)
             )`,
             [
@@ -249,7 +222,7 @@ async function sendMessage(
                 username,
                 sendTo,
                 messageText,
-                fileBuffer,
+                file,
                 fileName,
             ]
         );
@@ -261,7 +234,7 @@ async function sendMessage(
                 sent_by TEXT,
                 send_to TEXT,
                 text TEXT,
-                file BYTEA,
+                file TEXT,
                 filename TEXT
             );
         `);
@@ -280,7 +253,7 @@ async function sendMessage(
                 pgp_sym_encrypt($3, $2), 
                 pgp_sym_encrypt($4, $2), 
                 pgp_sym_encrypt($5, $2), 
-                pgp_sym_encrypt_bytea($6, $2), 
+                pgp_sym_encrypt($6, $2), 
                 pgp_sym_encrypt($7::text, $2)
             )`,
             [
@@ -289,7 +262,7 @@ async function sendMessage(
                 username,
                 sendTo,
                 messageText,
-                fileBuffer,
+                file,
                 fileName,
             ]
         );
