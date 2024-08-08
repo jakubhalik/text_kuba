@@ -18,9 +18,11 @@ import { cookies } from 'next/headers';
 
 import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
 
-import Icon from '@/components/Icon';
+import Image from 'next/image';
 
+import fs from 'fs';
 
+import path from 'path';
 
 interface MessagesResult {
     chatMessages: Message[];
@@ -273,6 +275,14 @@ async function sendMessage(
 
 }
 
+const getAvatarFiles = () => {
+    const avatarDirectory = path.join(process.cwd(), 'public');
+
+    const files = fs.readdirSync(avatarDirectory).filter((file) => file.startsWith('avatar_') && file.endsWith('.jpg'));
+
+    return files;
+};
+
 export async function Messenger({ username, password }: MessengerProps) {
 
     const { chatMessages, users } = await getDecryptedMessages(
@@ -283,12 +293,28 @@ export async function Messenger({ username, password }: MessengerProps) {
 
     );
 
+    const avatarFiles = getAvatarFiles();
+
+    const randomIndex = Math.floor(Math.random() * avatarFiles.length);
+
+    const selectedAvatar = avatarFiles[randomIndex];
+
     return (
         <div className="h-screen flex flex-col">
             <div className="border-b flex items-center p-4">
                 <div className="flex items-center space-x-4">
                     <div className="rounded-full overflow-hidden border w-10 h-10">
-                        <Icon />
+                        <Image
+                            alt="Avatar"
+                            className="rounded-full"
+                            height="40"
+                            src={`/${selectedAvatar}`}
+                            style={{
+                                aspectRatio: '40/40',
+                                objectFit: 'cover',
+                            }}
+                            width="40"
+                        />
                     </div>
                     <div className="space-y-1">
                         <h1 className="text-lg font-bold">Chats</h1>

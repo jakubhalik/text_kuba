@@ -39,6 +39,8 @@ export default function LoginOrSignUp({
 
     const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
+    const [submitLoading, setSubmitLoading] = useState(false);
+
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
 
