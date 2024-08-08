@@ -45,39 +45,50 @@ export default function Chat({
 }: ChatProps) {
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
-    console.log('chat messages as u get them from the server: ', chatMessages);
-
-    const privateKeyArmored = getCookie('privateKey') as string;
-
-    const privateKey = openpgp.readPrivateKey({
-        armoredKey: privateKeyArmored,
-    });
-
-    const decryptedEncryptedMessageText = openpgp.decrypt({
-        message: openpgp.readMessage({
-            armoredMessage: chatMessages[0].text,
-        }),
-        decryptionKeys: privateKey
-    })
-
-    const decryptedEncryptedFile = chatMessages[0].file ? openpgp.decrypt({
-        message: openpgp.readMessage({
-            armoredMessage: chatMessages[0].file,
-        }),
-        decryptionKeys: privateKey
-    }) : null
-
-    const decryptedEncryptedFileName = chatMessages[0].filename ? openpgp.decrypt({
-        message: openpgp.readMessage({
-            armoredMessage: chatMessages[0].filename,
-        }),
-        decryptionKeys: privateKey
-    }) : null
-
-    // Change all of chatMessages's text, file, filename props to the decrypted ones to then use those edited chatMessages in the setting state below for the localChatMessages    
-
     const [localChatMessages, setLocalChatMessages] =
         useState<Message[]>(chatMessages);
+
+    useEffect(() => {
+        const decryptMessages = async () => {
+            if (!chatMessages.length) { 
+                return;
+            }
+            const privateKeyArmored = getCookie('privateKey') as string;
+            const privateKey = await openpgp.readPrivateKey({
+                armoredKey: privateKeyArmored,
+            });
+            const decryptedMessages = await Promise.all(chatMessages.map(async (message) => {
+                const decryptedMessageText = await openpgp.decrypt({
+                    message: await openpgp.readMessage({
+                        armoredMessage: message.text,
+                    }),
+                    decryptionKeys: privateKey
+                })
+                const decryptedFile = message.file ? await openpgp.decrypt({
+                    message: await openpgp.readMessage({
+                        armoredMessage: message.file,
+                    }),
+                    decryptionKeys: privateKey
+                }) : null
+                const decryptedFileName = message.filename ? await openpgp.decrypt({
+                    message: await openpgp.readMessage({
+                        armoredMessage: message.filename,
+                    }),
+                    decryptionKeys: privateKey
+                }) : null
+                return {
+                    ...message,
+                    text: decryptedMessageText.data,
+                    file: decryptedFile ? decryptedFile.data : null,
+                    filename: decryptedFileName ? decryptedFileName.data : null
+                };
+            }));
+            console.log('chat messages as u get them from the server: ', chatMessages);
+            console.log('decrypted messages: ', decryptedMessages);
+            setLocalChatMessages(decryptedMessages);
+        };
+        decryptMessages();
+    }, [chatMessages]);
 
     const [ws, setWs] = useState<WebSocket | null>(null);
 
