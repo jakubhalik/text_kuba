@@ -10,8 +10,7 @@ export -f count_lines
 total=0
 
 while IFS= read -r -d '' file; do
-# Exclude files in .git, .next, node_modules, bun.lockb, dev.log, and dev1.log
-    if [[ "$file" == *"/.git/"* || "$file" == *"/.next/"* || "$file" == *"/node_modules/"* || "$file" == "./bun.lockb" || "$file" == "./dev.log" || "$file" == "./dev1.log" ]]; then
+    if [[ "$file" == *"/.git/"* || "$file" == *"/.next/"* || "$file" == *"/node_modules/"* || "$file" == "./bun.lockb" || "$file" == "./dev.log" || "$file" == "./dev1.log" || "$file" == *"/public"* ]]; then
         continue
     fi
 
