@@ -106,7 +106,6 @@ export default function LoginOrSignUp({
 
                 if (result.success) {
 
-                    // window.location.href = '/';
                     return;
 
                 } else {
@@ -168,7 +167,6 @@ export default function LoginOrSignUp({
 
                 const result = await signUpAction(formData);
                 if (result.success) {
-                    // window.location.href = '/';
                     return;
                 } else {
                     setError(texts.signup_failed);
