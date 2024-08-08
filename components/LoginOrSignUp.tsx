@@ -106,7 +106,8 @@ export default function LoginOrSignUp({
 
                 if (result.success) {
 
-                    window.location.href = '/';
+                    // window.location.href = '/';
+                    return;
 
                 } else {
                     setError(texts.login_failed);

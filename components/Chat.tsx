@@ -49,14 +49,18 @@ export default function Chat({
         useState<Message[]>(chatMessages);
 
     useEffect(() => {
+
         const decryptMessages = async () => {
+
             if (!chatMessages.length) { 
                 return;
             }
+
             const privateKeyArmored = getCookie('privateKey') as string;
             const privateKey = await openpgp.readPrivateKey({
                 armoredKey: privateKeyArmored,
             });
+
             const decryptedMessages = await Promise.all(chatMessages.map(async (message) => {
                 const decryptedMessageText = await openpgp.decrypt({
                     message: await openpgp.readMessage({
@@ -76,18 +80,24 @@ export default function Chat({
                     }),
                     decryptionKeys: privateKey
                 }) : null
+
                 return {
                     ...message,
                     text: decryptedMessageText.data,
                     file: decryptedFile ? decryptedFile.data : null,
                     filename: decryptedFileName ? decryptedFileName.data : null
                 };
+
             }));
+
             console.log('chat messages as u get them from the server: ', chatMessages);
             console.log('decrypted messages: ', decryptedMessages);
             setLocalChatMessages(decryptedMessages);
+
         };
+
         decryptMessages();
+
     }, [chatMessages]);
 
     const [ws, setWs] = useState<WebSocket | null>(null);
