@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if [ "$EUID" -ne 0 ]; then
-  echo "Please run as root or use sudo"
-  exit
-fi
-
 read -p "Enter your name/alias: " username
 read -sp "Enter password for the 'postgres' user: " postgres_password
 echo
@@ -14,11 +9,11 @@ echo
 install_postgresql() {
     if [ -f /etc/debian_version ]; then
         echo "Detected Debian-based system."
-        apt update
-        apt install -y postgresql
+        sudo apt update
+        sudo apt install -y postgresql
     elif [ -f /etc/arch-release ]; then
         echo "Detected Arch-based system."
-        pacman -Sy --noconfirm postgresql
+        sudo pacman -Sy --noconfirm postgresql
     else
         echo "Unsupported OS. Please use Debian-based or Arch-based system."
         exit 1
@@ -33,17 +28,17 @@ else
 fi
 
 if [ -f /etc/arch-release ]; then
-    -u postgres initdb --locale en_US.UTF-8 -D /var/lib/postgres/data
-    systemctl enable postgresql
-    systemctl start postgresql
+    sudo -u postgres initdb --locale en_US.UTF-8 -D /var/lib/postgres/data
+    sudo systemctl enable postgresql
+    sudo systemctl start postgresql
 fi
 
 if [ -f /etc/debian_version ]; then
-    service postgresql start
+    sudo service postgresql start
 fi
 
 if [ -f /etc/debian_version ]; then
-    PGDATA=$(-u postgres PGPASSWORD=$postgres_password psql -t -P format=unaligned -c "SHOW data_directory;")
+    PGDATA=$(sudo -u postgres PGPASSWORD=$postgres_password psql -t -P format=unaligned -c "SHOW data_directory;")
 elif [ -f /etc/arch-release ]; then
     PGDATA="/var/lib/postgres/data"
 else
@@ -51,18 +46,18 @@ else
     exit 1
 fi
 
--u postgres PGPASSWORD=$postgres_password psql -c "ALTER USER postgres PASSWORD '$postgres_password';"
+sudo -u postgres PGPASSWORD=$postgres_password psql -c "ALTER USER postgres PASSWORD '$postgres_password';"
 
 SSL_DIR="$PGDATA/ssl"
-mkdir -p $SSL_DIR
-openssl req -new -x509 -days 365 -nodes -out $SSL_DIR/server.crt -keyout $SSL_DIR/server.key -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
-chown postgres:postgres $SSL_DIR/server.crt $SSL_DIR/server.key
-chmod 600 $SSL_DIR/server.key
+sudo mkdir -p $SSL_DIR
+sudo openssl req -new -x509 -days 365 -nodes -out $SSL_DIR/server.crt -keyout $SSL_DIR/server.key -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
+sudo chown postgres:postgres $SSL_DIR/server.crt $SSL_DIR/server.key
+sudo chmod 600 $SSL_DIR/server.key
 
 PG_HBA="$PGDATA/pg_hba.conf"
-cp $PG_HBA ${PG_HBA}.bak
+sudo cp $PG_HBA ${PG_HBA}.bak
 
-tee $PG_HBA > /dev/null <<EOF
+sudo tee $PG_HBA > /dev/null <<EOF
 # "local" is for Unix domain socket connections only
 local   all             all                                     scram-sha-256
 
@@ -80,9 +75,9 @@ host    all             all             0.0.0.0/0               reject
 EOF
 
 PG_CONF="$PGDATA/postgresql.conf"
-cp $PG_CONF ${PG_CONF}.bak
+sudo cp $PG_CONF ${PG_CONF}.bak
 
-tee -a $PG_CONF > /dev/null <<EOF
+sudo tee -a $PG_CONF > /dev/null <<EOF
 
 # Connection settings
 listen_addresses = 'localhost'  # change to '*' to allow remote connections
@@ -110,12 +105,12 @@ log_min_duration_statement = 1000  # log queries that take longer than 1 second
 EOF
 
 if [ -f /etc/debian_version ]; then
-    service postgresql restart
+    sudo service postgresql restart
 elif [ -f /etc/arch-release ]; then
-    systemctl restart postgresql
+    sudo systemctl restart postgresql
 fi
 
--u postgres PGPASSWORD=$postgres_password psql <<EOF
+sudo -u postgres PGPASSWORD=$postgres_password psql <<EOF
 -- Drop database if it exists
 DROP DATABASE IF EXISTS text_${username};
 
@@ -136,16 +131,36 @@ END
 \$do\$;
 EOF
 
--u postgres PGPASSWORD=$postgres_password psql -c "ALTER ROLE ${username} WITH PASSWORD '$user_password';"
+sudo -u postgres PGPASSWORD=$postgres_password psql -c "ALTER ROLE ${username} WITH PASSWORD '$user_password';"
 
 combined_password="${username}${user_password}"
 
 hashed_password=$(echo -n "$combined_password" | sha256sum | awk '{print $1}')
 
--u postgres PGPASSWORD=$postgres_password psql -d text_${username} -c "CREATE EXTENSION pgcrypto;"
+combined_postgres_password="postgres${postgres_password}"
 
--u postgres PGPASSWORD=$postgres_password psql -d text_${username} <<EOF
--- Create schema
+postgres_hashed_password=$(echo -n "$combined_postgres_password" | sha256sum | awk '{print $1}')
+
+sudo -u postgres PGPASSWORD=$postgres_password psql -d text_${username} -c "CREATE EXTENSION pgcrypto;"
+
+gpg --batch --generate-key <<EOF
+%echo Generating a default PGP key
+Key-Type: ECDSA
+Key-Curve: nistp256
+Name-Real: $username
+Expire-Date: 0
+%commit
+%echo done
+EOF
+
+key_fingerprint=$(gpg --list-keys --with-colons | grep fpr | head -n 1 | cut -d':' -f10)
+
+public_key=$(gpg --armor --export "$key_fingerprint")
+
+private_key=$(gpg --armor --export-secret-keys "$key_fingerprint")
+
+sudo -u postgres PGPASSWORD=$postgres_password psql -d text_${username} <<EOF
+
 CREATE SCHEMA "${username}_schema" AUTHORIZATION "${username}";
 
 -- Grant necessary privileges to the schema
@@ -156,7 +171,7 @@ CREATE TABLE "${username}_schema"."messages_table" (
     sent_by TEXT,
     send_to TEXT,
     text TEXT,
-    file BYTEA,
+    file TEXT,
     filename TEXT
 );
 
@@ -164,7 +179,7 @@ CREATE TABLE "${username}_schema"."profile_table" (
     name TEXT,
     email TEXT,
     phone_number TEXT,
-    avatar BYTEA,
+    avatar TEXT,
     theology TEXT,
     philosophy TEXT
 );
@@ -177,7 +192,7 @@ UPDATE "${username}_schema"."profile_table" SET
     name = pgp_sym_encrypt(name::text, '$hashed_password'),
     email = pgp_sym_encrypt(email::text, '$hashed_password'),
     phone_number = pgp_sym_encrypt(phone_number::text, '$hashed_password'),
-    avatar = pgp_sym_encrypt(encode(avatar, 'hex'), '$hashed_password'),
+    avatar = pgp_sym_encrypt(avatar::text, '$hashed_password'),
     theology = pgp_sym_encrypt(theology::text, '$hashed_password'),
     philosophy = pgp_sym_encrypt(philosophy::text, '$hashed_password');
 
@@ -186,18 +201,31 @@ UPDATE "${username}_schema"."messages_table" SET
     sent_by = pgp_sym_encrypt(sent_by::text, '$hashed_password'),
     send_to = pgp_sym_encrypt(send_to::text, '$hashed_password'),
     text = pgp_sym_encrypt(text::text, '$hashed_password'),
-    file = pgp_sym_encrypt(encode(file, 'hex'), '$hashed_password'),
+    file = pgp_sym_encrypt(file::text, '$hashed_password'),
     filename = pgp_sym_encrypt(filename::text, '$hashed_password');
 
 ALTER TABLE "${username}_schema".messages_table OWNER TO ${username};
 ALTER TABLE "${username}_schema".profile_table OWNER TO ${username};
 GRANT ALL PRIVILEGES ON TABLE "${username}_schema".messages_table TO ${username};
 GRANT ALL PRIVILEGES ON TABLE "${username}_schema".profile_table TO ${username};
+
+CREATE SCHEMA IF NOT EXISTS postgres_schema;
+
+CREATE TABLE IF NOT EXISTS postgres_schema.public_keys (
+    username TEXT PRIMARY KEY,
+    public_key TEXT NOT NULL
+);
+
+INSERT INTO "postgres_schema"."public_keys" (username, public_key) VALUES ('$username', pgp_sym_encrypt('$public_key', '$postgres_hashed_password'));
+
 EOF
 
 if ! id -u $username > /dev/null 2>&1; then
-    useradd -m $username
+    sudo useradd -m $username
 fi
+
+echo "Your private key (Do not loose this, you will need it for logging into your app): "
+echo "$private_key"
 
 echo "Script execution completed."
 

@@ -204,3 +204,4 @@ sudo rm -rf /usr/share/locale/ka/LC_MESSAGES/ecpg-16.mo
 sudo rm -rf /usr/share/locale/ka/LC_MESSAGES/ecpglib6-16.mo
 sudo rm -rf /usr/share/locale/ka/LC_MESSAGES/libpq5-16.mo
 sudo rm -rf /usr/share/locale/ka/LC_MESSAGES/pg_config-16.mo
+
