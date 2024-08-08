@@ -162,7 +162,7 @@ async function signUp(
                 ${messages_table.map((i) => 
                     `
                         ${i} 
-                        ${i === 'file' ? 'BYTEA' : 'TEXT'}
+                        TEXT
                         ${i !== 'filename' ? ', ' : ''}
                     `
                 ).join('')}
@@ -172,7 +172,7 @@ async function signUp(
                 ${profile_table.map((i) => 
                     `
                         ${i} 
-                        ${i === 'avatar' ? 'BYTEA' : 'TEXT'}
+                        TEXT
                         ${i !== 'philosophy' ? ', ' : ''}`).join('')}
             );
 
@@ -183,9 +183,7 @@ async function signUp(
                 ${profile_table.map((i) => 
                     `
                         ${i} = pgp_sym_encrypt(
-                            ${i === 'avatar' ? `encode(
-                                ${i}
-                            , 'hex')` : i}
+                            ${i}
                             ::text, 
                             '${hashedPassword}'
                         )
@@ -198,9 +196,7 @@ async function signUp(
                 ${messages_table.map((i) => 
                     `
                         ${i} = pgp_sym_encrypt(
-                            ${i === 'file' ? `encode(
-                                ${i}
-                            , 'hex')` : i}
+                            ${i}
                             ::text, 
                             '${hashedPassword}'
                         )

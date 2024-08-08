@@ -62,18 +62,35 @@ export default function Chat({
             });
 
             const decryptedMessages = await Promise.all(chatMessages.map(async (message) => {
+
                 const decryptedMessageText = await openpgp.decrypt({
                     message: await openpgp.readMessage({
                         armoredMessage: message.text,
                     }),
                     decryptionKeys: privateKey
                 })
+
                 const decryptedFile = message.file ? await openpgp.decrypt({
                     message: await openpgp.readMessage({
                         armoredMessage: message.file,
                     }),
                     decryptionKeys: privateKey
                 }) : null
+
+                let file = null;
+
+                if (decryptedFile) {
+
+                    try {
+
+                        file = `data:image/*;base64,${decryptedFile.data.toString('base64')}`;
+
+                    } catch (e) {
+                        console.error('Error converting file to base64 on the client: ', e);
+                    }
+
+                }
+
                 const decryptedFileName = message.filename ? await openpgp.decrypt({
                     message: await openpgp.readMessage({
                         armoredMessage: message.filename,
@@ -84,7 +101,7 @@ export default function Chat({
                 return {
                     ...message,
                     text: decryptedMessageText.data,
-                    file: decryptedFile ? decryptedFile.data : null,
+                    file: file ? file : null,
                     filename: decryptedFileName ? decryptedFileName.data : null
                 };
 
@@ -92,6 +109,7 @@ export default function Chat({
 
             console.log('chat messages as u get them from the server: ', chatMessages);
             console.log('decrypted messages: ', decryptedMessages);
+
             setLocalChatMessages(decryptedMessages);
 
         };
@@ -186,9 +204,19 @@ export default function Chat({
 
         }) as string;
 
-        const encryptedFile = fileBase64 ? await openpgp.encrypt({
+        let stringFile = null;
 
-            message: await openpgp.createMessage({ text: fileBase64 }),
+        if (fileBase64) {
+            const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
+
+            stringFile = base64Data;
+
+            console.log('filebase64: ', fileBase64);
+        }
+
+        const encryptedFile = stringFile ? await openpgp.encrypt({
+
+            message: await openpgp.createMessage({ text: stringFile }),
 
             encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
 
@@ -271,6 +299,7 @@ export default function Chat({
             encryptedFileName
 
         );
+
     };
 
     const filteredChatMessages = localChatMessages.filter(
