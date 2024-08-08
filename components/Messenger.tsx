@@ -2,8 +2,6 @@ import { Pool } from 'pg';
 
 import crypto from 'crypto';
 
-import Image from 'next/image';
-
 import { Button } from '@/components/ui/button';
 
 import { host, port, owner, postgresHashedPassword } from '@/postgresConfig';
@@ -20,7 +18,7 @@ import { cookies } from 'next/headers';
 
 import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
 
-
+import Icon from '@/components/Icon';
 
 
 
@@ -290,17 +288,7 @@ export async function Messenger({ username, password }: MessengerProps) {
             <div className="border-b flex items-center p-4">
                 <div className="flex items-center space-x-4">
                     <div className="rounded-full overflow-hidden border w-10 h-10">
-                        <Image
-                            alt="Avatar"
-                            className="rounded-full"
-                            height="40"
-                            src="/placeholder.svg"
-                            style={{
-                                aspectRatio: '40/40',
-                                objectFit: 'cover',
-                            }}
-                            width="40"
-                        />
+                        <Icon />
                     </div>
                     <div className="space-y-1">
                         <h1 className="text-lg font-bold">Chats</h1>
