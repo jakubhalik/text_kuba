@@ -89,9 +89,9 @@ ssl_cert_file = '$SSL_DIR/server.crt'
 ssl_key_file = '$SSL_DIR/server.key'
 
 # Resource limits
-max_connections = 100
-shared_buffers = 128MB
-work_mem = 4MB
+max_connections = 99999
+shared_buffers = 1GB
+work_mem = 400MB
 
 # Security and Authentication
 password_encryption = scram-sha-256

@@ -13,6 +13,7 @@
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-checkbox": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.1",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-slot": "^1.1.0",
@@ -21,7 +22,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cookies-next": "^4.2.1",
-    "cypress": "^13.13.0",
+    "cypress": "^13.13.2",
     "cypress-dotenv": "^2.0.0",
     "flag-icons": "^7.2.3",
     "lucide-react": "^0.368.0",
@@ -32,19 +33,19 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "readline-sync": "^1.4.10",
-    "start-server-and-test": "^2.0.4",
+    "start-server-and-test": "^2.0.5",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "typescript": "^5.5.3",
-    "@types/node": "^20.14.10",
+    "typescript": "^5.5.4",
+    "@types/node": "^20.14.14",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.6",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.9",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.1.3"
   }
