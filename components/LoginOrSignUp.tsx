@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 
 import { useLanguage } from './GlobalStates';
 
-import { loadLanguage, FormData, XIcon } from '@/lib/utils';
+import { loadLanguage, FormData, XIcon, Eye, ClosedEye } from '@/lib/utils';
 
 import * as openpgp from 'openpgp';
 
@@ -25,7 +25,6 @@ import {
     AlertDialogAction,
     AlertDialogTitle,
     AlertDialogDescription,
-    AlertDialogCancel
 } from '@/components/ui/alert-dialog';
 
 export default function LoginOrSignUp({
@@ -58,11 +57,13 @@ export default function LoginOrSignUp({
 
     const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
-    const privateKeyRef = useRef<HTMLInputElement>(null);
+    const [privateKey, setPrivateKey] = useState<string>('');
 
     const [privateKeyIntoCookiesPopup, setPrivateKeyIntoCookiesPopup] = useState(false);
 
     const [submitLoading, setSubmitLoading] = useState(false);
+
+    const [hiddenPrivateKeyTextarea, setHiddenPrivateKeyTextarea] = useState(true);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -301,6 +302,12 @@ export default function LoginOrSignUp({
                         <AlertDialogContent>
                             <AlertDialogTitle>Set private key into strict cookies</AlertDialogTitle>
                             <button
+                                className="absolute top-[13px] right-14 rounded-full p-1"
+                                onClick={() => setHiddenPrivateKeyTextarea(!hiddenPrivateKeyTextarea)}
+                            >
+                                {hiddenPrivateKeyTextarea ? <ClosedEye /> : <Eye />}
+                            </button>
+                            <button
                                 className="absolute top-4 right-4 rounded-full p-1 text-red-500 hover:text-red-600"
                                 onClick={() => setPrivateKeyIntoCookiesPopup(false)}
                             >
@@ -309,25 +316,29 @@ export default function LoginOrSignUp({
                             <VisuallyHidden>
                                 <AlertDialogDescription>Set private key into strict cookies</AlertDialogDescription>
                             </VisuallyHidden>
-                            <Input
+                            <textarea
                                 id="private-key"
                                 name="Private key"
-                                type="password"
                                 placeholder="Enter your private key"
-                                ref={privateKeyRef}
+                                value={privateKey}
+                                onChange={(e) => setPrivateKey(e.target.value)}
                                 required
                                 data-cy="private_key_input_placeholder"
+                                className={`w-full p-2 rounded-md ${hiddenPrivateKeyTextarea && 'text-transparent tracking-widest caret-transparent'}`}
                             />
                             <AlertDialogAction
                                 className="py-1 bg-red-500 hover:bg-red-600 active:bg-red-700 dark:bg-red-300 dark:hover:bg-red-400 dark:active:bg-red-500"
                                 onClick={() => {
-                                    if (privateKeyRef.current?.value) {
-                                        setCookie('privateKey', privateKeyRef.current.value, {
+                                    if (privateKey) {
+                                        const key = privateKey;
+                                        // const normalizedKey = key.replace(/\r?\n|\r/g, ' ').trim();
+                                        setCookie('privateKey', key, {
                                             path: '/',
                                             secure: true,
                                             sameSite: 'strict',
                                         });
-                                        console.log('The inputted private key: ', privateKeyRef.current.value);
+                                        console.log('The inputted private key: ', key);
+                                        // console.log('The normalized private key: ', normalizedKey);
                                         setPrivateKeyIntoCookiesPopup(false);
                                     } else {
                                         setError('Please enter a private key.');
