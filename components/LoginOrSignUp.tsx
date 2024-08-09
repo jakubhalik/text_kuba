@@ -16,13 +16,14 @@ import * as openpgp from 'openpgp';
 
 import { getCookie, setCookie } from 'cookies-next';
 
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+
 import {
     AlertDialog,
     AlertDialogTrigger,
     AlertDialogContent,
-    AlertDialogTitle,
     AlertDialogAction,
-    AlertDialogHeader,
+    AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 
 export default function LoginOrSignUp({
@@ -99,6 +100,8 @@ export default function LoginOrSignUp({
                 const privateKey = await openpgp.readPrivateKey({
                     armoredKey: privateKeyArmored,
                 });
+
+                console.log('Private key unarmored: ', privateKey);
 
                 const encryptedUsername = await openpgp.sign({
 
@@ -293,35 +296,35 @@ export default function LoginOrSignUp({
                         <AlertDialogTrigger asChild>
                             <button className="hidden">Open</button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <Label htmlFor="private-key" data-cy="private_key_label">
-                                Private key
-                            </Label>
-                        <Input
-                            id="private-key"
-                            name="Private key"
-                            type="password"
-                            placeholder="Enter your private key"
-                            ref={privateKeyRef}
-                            required
-                            data-cy="private_key_input_placeholder"
-                        />
-                        <AlertDialogAction
-                            onClick={() => {
-                                if (privateKeyRef.current?.value) {
-                                    setCookie('privateKey', privateKeyRef.current.value, {
-                                        path: '/',
-                                        secure: true,
-                                        sameSite: 'strict',
-                                    });
-                                    setPrivateKeyIntoCookiesPopup(false);
-                                } else {
-                                    setError('Please enter a private key.');
-                                }
-                            }}
-                        >
-                            Set private key into strict cookies
-                        </AlertDialogAction>
+                        <AlertDialogContent aria-describedby={undefined}>
+                            <AlertDialogTitle>Set private key into strict cookies</AlertDialogTitle>
+                            <Input
+                                id="private-key"
+                                name="Private key"
+                                type="password"
+                                placeholder="Enter your private key"
+                                ref={privateKeyRef}
+                                required
+                                data-cy="private_key_input_placeholder"
+                            />
+                            <AlertDialogAction
+                                className="py-1 bg-red-500 hover:bg-red-600 active:bg-red-700 dark:bg-red-300 dark:hover:bg-red-400 dark:active:bg-red-500"
+                                onClick={() => {
+                                    if (privateKeyRef.current?.value) {
+                                        setCookie('privateKey', privateKeyRef.current.value, {
+                                            path: '/',
+                                            secure: true,
+                                            sameSite: 'strict',
+                                        });
+                                        console.log('The inputted private key: ', privateKeyRef.current.value);
+                                        setPrivateKeyIntoCookiesPopup(false);
+                                    } else {
+                                        setError('Please enter a private key.');
+                                    }
+                                }}
+                            >
+                                Set
+                            </AlertDialogAction>
                         </AlertDialogContent>
                     </AlertDialog>
                     {!submitLoading ? 
@@ -375,7 +378,11 @@ export default function LoginOrSignUp({
                     {isLogin && 
                         <Button
                             data-cy="set_private_key_to_cookies"
-                            className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-400 dark:hover:bg-blue-500 dark:active:bg-blue-600"
+                            className="
+                                w-full 
+                                bg-blue-500 hover:bg-blue-600 active:bg-blue-700 
+                                dark:bg-blue-400 dark:hover:bg-blue-500 dark:active:bg-blue-600
+                            "
                             onClick={() => setPrivateKeyIntoCookiesPopup(true)}
                         >
                             Set private key to cookies
