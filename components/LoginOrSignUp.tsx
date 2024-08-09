@@ -1,13 +1,29 @@
 'use client';
 
 import { useState, useRef, ChangeEvent, FormEvent } from 'react';
+
 import { Label } from '@/components/ui/label';
+
 import { Input } from '@/components/ui/input';
+
 import { Button } from '@/components/ui/button';
+
 import { useLanguage } from './GlobalStates';
+
 import { loadLanguage, FormData } from '@/lib/utils';
+
 import * as openpgp from 'openpgp';
+
 import { getCookie, setCookie } from 'cookies-next';
+
+import {
+    AlertDialog,
+    AlertDialogTrigger,
+    AlertDialogContent,
+    AlertDialogTitle,
+    AlertDialogAction,
+    AlertDialogHeader,
+} from '@/components/ui/alert-dialog';
 
 export default function LoginOrSignUp({
     loginAction,
@@ -39,6 +55,10 @@ export default function LoginOrSignUp({
 
     const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
+    const privateKeyRef = useRef<HTMLInputElement>(null);
+
+    const [privateKeyIntoCookiesPopup, setPrivateKeyIntoCookiesPopup] = useState(false);
+
     const [submitLoading, setSubmitLoading] = useState(false);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -52,6 +72,7 @@ export default function LoginOrSignUp({
     const getConfirmPassword = () => confirmPasswordRef.current?.value || '';
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+
         e.preventDefault();
 
         if (!isLogin && getPassword() !== getConfirmPassword()) {
@@ -61,6 +82,7 @@ export default function LoginOrSignUp({
         }
 
         try {
+
             if (isLogin) {
                 setSubmitLoading(true);
 
@@ -189,10 +211,12 @@ export default function LoginOrSignUp({
                 }
 
             }
+
         } catch (error) {
             // Encryption error
             setError(texts.login_failed);
         }
+
     };
 
     return (
@@ -262,6 +286,44 @@ export default function LoginOrSignUp({
                             </>
                         )}
                     </div>
+                    <AlertDialog
+                        open={privateKeyIntoCookiesPopup}
+                        onOpenChange={setPrivateKeyIntoCookiesPopup}
+                    >
+                        <AlertDialogTrigger asChild>
+                            <button className="hidden">Open</button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <Label htmlFor="private-key" data-cy="private_key_label">
+                                Private key
+                            </Label>
+                        <Input
+                            id="private-key"
+                            name="Private key"
+                            type="password"
+                            placeholder="Enter your private key"
+                            ref={privateKeyRef}
+                            required
+                            data-cy="private_key_input_placeholder"
+                        />
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (privateKeyRef.current?.value) {
+                                    setCookie('privateKey', privateKeyRef.current.value, {
+                                        path: '/',
+                                        secure: true,
+                                        sameSite: 'strict',
+                                    });
+                                    setPrivateKeyIntoCookiesPopup(false);
+                                } else {
+                                    setError('Please enter a private key.');
+                                }
+                            }}
+                        >
+                            Set private key into strict cookies
+                        </AlertDialogAction>
+                        </AlertDialogContent>
+                    </AlertDialog>
                     {!submitLoading ? 
                         error && (
                             <p className="text-red-500" data-cy="error">
@@ -310,6 +372,15 @@ export default function LoginOrSignUp({
                     >
                         {isLogin ? texts.login_button : texts.signup_button}
                     </Button>
+                    {isLogin && 
+                        <Button
+                            data-cy="set_private_key_to_cookies"
+                            className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-400 dark:hover:bg-blue-500 dark:active:bg-blue-600"
+                            onClick={() => setPrivateKeyIntoCookiesPopup(true)}
+                        >
+                            Set private key to cookies
+                        </Button>
+                    }
                 </form>
             </div>
             <div
