@@ -219,6 +219,7 @@ export default function LoginOrSignUp({
             }
 
         } catch (error) {
+            setSubmitLoading(false);
             // Encryption error
             setError(texts.login_failed);
         }
@@ -331,14 +332,12 @@ export default function LoginOrSignUp({
                                 onClick={() => {
                                     if (privateKey) {
                                         const key = privateKey;
-                                        // const normalizedKey = key.replace(/\r?\n|\r/g, ' ').trim();
                                         setCookie('privateKey', key, {
                                             path: '/',
                                             secure: true,
                                             sameSite: 'strict',
                                         });
                                         console.log('The inputted private key: ', key);
-                                        // console.log('The normalized private key: ', normalizedKey);
                                         setPrivateKeyIntoCookiesPopup(false);
                                     } else {
                                         setError('Please enter a private key.');
