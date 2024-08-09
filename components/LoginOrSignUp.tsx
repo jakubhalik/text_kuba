@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 
 import { useLanguage } from './GlobalStates';
 
-import { loadLanguage, FormData } from '@/lib/utils';
+import { loadLanguage, FormData, XIcon } from '@/lib/utils';
 
 import * as openpgp from 'openpgp';
 
@@ -23,7 +23,9 @@ import {
     AlertDialogTrigger,
     AlertDialogContent,
     AlertDialogAction,
-    AlertDialogTitle
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogCancel
 } from '@/components/ui/alert-dialog';
 
 export default function LoginOrSignUp({
@@ -296,8 +298,17 @@ export default function LoginOrSignUp({
                         <AlertDialogTrigger asChild>
                             <button className="hidden">Open</button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent aria-describedby={undefined}>
+                        <AlertDialogContent>
                             <AlertDialogTitle>Set private key into strict cookies</AlertDialogTitle>
+                            <button
+                                className="absolute top-4 right-4 rounded-full p-1 text-red-500 hover:text-red-600"
+                                onClick={() => setPrivateKeyIntoCookiesPopup(false)}
+                            >
+                                <XIcon className="h-4 w-4" />
+                            </button>
+                            <VisuallyHidden>
+                                <AlertDialogDescription>Set private key into strict cookies</AlertDialogDescription>
+                            </VisuallyHidden>
                             <Input
                                 id="private-key"
                                 name="Private key"
