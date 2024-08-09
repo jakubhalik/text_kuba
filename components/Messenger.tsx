@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 
 import { host, port, owner, postgresHashedPassword } from '@/postgresConfig';
 
-import { Message, User } from '../lib/utils';
+import { Message, User, PaperclipIcon, SearchIcon, VideoIcon, PhoneIcon } from '../lib/utils';
+
+import { MoreHorizontal } from 'lucide-react';
 
 import Chat from './Chat';
 
 import { postgresUserPool } from '@/postgresConfig';
-
-import { PaperclipIcon } from '../lib/utils';
 
 import { cookies } from 'next/headers';
 
@@ -321,6 +321,7 @@ export async function Messenger({ username, password }: MessengerProps) {
                     </div>
                 </div>
                 <Button className="ml-auto" variant="ghost" size="icon">
+                    <SearchIcon className="w-4 h-4" />
                     <span className="sr-only">Search</span>
                 </Button>
             </div>
@@ -343,6 +344,7 @@ export async function Messenger({ username, password }: MessengerProps) {
                                     variant="ghost"
                                     size="icon"
                                 >
+                                    <MoreHorizontal />
                                     <span className="sr-only">More</span>
                                 </Button>
                             </div>
@@ -357,17 +359,20 @@ export async function Messenger({ username, password }: MessengerProps) {
                     }
                     arrowForLeftIcon={<span className="sr-only">Back</span>}
                     buttonsIconsAndMoreForUpperChat={
-                        <>
+                        <div>
                             <Button variant="ghost" size="icon">
+                                <VideoIcon className="w-5 h-5" />
                                 <span className="sr-only">Video call</span>
                             </Button>
                             <Button variant="ghost" size="icon">
+                                <PhoneIcon className="w-[18px] h-[18px] pb-[2px]" />
                                 <span className="sr-only">Voice call</span>
                             </Button>
                             <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="w-5 h-5" />
                                 <span className="sr-only">More</span>
                             </Button>
-                        </>
+                        </div>
                     }
                     chatMessages={chatMessages}
                     onSendMessage={sendMessage}

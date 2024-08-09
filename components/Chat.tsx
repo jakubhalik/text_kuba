@@ -498,10 +498,11 @@ function ChatComponent({
                 </div>
             )}
             <div className="flex flex-col w-full h-[calc(100vh-88px)] pb-[75px]">
-                <div className="border-b flex items-center p-4 space-x-4">
-                    <div className="flex items-center space-x-2">
+
+                <div className="border-b flex items-center px-4 py-2 justify-between">
+                    <div>
                         {arrowForLeftIcon}
-                        <h2 className="font-semibold">{selectedUser}</h2>
+                        <h2 className="font-semibold pr-14">{selectedUser}</h2>
                     </div>
                     {buttonsIconsAndMoreForUpperChat}
                 </div>

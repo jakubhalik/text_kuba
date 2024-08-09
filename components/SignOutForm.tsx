@@ -40,7 +40,7 @@ export default function SignOutForm({ action }: SignOutFormProps) {
                     onClick={async (e) => {
                         e.preventDefault();
                         await action();
-                        window.location.href = '/';
+                        return;
                     }}
                     data-cy="signout_button"
                 >

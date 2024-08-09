@@ -1,5 +1,7 @@
 import GlobalStates from '@/components/GlobalStates';
 
+import ButtonForDisplayKeysPopup from '@/components/ButtonForDisplayKeysPopup';
+
 import { ModeToggle } from '@/components/ModeToggle';
 
 import { LangToggle } from '@/components/LangToggle';
@@ -29,6 +31,10 @@ import * as openpgp from 'openpgp';
 import { Messenger } from '@/components/Messenger';
 
 import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
+
+
+
+
 
 
 
@@ -355,7 +361,7 @@ export default async function Home() {
 
     console.log('Asking for if session');
 
-    if (session) {
+    if (session?.value) {
         console.log('Session: ', session);
 
         const sessionData = JSON.parse(session.value);
@@ -435,6 +441,7 @@ export default async function Home() {
         <GlobalStates>
             <header className="flex pr-4 py-4 border-b">
                 <nav className="flex gap-2 ml-auto">
+                    {loggedIn && <ButtonForDisplayKeysPopup />}
                     <ModeToggle />
                     <LangToggle />
                     {loggedIn && <SignOutForm action={signOut} />}
