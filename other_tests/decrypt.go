@@ -85,32 +85,44 @@ func main() {
 	}
 	defer db.Close()
 
+	
+	_, err = db.Exec(fmt.Sprintf(`CREATE ROLE "%s" WITH LOGIN PASSWORD '%s';`, newUsername, newUserPassword))
+	if err != nil {
+		log.Fatalf("Failed to create role: %v", err)
+	}
+
+	_, err = db.Exec(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS "%s_schema" AUTHORIZATION "%s";`, newUsername, newUsername))
+	if err != nil {
+		log.Fatalf("Failed to create schema: %v", err)
+	}
+
 	_, err = db.Exec(fmt.Sprintf(`
-		CREATE ROLE "%s" WITH LOGIN PASSWORD '%s';
-
-		CREATE SCHEMA IF NOT EXISTS "%s_schema" AUTHORIZATION "%s";
-
 		CREATE TABLE IF NOT EXISTS "%s_schema".encryption_test (
 			id SERIAL PRIMARY KEY,
 			encrypted_message TEXT,
 			decrypted_message TEXT
-		);
-
-		CREATE SCHEMA IF NOT EXISTS postgres_schema;
-
-		CREATE TABLE IF NOT EXISTS postgres_schema.public_keys (
-			username TEXT PRIMARY KEY,
-			public_key TEXT NOT NULL
-		);
-
-		INSERT INTO "postgres_schema"."public_keys" (username, public_key) 
-
-		VALUES ('%s', pgp_sym_encrypt($1, $2));`,
-
-		newUsername, newUserPassword, newUsername, newUsername, newUsername, newUsername), publicKey, postgresHashedPassword)
-
+		);`, newUsername))
 	if err != nil {
-		log.Fatalf("Failed to execute PostgreSQL queries: %v", err)
+		log.Fatalf("Failed to create encryption_test table: %v", err)
+	}
+
+	_, err = db.Exec(`CREATE SCHEMA IF NOT EXISTS postgres_schema;`)
+	if err != nil {
+		log.Fatalf("Failed to create postgres_schema: %v", err)
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS postgres_schema.public_keys (
+		username TEXT PRIMARY KEY,
+		public_key TEXT NOT NULL
+	);`)
+	if err != nil {
+		log.Fatalf("Failed to create public_keys table: %v", err)
+	}
+
+	_, err = db.Exec(fmt.Sprintf(`INSERT INTO "postgres_schema"."public_keys" (username, public_key) 
+		VALUES ($1, pgp_sym_encrypt($2, $3));`), newUsername, publicKey, postgresHashedPassword)
+	if err != nil {
+		log.Fatalf("Failed to insert public key: %v", err)
 	}
 
 	_, err = db.Exec(fmt.Sprintf(`
@@ -185,12 +197,14 @@ func encryptMessage(entity *openpgp.Entity, message string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer pt.Close()
 
 	_, err = pt.Write([]byte(message))
 	if err != nil {
 		return "", err
 	}
+
+	pt.Close()
+	w.Close()
 
 	return encryptedBuf.String(), nil
 }
