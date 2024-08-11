@@ -14,7 +14,6 @@ import { getCookie } from 'cookies-next';
 
 interface ChatProps {
     users: User[];
-    // onUserSelect: (username: string) => Promise<void>;
     onSendMessage: (
         username: string,
         sendTo: string,
@@ -33,7 +32,6 @@ interface ChatProps {
 
 export default function Chat({
     users,
-    // onUserSelect,
     conditionalForOwner,
     iconsAndMoreForUpperSidebar,
     arrowForLeftIcon,
@@ -132,10 +130,6 @@ export default function Chat({
 
             setSelectedUser(initialUser);
 
-            /* if (initialUser) {
-                onUserSelect(initialUser);
-            } */
-
         } else {
             setSelectedUser(stringifiedOwner);
         }
@@ -154,7 +148,7 @@ export default function Chat({
 
         setWs(webSocket);
 
-    }, [/* onUserSelect, */ users, owner, username, stringifiedOwner]);
+    }, [users, owner, username, stringifiedOwner]);
 
     useEffect(() => {
 
@@ -169,8 +163,6 @@ export default function Chat({
     const handleUserClick = async (username: string) => {
 
         setSelectedUser(username);
-
-        // await onUserSelect(username);
 
     };
 
