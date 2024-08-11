@@ -123,16 +123,6 @@ interface MessengerProps {
     password: string;
 }
 
-/* let selectedUser: string | null = null;
-
-async function updateSelectedUser(newSelectedUser: string): Promise<void> {
-
-    'use server';
-
-    selectedUser = newSelectedUser;
-
-} */
-
 async function sendMessage(
     username: string,
     sendTo: string,
@@ -334,7 +324,6 @@ export async function Messenger({ username, password }: MessengerProps) {
             >
                 <Chat
                     users={users}
-                    // onUserSelect={updateSelectedUser}
                     conditionalForOwner={username === `${owner}`}
                     iconsAndMoreForUpperSidebar={
                         <div className="border-b flex items-center p-4 space-x-4">
