@@ -310,10 +310,10 @@ export async function Messenger({ username, password }: MessengerProps) {
                         <h1 className="text-lg font-bold">Chats</h1>
                     </div>
                 </div>
-                <Button className="ml-auto" variant="ghost" size="icon">
+                {/*<Button className="ml-auto" variant="ghost" size="icon">
                     <SearchIcon className="w-4 h-4" />
                     <span className="sr-only">Search</span>
-                </Button>
+                </Button>*/}
             </div>
             <div
                 className={
@@ -326,30 +326,32 @@ export async function Messenger({ username, password }: MessengerProps) {
                     users={users}
                     conditionalForOwner={username === `${owner}`}
                     iconsAndMoreForUpperSidebar={
-                        <div className="border-b flex items-center p-4 space-x-4">
-                            <div className="flex items-center space-x-2">
+                        <div>
+                            {/*<div className="border-b flex items-center p-4 space-x-4">
+                                <div className="flex items-center space-x-2">
+                                    <Button
+                                        className="ml-auto rounded-[50px]"
+                                        variant="ghost"
+                                        size="icon"
+                                    >
+                                        <MoreHorizontal />
+                                        <span className="sr-only">More</span>
+                                    </Button>
+                                </div>
                                 <Button
-                                    className="ml-auto rounded-[50px]"
+                                    className="ml-auto"
                                     variant="ghost"
                                     size="icon"
                                 >
-                                    <MoreHorizontal />
-                                    <span className="sr-only">More</span>
+                                    <span className="sr-only">New chat</span>
                                 </Button>
-                            </div>
-                            <Button
-                                className="ml-auto"
-                                variant="ghost"
-                                size="icon"
-                            >
-                                <span className="sr-only">New chat</span>
-                            </Button>
+                            </div>*/}
                         </div>
                     }
                     arrowForLeftIcon={<span className="sr-only">Back</span>}
                     buttonsIconsAndMoreForUpperChat={
                         <div>
-                            <Button variant="ghost" size="icon">
+                            {/*<Button variant="ghost" size="icon">
                                 <VideoIcon className="w-5 h-5" />
                                 <span className="sr-only">Video call</span>
                             </Button>
@@ -360,7 +362,7 @@ export async function Messenger({ username, password }: MessengerProps) {
                             <Button variant="ghost" size="icon">
                                 <MoreHorizontal className="w-5 h-5" />
                                 <span className="sr-only">More</span>
-                            </Button>
+                            </Button>*/}
                         </div>
                     }
                     chatMessages={chatMessages}
