@@ -41,6 +41,8 @@ export default function Chat({
     username,
     paperclipIcon,
 }: ChatProps) {
+    const [loading, setLoading] = useState(true);
+
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
     const [localChatMessages, setLocalChatMessages] =
@@ -51,6 +53,7 @@ export default function Chat({
         const decryptMessages = async () => {
 
             if (!chatMessages.length) { 
+                setLoading(false);
                 return;
             }
 
@@ -109,6 +112,8 @@ export default function Chat({
             console.log('decrypted messages: ', decryptedMessages);
 
             setLocalChatMessages(decryptedMessages);
+
+            setLoading(false);
 
         };
 
@@ -365,8 +370,7 @@ export default function Chat({
 
     };
 
-    return (
-        <ChatComponent
+    return !loading ? <ChatComponent
             users={users}
             handleUserClick={handleUserClick}
             selectedUser={
@@ -387,8 +391,28 @@ export default function Chat({
             createBlobUrl={createBlobUrl}
             isImageFile={isImageFile}
             handleSendMessage={handleSendMessage}
-        />
-    );
+        /> : <div className="pt-40 fixed inset-x-0 mx-auto flex justify-center">
+            <svg
+                className="animate-spin h-24 w-24 text-blue-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+            >
+                <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                ></circle>
+                <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291l-2.293 2.293a1 1 0 001.414 1.414L8 18.414A8.001 8.001 0 016 17.291z"
+                ></path>
+            </svg>
+    </div>
 }
 
 interface ChatComponentProps {
