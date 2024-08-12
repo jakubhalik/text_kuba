@@ -33,6 +33,7 @@ dev3.log
 # local env files
 .env
 .env*.local
+private_key.asc
 
 # typescript
 *.tsbuildinfo
