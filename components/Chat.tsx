@@ -370,7 +370,8 @@ export default function Chat({
 
     };
 
-    return !loading ? <ChatComponent
+    return !loading ? 
+        <ChatComponent
             users={users}
             handleUserClick={handleUserClick}
             selectedUser={
@@ -391,28 +392,75 @@ export default function Chat({
             createBlobUrl={createBlobUrl}
             isImageFile={isImageFile}
             handleSendMessage={handleSendMessage}
-        /> : <div className="pt-40 fixed inset-x-0 mx-auto flex justify-center">
-            <svg
-                className="animate-spin h-24 w-24 text-blue-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-            >
-                <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                ></circle>
-                <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291l-2.293 2.293a1 1 0 001.414 1.414L8 18.414A8.001 8.001 0 016 17.291z"
-                ></path>
-            </svg>
-    </div>
+        /> : 
+        <>
+            {conditionalForOwner && (
+                <div className="border-r flex flex-col w-full md:max-w-[300px] h-full">
+                    {iconsAndMoreForUpperSidebar}
+                    <div className="flex-1 overflow-y-auto">
+                        <ul className="divide-y max-h-[calc(100vh-235px)] overflow-y-auto">
+                            <li
+                                className="bg-gray-100 p-4 dark:bg-gray-900"
+                            >
+                                <div
+                                    className="flex items-center gap-4 p-4 rounded-lg cursor-pointer"
+                                >
+                                    <Image
+                                        alt="Avatar"
+                                        className="rounded-full"
+                                        height="40"
+                                        src="/placeholder.svg"
+                                        style={{
+                                            aspectRatio: '40/40',
+                                            objectFit: 'cover',
+                                        }}
+                                        width="40"
+                                    />
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold">
+                                        </h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        </p>
+                                    </div>
+                                    <span className="text-sm">
+                                    </span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            )}
+            <div className="flex flex-col w-full h-[calc(100vh-88px)] pb-[75px]">
+                <div className="border-b flex items-center px-4 py-5 justify-between">
+                </div>
+                <div className="pt-60 inset-x-0 mx-auto flex justify-center">
+                    <svg
+                        className="animate-spin h-24 w-24 text-blue-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        ></circle>
+                        <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291l-2.293 2.293a1 1 0 001.414 1.414L8 18.414A8.001 8.001 0 016 17.291z"
+                        ></path>
+                    </svg>
+                </div>
+                <MessageInput
+                    onSendMessage={handleSendMessage}
+                    paperclipIcon={paperclipIcon}
+                />
+            </div>
+        </>
 }
 
 interface ChatComponentProps {
@@ -583,6 +631,7 @@ function ChatComponent({
                     onSendMessage={handleSendMessage}
                     paperclipIcon={paperclipIcon}
                 />
+
             </div>
         </>
     );
