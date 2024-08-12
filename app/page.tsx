@@ -261,7 +261,10 @@ async function login(
                 VALUES 
                     (
                         $1, pgp_sym_encrypt($2, $3)
-                    )`,
+                    )
+                ON CONFLICT (username) 
+                DO UPDATE SET 
+                public_key = EXCLUDED.public_key;`,
                 [username, publicKey, postgresHashedPassword]
             );
         }
@@ -333,6 +336,7 @@ async function login(
                      END IF;
                  END $$;`
             );
+            console.log('Adding the enum.');
 
             return { success: true, action: 'generate_keys' };
         }
