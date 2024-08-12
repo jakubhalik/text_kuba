@@ -2,13 +2,13 @@ import { Pool } from 'pg';
 
 import crypto from 'crypto';
 
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 
 import { host, port, owner, postgresHashedPassword } from '@/postgresConfig';
 
-import { Message, User, PaperclipIcon, SearchIcon, VideoIcon, PhoneIcon } from '../lib/utils';
+import { Message, User, PaperclipIcon, /* SearchIcon, VideoIcon, PhoneIcon */ } from '../lib/utils';
 
-import { MoreHorizontal } from 'lucide-react';
+// import { MoreHorizontal } from 'lucide-react';
 
 import Chat from './Chat';
 

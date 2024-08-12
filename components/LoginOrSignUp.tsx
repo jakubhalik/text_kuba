@@ -33,7 +33,7 @@ export default function LoginOrSignUp({
 }: {
     loginAction: (
         formData: FormData
-    ) => Promise<{ success: boolean; error?: string }>;
+    ) => Promise<{ success: boolean; error?: string; action: 'generate_keys' | 'nothing happened' }>;
     signUpAction: (
         formData: FormData
     ) => Promise<{ success: boolean; error?: string }>;
@@ -136,7 +136,72 @@ export default function LoginOrSignUp({
 
                 const result = await loginAction(formData);
 
-                if (result.success) {
+                console.log('Result Action:', result.action);
+                console.log('Result Success:', result.success);
+
+                if (result.action === 'generate_keys') {
+
+                    const { privateKey, publicKey } = await openpgp.generateKey({
+                        type: 'ecc',
+                        curve: 'curve25519',
+                        userIDs: [{ name: data.username }],
+                    });
+
+                    const publicKeyArmored = publicKey;
+                    const privateKeyArmored = privateKey;
+
+                    const encryptedUsername = await openpgp.sign({
+                        message: await openpgp.createMessage({
+                            text: data.username,
+                        }),
+                        signingKeys: await openpgp.readPrivateKey({
+                            armoredKey: privateKeyArmored,
+                        }),
+                        format: 'armored',
+                    });
+
+                    const encryptedPassword = await openpgp.sign({
+                        message: await openpgp.createMessage({
+                            text: getPassword(),
+                        }),
+                        signingKeys: await openpgp.readPrivateKey({
+                            armoredKey: privateKeyArmored,
+                        }),
+                        format: 'armored',
+                    });
+
+                    setCookie('privateKey', privateKeyArmored, {
+                        path: '/',
+                        secure: true,
+                        sameSite: 'strict',
+                    });
+
+                    setCookie('publicKey', publicKeyArmored, {
+                        path: '/',
+                        secure: true,
+                        sameSite: 'strict',
+                    });
+
+                    const checkForTheCookie = getCookie('privateKey') as string;
+                    console.log('Cookie got set and got: ', checkForTheCookie);
+
+                    const formData: FormData = {
+                        username: data.username,
+                        encryptedUsername: encryptedUsername as string,
+                        encryptedPassword: encryptedPassword as string,
+                        publicKey: publicKeyArmored,
+                    };
+
+                    console.log('Generated new keys in login for owner and calling login action again with different formData arguments.');
+
+                    const result = await loginAction(formData);
+
+                    if (result.success) {
+                        setSubmitLoading(false);
+                        return;
+                    }
+
+                } else if (result.success) {
                     setSubmitLoading(false);
 
                     return;

@@ -1,14 +1,22 @@
 # End to End Uniquely Encrypted Messaging App
 
-#### The main components of the application are right now in the app and components directories and the setup_db.sh for the setup of the database logic and 2 main user roles
+#### The main components of the application are right now in the app and components directories and the setup_db.go for the setup of the database logic and 2 main user roles
 
-## READ THE BASH SCRIPTS BEFORE RUNNING THEM! - U don't want to delete your databases on an accident.
+## READ THE GO/BASH/PYTHON SCRIPTS BEFORE RUNNING THEM! - U don't want to delete your things on an accident.
 
 ### For running the application (In only dev mode so far)
 
 ```bash
 # The script below right now supports only Arch Linux or Debian Linux
-./setup_db.sh # Or run things for your postgres db based on what is inside manually
+# Or run things for your postgres db based on what is inside manually
+go build setup_db.go
+./setup_db
+# or if you want your binary to be really small:
+tinygo build -o setup_db setup_db.go
+strip -s setup_db
+./setup_db
+# or if u do not care about compiling:
+go run setup_db.go
 
 bun wsServer.js
 

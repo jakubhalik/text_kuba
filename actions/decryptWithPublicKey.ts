@@ -18,9 +18,7 @@ export async function decryptWithPublicKey(
         console.log('Encrypted Text:', encryptedText);
 
         const publicKey = await openpgp.readKey({
-
             armoredKey: publicKeyArmored,
-
         });
 
         const message = await openpgp.readMessage({
@@ -30,11 +28,8 @@ export async function decryptWithPublicKey(
         });
 
         const verificationResult = await openpgp.verify({
-
             message,
-
             verificationKeys: [publicKey],
-
         });
 
         const { verified } = verificationResult.signatures[0];

@@ -157,8 +157,9 @@ func main() {
 		log.Fatalf("Failed to write private key to file: %v", err)
 	}
 
-	fmt.Println("Your private key has been saved to 'private_key.asc'. Do not lose the content of this file, you will need it for logging into your app.")
+	fmt.Println("Your private key has been saved to 'private_key.asc'. Do not lose the content of this file, you will need it for the first logging into your app.")
 	log.Println("Private key saved to 'private_key.asc'.")
+	fmt.Println("Your private and public key will change after your first sign in.")
 
 	fmt.Println("Script execution completed.")
 	log.Println("Script execution completed.")

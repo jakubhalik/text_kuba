@@ -231,7 +231,7 @@ async function signUp(
 
 async function login(
     formData: FormData
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; action?: 'generate_keys' | 'nothing happened' }> {
 
     'use server';
 
@@ -241,9 +241,31 @@ async function login(
 
     const client = await postgresUserPool.connect();
 
-    const { username, encryptedUsername, encryptedPassword } = formData;
+    const { username, encryptedUsername, encryptedPassword, publicKey } = formData;
 
     console.log('Postgres Hashed Password:', postgresHashedPassword);
+
+    if (username === owner) {
+        if (publicKey) {
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS postgres_schema.public_keys (
+                    username TEXT PRIMARY KEY,
+                    public_key TEXT NOT NULL
+                );
+            `);
+            await client.query(
+                `INSERT INTO postgres_schema.public_keys 
+                    (
+                        username, public_key
+                    ) 
+                VALUES 
+                    (
+                        $1, pgp_sym_encrypt($2, $3)
+                    )`,
+                [username, publicKey, postgresHashedPassword]
+            );
+        }
+    }
 
     const result = await client.query(
         `SELECT pgp_sym_decrypt(public_key::bytea, $1) 
@@ -262,20 +284,68 @@ async function login(
 
     const decryptedPublicKey = result.rows[0].public_key;
 
+     if (username === owner) {
+
+        const ownerInitialSignInCheck = await client.query(
+            `SELECT enumlabel FROM pg_enum WHERE enumlabel = 'owner_initial_sign_in_happened'`
+        );
+
+        if (ownerInitialSignInCheck.rows.length === 0) {
+            console.log('First time owner login detected. Generating keys.');
+
+            const enumExistsResult = await client.query(`
+                SELECT 1 
+                FROM pg_type 
+                WHERE typname = 'owner_sign_in_status'
+            `);
+
+            if (enumExistsResult.rows.length === 0) {
+                await client.query(`
+                    CREATE TYPE owner_sign_in_status AS ENUM ('owner_initial_sign_in_happened');
+                `);
+                console.log('Enum type owner_sign_in_status created.');
+            }
+
+            try {
+                const insertEnumValueResult = await client.query(`
+                    INSERT INTO pg_enum (enumtypid, enumlabel) 
+                    SELECT typ.oid, 'owner_initial_sign_in_happened' 
+                    FROM pg_type typ 
+                    WHERE typ.typname = 'owner_sign_in_status'
+                    ON CONFLICT DO NOTHING
+                    RETURNING *;
+                `);
+
+                if (insertEnumValueResult.rows.length > 0) {
+                    console.log('Enum value owner_initial_sign_in_happened inserted.');
+                } else {
+                    console.log('Enum value owner_initial_sign_in_happened already exists.');
+                }
+            } catch (error) {
+                console.error('Failed to insert enum value:', error);
+            }
+
+            await client.query(
+                `DO $$
+                 BEGIN
+                     IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'owner_initial_sign_in_happened') THEN
+                         PERFORM pg_enum.enum_range('postgres_schema', 'owner_initial_sign_in_happened');
+                     END IF;
+                 END $$;`
+            );
+
+            return { success: true, action: 'generate_keys' };
+        }
+    }
+
     const decryptedUsername = await decryptWithPublicKey(
-        
         decryptedPublicKey,
-
         encryptedUsername
-
     );
 
     const decryptedPassword = await decryptWithPublicKey(
-
         decryptedPublicKey,
-
         encryptedPassword
-
     );
 
     console.log('Decrypted Username:', decryptedUsername);
@@ -337,7 +407,7 @@ async function login(
 
         userUsername = username;
 
-        return { success: true };
+        return { success: true, action: 'nothing happened' };
 
     } catch (error) {
 
