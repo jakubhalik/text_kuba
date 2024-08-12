@@ -38,19 +38,9 @@ import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
 
 
 
-<<<<<<< HEAD
 let loggedIn: boolean = false;
 
 let userUsername: string;
-=======
-async function transferMessagesToUser(
-    username: string,
-    password: string
-): Promise<void> {
-    'use server';
-    const client = await postgresUserPool.connect();
->>>>>>> 392a045e58f7162185084887fec232391b545001
-
 let decryptedUsernameForMessenger: string;
 let decryptedPasswordForMessenger: string;
 
