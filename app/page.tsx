@@ -228,6 +228,85 @@ async function signUp(
     }
 }
 
+async function transferMessagesToUser(
+    username: string,
+    password: string
+): Promise<void> {
+    'use server';
+    const client = await postgresUserPool.connect();
+
+    const queryForMessages = `
+        SELECT
+            pgp_sym_decrypt(datetime_from::bytea, $1) as datetime_from,
+            pgp_sym_decrypt(sent_by::bytea, $1) as sent_by,
+            pgp_sym_decrypt(send_to::bytea, $1) as send_to,
+            pgp_sym_decrypt(text::bytea, $1) as text,
+            pgp_sym_decrypt(file::bytea, $1) as file,
+            pgp_sym_decrypt(filename::bytea, $1) as filename
+        FROM "postgres_schema".messages_table
+        WHERE pgp_sym_decrypt(send_to::bytea, $1) = $2;
+    `;
+
+    const resultForMessages = await client.query(queryForMessages, [
+        postgresHashedPassword,
+        username,
+    ]);
+
+    if (resultForMessages.rows.length === 0) {
+        console.log('No messages to transfer.');
+        client.release();
+        return;
+    }
+
+    const userPool = new Pool({
+        host,
+        port,
+        database: `text_${owner}`,
+        user: username,
+        password: password,
+    });
+
+    const userClient = await userPool.connect();
+
+    const userCombinedPassword = `${username}${password}`;
+    const userHashedPassword = crypto
+        .createHash('sha256')
+        .update(userCombinedPassword)
+        .digest('hex');
+
+    for (const message of resultForMessages.rows) {
+        await userClient.query(
+            `INSERT INTO "${username}_schema".messages_table 
+                (datetime_from, sent_by, send_to, text) VALUES (
+                    pgp_sym_encrypt($1::text, $2), 
+                    pgp_sym_encrypt($3, $2), 
+                    pgp_sym_encrypt($4, $2), 
+                    pgp_sym_encrypt($5, $2),
+                    pgp_sym_encrypt($6, $2), 
+                    pgp_sym_encrypt($7::text, $2)
+                )`,
+            [
+                message.datetime_from,
+                userHashedPassword,
+                message.sent_by,
+                message.send_to,
+                message.text,
+                message.file,
+                message.filename
+            ]
+        );
+    }
+
+    await client.query(
+        `DELETE FROM "postgres_schema".messages_table
+        WHERE pgp_sym_decrypt(send_to::bytea, $1) = $2;`,
+        [postgresHashedPassword, username]
+    );
+
+    client.release();
+    userClient.release();
+}
+
 async function login(
     formData: FormData
 ): Promise<{ success: boolean; error?: string; action?: 'generate_keys' | 'nothing happened' }> {
@@ -373,6 +452,8 @@ async function login(
         sameSite?: 'Strict';
     };
 
+    await transferMessagesToUser(decryptedUsername, decryptedPassword);
+
     try {
 
         const userClient = await pool.connect();
@@ -380,11 +461,8 @@ async function login(
         userClient.release();
 
         const sessionData = {
-
             username: encryptedUsername,
-
             password: encryptedPassword,
-
         };
 
         const cookieOptions: Partial<ResponseCookie> = {
@@ -392,18 +470,12 @@ async function login(
             httpOnly: true,
             sameSite: 'Strict',
         };
-
         (
             cookies().set as unknown as (
-
                 key: string,
-
                 value: string,
-
                 cookie?: Partial<ResponseCookie>
-
             ) => void
-
         )('session', JSON.stringify(sessionData), cookieOptions);
 
         console.log('login - End');
@@ -413,19 +485,14 @@ async function login(
         return { success: true, action: 'nothing happened' };
 
     } catch (error) {
-
         console.error('Database connection error:', error);
-
         return { success: false, error: 'Invalid credentials.' };
-
     }
 }
 
 async function signOut(): Promise<void> {
     'use server';
-
     loggedIn = false;
-
     cookies().delete('session');
 }
 

@@ -245,7 +245,7 @@ async function sendMessage(
                 filename
             ) VALUES
             (
-                pgp_sym_encrypt($1, $2), 
+                pgp_sym_encrypt($1::text, $2), 
                 pgp_sym_encrypt($3, $2), 
                 pgp_sym_encrypt($4, $2), 
                 pgp_sym_encrypt($5, $2), 
