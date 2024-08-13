@@ -66,6 +66,10 @@ export default function Chat({
                 });
 
                 console.log('Private Key (Unarmored):', privateKey);
+                console.log('Key Packet:', privateKey.keyPacket);
+                console.log('Subkeys:', privateKey.subkeys);
+                console.log('Users:', privateKey.users);
+                console.log('Private Key Fingerprint:', privateKey.getFingerprint());
 
                 const decryptedMessages = await Promise.all(chatMessages.map(async (message) => {
                     try {
