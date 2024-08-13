@@ -232,23 +232,15 @@ export default function Chat({
         }
 
         const encryptedFile = stringFile ? await openpgp.encrypt({
-
             message: await openpgp.createMessage({ text: stringFile }),
-
             encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
-
             format: 'armored',
-
         }) as string : null;
 
         const encryptedFileName = fileName ? await openpgp.encrypt({
-
             message: await openpgp.createMessage({ text: fileName }),
-
             encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
-
             format: 'armored',
-
         }) as string : null;
 
         console.log('encrypted message text: ', encryptedMessageText);
