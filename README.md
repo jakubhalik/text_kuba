@@ -66,6 +66,18 @@ bun wsServer.js
 bun run dev
 ```
 
+### Debugging "docs"
+```bash
+# This will not be that glamorous,
+# Just either drop the tables, enums, roles manually or just kill and rerun the setup db:
+tinygo build -o kill_postgres kill_postgres.go
+strip -s kill_postgres
+./kill_postgres
+tinygo build -o setup_db setup_db.go
+strip -s setup_db
+./setup_db
+```
+
 # This project is NOT fininshed yet, it is still a work in progress - Pre-Alpha
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
