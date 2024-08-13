@@ -55,7 +55,7 @@ async function testEncryptionDecryption() {
 
     console.log('Decrypted Message:', decrypted.data);
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Decrypt message test error:', error);
   }
 }
 

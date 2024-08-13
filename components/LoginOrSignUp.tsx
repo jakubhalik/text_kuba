@@ -198,6 +198,45 @@ export default function LoginOrSignUp({
 
                     console.log('Generated new keys in login for owner and calling login action again with different formData arguments.');
 
+                    const checkForThePrivateKeyCookie = 
+                        getCookie('privateKey') as string;
+                    console.log(
+                        'Cookie got set and got: ', checkForThePrivateKeyCookie
+                    );
+
+                    const checkForThePublicKeyCookie = 
+                        getCookie('privateKey') as string;
+                    console.log(
+                        'Cookie got set and got: ', checkForThePublicKeyCookie
+                    );
+
+                    // test ->
+                    try {
+                        const message = 'Hello, this is a test message!';
+
+                        const encrypted = await openpgp.encrypt({
+                            message: await openpgp.createMessage({ text: message }),
+                            encryptionKeys: await openpgp.readKey({ armoredKey: publicKeyArmored }),
+                        });
+
+                        console.log('Encrypted Message:', encrypted);
+
+                        const privateKey = await openpgp.readPrivateKey({
+                            armoredKey: privateKeyArmored,
+                        });
+                        console.log('private key: ', privateKey);
+
+                        const decrypted = await openpgp.decrypt({
+                            message: await openpgp.readMessage({ armoredMessage: encrypted }),
+                            decryptionKeys: privateKey,
+                        });
+
+                        console.log('Decrypted Message:', decrypted.data);
+                    } catch (error) {
+                        console.error('Decrypt message test error:', error);
+                    }
+                    // test <-
+
                     const result = await loginAction(formData);
 
                     if (result.success) {

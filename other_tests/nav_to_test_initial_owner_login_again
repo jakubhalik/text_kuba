@@ -1,0 +1,26 @@
+postgres@localhost:text_kuba> select enumlabel from pg_enum where enumlabel = 'owner_initial_sign_in_happened'
++--------------------------------+
+| enumlabel                      |
+|--------------------------------|
+| owner_initial_sign_in_happened |
++--------------------------------+
+SELECT 1
+Time: 0.008s
+postgres@localhost:text_kuba> drop type owner_sign_in_status;
+You're about to run a destructive command.
+Do you want to proceed? [y/N]: y
+Your call!
+DROP TYPE
+Time: 0.007s
+postgres@localhost:text_kuba> select enumlabel from pg_enum where enumlabel = 'owner_initial_sign_in_happened'
++-----------+
+| enumlabel |
+|-----------|
++-----------+
+SELECT 0
+Time: 0.006s
+postgres@localhost:text_kuba>
+
+Just drop the: 
+    drop type owner_sign_in_status;
+to the psql/pgcli
