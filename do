@@ -32,3 +32,6 @@ The login is so if the username === owner and there is not an owner_initial_sign
 
 When the last message in the chat sidebar is too long, for example longer than 10 chars, do not show the entirety of it but just the first 10 for example and then ...
 
+When login and password already inputted make setting the private key to cookies relog with that private key and the credentials
+
+When opening the private key popup make the cursor come to its textarea
