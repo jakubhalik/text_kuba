@@ -18,8 +18,11 @@ interface ChatProps {
         username: string,
         sendTo: string,
         messageText: string,
+        messageTextForRecipient: string,
         fileBase64?: string | null,
-        fileName?: string | null
+        fileName?: string | null,
+        fileBase64ForRecipient?: string | null,
+        fileNameForRecipient?: string | null
     ) => void;
     conditionalForOwner: boolean;
     iconsAndMoreForUpperSidebar: React.ReactNode;
@@ -28,6 +31,7 @@ interface ChatProps {
     chatMessages: Message[];
     username: string;
     paperclipIcon: React.ReactNode;
+    publicKeys: Record<string, string>;
 }
 
 export default function Chat({
@@ -212,22 +216,16 @@ export default function Chat({
         console.log('public key: ', publicKey);
 
         const encryptedMessageText = await openpgp.encrypt({
-
             message: await openpgp.createMessage({ text: messageText }),
-
             encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
-
             format: 'armored',
-
         }) as string;
 
         let stringFile = null;
 
         if (fileBase64) {
             const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
-
             stringFile = base64Data;
-
             console.log('filebase64: ', fileBase64);
         }
 
@@ -246,6 +244,26 @@ export default function Chat({
         console.log('encrypted message text: ', encryptedMessageText);
         console.log('encrypted file: ', encryptedFile);
         console.log('encrypted filename: ', encryptedFileName);
+
+        const recipientPublicKey = publicKeys[selectedUser];
+
+        const encryptedMessageTextForRecipient = await openpgp.encrypt({
+            message: await openpgp.createMessage({ text: encryptedMessageText }),
+            encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+            format: 'armored',
+        }) as string;
+
+        const encryptedFileForRecipient = encryptedFile ? await openpgp.encrypt({
+            message: await openpgp.createMessage({ text: encryptedFile }),
+            encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+            format: 'armored',
+        }) as string : null;
+
+        const encryptedFileNameForRecipient = encryptedFileName ? await openpgp.encrypt({
+            message: await openpgp.createMessage({ text: encryptedFileName }),
+            encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+            format: 'armored',
+        }) as string : null;
 
         // This block is for a client side test ->
 
@@ -325,36 +343,32 @@ export default function Chat({
         if (ws) {
             ws.send(
                 JSON.stringify({
-
                     sendTo: selectedUser,
-                    text: encryptedMessageText,
-                    file: encryptedFile,
-                    filename: encryptedFileName,
-
+                    text: encryptedMessageTextForRecipient,
+                    file: encryptedFileForRecipient,
+                    filename: encryptedFileNameForRecipient,
                 })
             );
         }
 
         onSendMessage(
-
             username,
             selectedUser!,
             encryptedMessageText,
+            encryptedMessageTextForRecipient,
             encryptedFile,
-            encryptedFileName
-
+            encryptedFileName,
+            encryptedFileForRecipient,
+            encryptedFileNameForRecipient
         );
 
     };
 
     const filteredChatMessages = localChatMessages.filter(
         (message) =>
-
             (message.sent_by === username &&
                 message.send_to === selectedUser) ||
-
             (message.sent_by === selectedUser && message.send_to === username)
-
     );
 
     const getLastMessage = (user: User) => {

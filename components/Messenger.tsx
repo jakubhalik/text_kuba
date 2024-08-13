@@ -76,44 +76,52 @@ async function getDecryptedMessages(
             );
     `;
 
+    const queryForPublicKeys = `
+        SELECT username, pgp_sym_decrypt(public_key::bytea, $1) AS public_key FROM postgres_schema.public_keys;
+    `;
+
+    let publicKeys: Record<string, string> = {};
+    let publicKeysForOwner: Record<string, string> = {};
+
     try {
-        const [resultForChat, resultForUsers] = await Promise.all([
-
+        const [resultForChat, resultForUsers, resultForPublicKeys] = await Promise.all([
             client.query(queryForChat, [hashedPassword]),
-
             client.query(queryForUsers),
-
+            client.query(queryForPublicKeys, [hashedPassword])
         ]);
 
         client.release();
 
+        publicKeys = resultForPublicKeys.rows.reduce((acc, row) => {
+            acc[row.username] = row.public_key;
+            return acc;
+        }, {} as Record<string, string>);
+
+        publicKeysForOwner = Object.keys(publicKeys).reduce((acc, key) => {
+            if (key !== owner) {
+                acc[key] = publicKeys[key];
+            }
+            return acc;
+        }, {} as Record<string, string>);
+
         const chatMessagesProcessed = resultForChat.rows.map((message) => {
 
             return {
-
                 ...message,
-
                 datetime_from: new Date(message.datetime_from).toLocaleString(),
 
             };
         });
 
         return {
-
             chatMessages: chatMessagesProcessed,
-
             users: resultForUsers.rows,
-
         };
 
     } catch (error) {
-
         console.error('Error decrypting messages:', error);
-
         client.release();
-
         throw new Error('Failed to decrypt messages');
-
     }
 
 }
@@ -127,8 +135,11 @@ async function sendMessage(
     username: string,
     sendTo: string,
     messageText: string,
+    messageTextForRecipient: string,
     file: string | null = null,
-    fileName: string | null = null
+    fileName: string | null = null,
+    fileForRecipient: string | null = null,
+    fileNameForRecipient: string | null = null
 ): Promise<void> {
 
     'use server';
@@ -156,19 +167,14 @@ async function sendMessage(
         const decryptedPublicKey = result.rows[0].public_key;
 
         const decryptedPassword = await decryptWithPublicKey(
-
             decryptedPublicKey,
-
             sessionData.password
-
         );
 
         const password = decryptedPassword;
 
         if (typeof password !== 'string') {
-
             throw new Error('Password must be a string');
-
         }
 
         const pool = new Pool({
@@ -251,9 +257,9 @@ async function sendMessage(
                 postgresHashedPassword,
                 username,
                 sendTo,
-                messageText,
-                file,
-                fileName,
+                messageTextForRecipient,
+                fileForRecipient,
+                fileNameForRecipient,
             ]
         );
 
@@ -276,11 +282,8 @@ const getAvatarFiles = () => {
 export async function Messenger({ username, password }: MessengerProps) {
 
     const { chatMessages, users } = await getDecryptedMessages(
-
         username,
-
         password
-
     );
 
     const avatarFiles = getAvatarFiles();
@@ -324,6 +327,7 @@ export async function Messenger({ username, password }: MessengerProps) {
             >
                 <Chat
                     users={users}
+                    publicKeys={username === `${owner}` ? publicKeysForOwner : { [owner]: publicKeys[owner] }}
                     conditionalForOwner={username === `${owner}`}
                     iconsAndMoreForUpperSidebar={
                         <div>
