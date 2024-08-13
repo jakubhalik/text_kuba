@@ -33,12 +33,15 @@ The public keys will be in a postgres_schema
 During sign up and login you will get a loading bar in the place of the error message so you know your new request was sent and when signed in while decrypting messages and all around your data with your key/keys loading bar
 
 The login is so if the username === owner and there is not an owner_initial_sign_in_happened enum in postgres_schema, so the client side generating of public and a private key as it happens in the sign up happens in this case also in the login with them also getting set in the strict cookies and with the public one replacing whatever is under that name in the postgres schema public keys now
-
-
-
-
-
-
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 #### The main components of the application are right now in the app and components directories and the setup_db.go for the setup of the database logic and 2 main user roles
 
