@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, ChangeEvent, FormEvent } from 'react';
+import { useState, useRef, ChangeEvent, FormEvent, useEffect } from 'react';
 
 import { Label } from '@/components/ui/label';
 
@@ -56,6 +56,8 @@ export default function LoginOrSignUp({
     const passwordRef = useRef<HTMLInputElement>(null);
 
     const confirmPasswordRef = useRef<HTMLInputElement>(null);
+
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const [privateKey, setPrivateKey] = useState<string>('');
 
@@ -431,6 +433,7 @@ export default function LoginOrSignUp({
                                 placeholder="Enter your private key"
                                 value={privateKey}
                                 onChange={(e) => setPrivateKey(e.target.value)}
+                                ref={textareaRef}
                                 required
                                 data-cy="private_key_input_placeholder"
                                 className={`w-full p-2 rounded-md ${hiddenPrivateKeyTextarea && 'text-transparent tracking-widest caret-transparent'}`}
@@ -512,7 +515,14 @@ export default function LoginOrSignUp({
                                 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 
                                 dark:bg-blue-400 dark:hover:bg-blue-500 dark:active:bg-blue-600
                             "
-                            onClick={() => setPrivateKeyIntoCookiesPopup(true)}
+                            onClick={() => { 
+                                setPrivateKeyIntoCookiesPopup(true)
+                                setTimeout(() => {
+                                    if (textareaRef.current) {
+                                        textareaRef.current.focus();
+                                    }
+                                }, 0);
+                            }}
                         >
                             Set private key to cookies
                         </Button>
