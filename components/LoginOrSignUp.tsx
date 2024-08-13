@@ -88,6 +88,10 @@ export default function LoginOrSignUp({
         try {
 
             if (isLogin) {
+                setTimeout(() => {
+                    setError('Login attempt timed out. Your private key or credentials are probably wrong. Please try again.');
+                    setSubmitLoading(false);
+                }, 10000);
                 setSubmitLoading(true);
 
                 const privateKeyArmored = getCookie('privateKey') as string;
