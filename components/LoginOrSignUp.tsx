@@ -450,6 +450,7 @@ export default function LoginOrSignUp({
                                         });
                                         console.log('The inputted private key: ', key);
                                         setPrivateKeyIntoCookiesPopup(false);
+                                        handleSubmit(new Event('submit') as FormEvent<HTMLFormElement>);
                                     } else {
                                         setError('Please enter a private key.');
                                     }
