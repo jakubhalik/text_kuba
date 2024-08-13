@@ -30,8 +30,20 @@ During sign up and login you will get a loading bar in the place of the error me
 
 The login is so if the username === owner and there is not an owner_initial_sign_in_happened enum in postgres_schema, so the client side generating of public and a private key as it happens in the sign up happens in this case also in the login with them also getting set in the strict cookies and with the public one replacing whatever is under that name in the postgres schema public keys now
 
+done till here
+
 When the last message in the chat sidebar is too long, for example longer than 10 chars, do not show the entirety of it but just the first 10 for example and then ...
 
 When login and password already inputted make setting the private key to cookies relog with that private key and the credentials
 
-When opening the private key popup make the cursor come to its textarea
+When opening the private key popup make the textarea selected by the user
+
+text transfer via encryption with my private key and public key of recipient and inverse decryption
+    this will need the messenger component to send the public keys of users the user can chat with to the chat component and for the chat component to be doing for all messages/files/filenames/dates not just the encryptions it does for its own storage, but to also besides that encrypt it the way mentioned above with that being sent back to the messenger component with there being those arguments used in the saving in postgres_schema instead of the same way as is the other stored there
+
+websockets encryption and decryption the same way as above with the keys
+
+possibility to generate new keys and set them right away in the cookies and the new public one in the db with all data being replaced with ones encrypted with the new private key and the old ones deleted
+
+logging in without having or setting the private key in cookies, instead just putting in in an input
+

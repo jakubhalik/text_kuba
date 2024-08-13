@@ -89,7 +89,7 @@ export default function LoginOrSignUp({
 
             if (isLogin) {
                 setTimeout(() => {
-                    setError('Login attempt timed out. Your private key or credentials are probably wrong. Please try again.');
+                    setError('Invalid credentials');
                     setSubmitLoading(false);
                 }, 10000);
                 setSubmitLoading(true);

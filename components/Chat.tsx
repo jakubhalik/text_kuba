@@ -570,7 +570,9 @@ function ChatComponent({
                                 let lastMessageTime = '';
 
                                 if (lastMessage) {
-                                    lastMessageText = lastMessage.text;
+                                    lastMessageText = lastMessage.text.length > 10 ? 
+                                        `${lastMessage.text.substring(0, 10)}...` : 
+                                        lastMessage.text;
                                     lastMessageTime = new Date(
                                         lastMessage.datetime_from
                                     ).toLocaleString();
