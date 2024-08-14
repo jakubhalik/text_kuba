@@ -452,8 +452,6 @@ async function login(
         sameSite?: 'Strict';
     };
 
-    await transferMessagesToUser(decryptedUsername, decryptedPassword);
-
     try {
 
         const userClient = await pool.connect();

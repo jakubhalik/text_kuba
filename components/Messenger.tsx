@@ -45,6 +45,7 @@ async function getDecryptedMessages(
     });
 
     const client = await pool.connect();
+    const postgresClient = await postgresUserPool.connect();
 
     const combinedPassword = `${username}${password}`;
     const hashedPassword = crypto
@@ -77,21 +78,40 @@ async function getDecryptedMessages(
     `;
 
     const queryForPublicKeys = `
-        SELECT username, pgp_sym_decrypt(public_key::bytea, $1) AS public_key FROM postgres_schema.public_keys;
+        SELECT username, pgp_sym_decrypt(public_key::bytea, $1) 
+        AS public_key FROM postgres_schema.public_keys;
     `;
+
+    let resultForChat, resultForUsers, resultForPublicKeys;
+
+    try {
+        resultForChat = await client.query(queryForChat, [hashedPassword]);
+    } catch (error) {
+        console.error('Error executing chat query:', error);
+        client.release();
+        throw new Error('Failed to execute chat query');
+    }
+
+    try {
+        resultForUsers = await client.query(queryForUsers);
+    } catch (error) {
+        console.error('Error executing users query:', error);
+        client.release();
+        throw new Error('Failed to execute users query');
+    }
+
+    try {
+        resultForPublicKeys = await postgresClient.query(queryForPublicKeys, [postgresHashedPassword]);
+    } catch (error) {
+        console.error('Error executing public keys query:', error);
+        postgresClient.release();
+        throw new Error('Failed to execute public keys query');
+    }
 
     let publicKeys: Record<string, string> = {};
     let publicKeysForOwner: Record<string, string> = {};
 
     try {
-        const [resultForChat, resultForUsers, resultForPublicKeys] = await Promise.all([
-            client.query(queryForChat, [hashedPassword]),
-            client.query(queryForUsers),
-            client.query(queryForPublicKeys, [hashedPassword])
-        ]);
-
-        client.release();
-
         publicKeys = resultForPublicKeys.rows.reduce((acc, row) => {
             acc[row.username] = row.public_key;
             return acc;
@@ -103,26 +123,38 @@ async function getDecryptedMessages(
             }
             return acc;
         }, {} as Record<string, string>);
+    } catch (error) {
+        console.error('Error processing public keys:', error);
+        client.release();
+        throw new Error('Failed to process public keys');
+    }
 
-        const chatMessagesProcessed = resultForChat.rows.map((message) => {
+    if (Object.keys(publicKeysForOwner).length === 0) {
+        console.warn(`
+            No non-owner public keys found. 
+            Skipping encryption/decryption for the messages sent 
+                from non-owner users to owner.`
+        );
+    }
 
+    let chatMessagesProcessed;
+    try {
+        chatMessagesProcessed = resultForChat.rows.map((message) => {
             return {
                 ...message,
                 datetime_from: new Date(message.datetime_from).toLocaleString(),
-
             };
         });
-
-        return {
-            chatMessages: chatMessagesProcessed,
-            users: resultForUsers.rows,
-        };
-
     } catch (error) {
-        console.error('Error decrypting messages:', error);
+        console.error('Error processing chat messages:', error);
         client.release();
-        throw new Error('Failed to decrypt messages');
+        throw new Error('Failed to process chat messages');
     }
+
+    return {
+        chatMessages: chatMessagesProcessed,
+        users: resultForUsers.rows,
+    };
 
 }
 
@@ -245,7 +277,7 @@ async function sendMessage(
                 filename
             ) VALUES
             (
-                pgp_sym_encrypt($1::text, $2), 
+                pgp_sym_encrypt($1, $2), 
                 pgp_sym_encrypt($3, $2), 
                 pgp_sym_encrypt($4, $2), 
                 pgp_sym_encrypt($5, $2), 

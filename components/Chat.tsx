@@ -247,23 +247,51 @@ export default function Chat({
 
         const recipientPublicKey = publicKeys[selectedUser];
 
-        const encryptedMessageTextForRecipient = await openpgp.encrypt({
-            message: await openpgp.createMessage({ text: encryptedMessageText }),
-            encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
-            format: 'armored',
-        }) as string;
+        if (!recipientPublicKey) {
+            console.warn('Recipient public key not found. Skipping encryption for recipient.');
+        } else {
 
-        const encryptedFileForRecipient = encryptedFile ? await openpgp.encrypt({
-            message: await openpgp.createMessage({ text: encryptedFile }),
-            encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
-            format: 'armored',
-        }) as string : null;
+            const encryptedMessageTextForRecipient = await openpgp.encrypt({
+                message: await openpgp.createMessage({ text: encryptedMessageText }),
+                encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+                format: 'armored',
+            }) as string;
 
-        const encryptedFileNameForRecipient = encryptedFileName ? await openpgp.encrypt({
-            message: await openpgp.createMessage({ text: encryptedFileName }),
-            encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
-            format: 'armored',
-        }) as string : null;
+            const encryptedFileForRecipient = encryptedFile ? await openpgp.encrypt({
+                message: await openpgp.createMessage({ text: encryptedFile }),
+                encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+                format: 'armored',
+            }) as string : null;
+
+            const encryptedFileNameForRecipient = encryptedFileName ? await openpgp.encrypt({
+                message: await openpgp.createMessage({ text: encryptedFileName }),
+                encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+                format: 'armored',
+            }) as string : null;
+
+            if (ws) {
+                ws.send(
+                    JSON.stringify({
+                        sendTo: selectedUser,
+                        text: encryptedMessageTextForRecipient,
+                        file: encryptedFileForRecipient,
+                        filename: encryptedFileNameForRecipient,
+                    })
+                );
+            }
+
+            onSendMessage(
+                username,
+                selectedUser!,
+                encryptedMessageText,
+                encryptedMessageTextForRecipient,
+                encryptedFile,
+                encryptedFileName,
+                encryptedFileForRecipient,
+                encryptedFileNameForRecipient
+            );
+
+        }
 
         // This block is for a client side test ->
 
@@ -340,28 +368,6 @@ export default function Chat({
         
         // This block is for a client side test <-
         
-        if (ws) {
-            ws.send(
-                JSON.stringify({
-                    sendTo: selectedUser,
-                    text: encryptedMessageTextForRecipient,
-                    file: encryptedFileForRecipient,
-                    filename: encryptedFileNameForRecipient,
-                })
-            );
-        }
-
-        onSendMessage(
-            username,
-            selectedUser!,
-            encryptedMessageText,
-            encryptedMessageTextForRecipient,
-            encryptedFile,
-            encryptedFileName,
-            encryptedFileForRecipient,
-            encryptedFileNameForRecipient
-        );
-
     };
 
     const filteredChatMessages = localChatMessages.filter(
