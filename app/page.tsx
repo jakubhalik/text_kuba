@@ -289,7 +289,15 @@ async function transferMessagesToUser(
         for (const message of resultForMessages.rows) {
             await userClient.query(
                 `INSERT INTO "${username}_schema".messages_table 
-                    (datetime_from, sent_by, send_to, text) VALUES (
+                    (
+                        datetime_from, 
+                        sent_by, 
+                        send_to, 
+                        text, 
+                        file, 
+                        filename
+                    ) VALUES 
+                    (
                         pgp_sym_encrypt($1::text, $2), 
                         pgp_sym_encrypt($3, $2), 
                         pgp_sym_encrypt($4, $2), 
@@ -314,11 +322,17 @@ async function transferMessagesToUser(
         throw new Error('inserting the transferred messages failed: ', e!);
     }
 
-    await client.query(
-        `DELETE FROM "postgres_schema".messages_table
-        WHERE pgp_sym_decrypt(send_to::bytea, $1) = $2;`,
-        [postgresHashedPassword, username]
-    );
+    try {
+        await client.query(
+            `DELETE FROM "postgres_schema".messages_table
+            WHERE pgp_sym_decrypt(send_to::bytea, $1) = $2;`,
+            [postgresHashedPassword, username]
+        );
+        console.log('Deleting the temporarily held messages from postgres_schema.');
+    } catch (e) {
+        console.error('Failed deleting the temporarily held messages from postgres_schema: ', e);
+        throw new Error('Failed deleting the temporarily held messages from postgres_schema: ', e!);
+    }
 
     client.release();
     userClient.release();
