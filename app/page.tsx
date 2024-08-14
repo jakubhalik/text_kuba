@@ -258,6 +258,9 @@ async function transferMessagesToUser(
         return;
     }
 
+    console.log('transfered messages: ', resultForMessages);
+    console.log(resultForMessages.rows);
+
     const userPool = new Pool({
         host,
         port,
@@ -274,27 +277,41 @@ async function transferMessagesToUser(
         .update(userCombinedPassword)
         .digest('hex');
 
-    for (const message of resultForMessages.rows) {
-        await userClient.query(
-            `INSERT INTO "${username}_schema".messages_table 
-                (datetime_from, sent_by, send_to, text) VALUES (
-                    pgp_sym_encrypt($1::text, $2), 
-                    pgp_sym_encrypt($3, $2), 
-                    pgp_sym_encrypt($4, $2), 
-                    pgp_sym_encrypt($5, $2),
-                    pgp_sym_encrypt($6, $2), 
-                    pgp_sym_encrypt($7::text, $2)
-                )`,
-            [
-                message.datetime_from,
-                userHashedPassword,
-                message.sent_by,
-                message.send_to,
-                message.text,
-                message.file,
-                message.filename
-            ]
-        );
+    try {
+        for (const message of resultForMessages.rows) {
+            console.log('message: ', message);
+            console.log('message sent by: ', message.sent_by);
+            console.log('message send to: ', message.send_to);
+            console.log('message text: ', message.text);
+            console.log('message file: ', message.file);
+            console.log('message filename: ', message.filename);
+        }
+        for (const message of resultForMessages.rows) {
+            await userClient.query(
+                `INSERT INTO "${username}_schema".messages_table 
+                    (datetime_from, sent_by, send_to, text) VALUES (
+                        pgp_sym_encrypt($1::text, $2), 
+                        pgp_sym_encrypt($3, $2), 
+                        pgp_sym_encrypt($4, $2), 
+                        pgp_sym_encrypt($5, $2),
+                        pgp_sym_encrypt($6, $2), 
+                        pgp_sym_encrypt($7::text, $2)
+                    )`,
+                [
+                    message.datetime_from,
+                    userHashedPassword,
+                    message.sent_by,
+                    message.send_to,
+                    message.text,
+                    message.file,
+                    message.filename
+                ]
+            );
+            console.log('inserted messages from sender to receiver successfully.');
+        }
+    } catch (e) {
+        console.error('inserting the transferred messages failed: ', e);
+        throw new Error('inserting the transferred messages failed: ', e!);
     }
 
     await client.query(
@@ -451,6 +468,14 @@ async function login(
         secure?: boolean;
         sameSite?: 'Strict';
     };
+
+    try {
+        transferMessagesToUser(decryptedUsername, decryptedPassword);
+        console.log('Transfered messages.');
+    } catch (e) {
+        console.error('Failed in transferring messages.');
+        throw new Error('Failed in transferring messages.');
+    }
 
     try {
 

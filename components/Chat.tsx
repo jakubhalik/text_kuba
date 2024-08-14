@@ -44,6 +44,7 @@ export default function Chat({
     onSendMessage,
     username,
     paperclipIcon,
+    publicKeys
 }: ChatProps) {
     const [loading, setLoading] = useState(true);
 
@@ -466,7 +467,7 @@ export default function Chat({
                 <div className="border-r flex flex-col w-full md:max-w-[300px] h-full">
                     {iconsAndMoreForUpperSidebar}
                     <div className="flex-1 overflow-y-auto">
-                        <ul className="divide-y max-h-[calc(100vh-235px)] overflow-y-auto">
+                        <ul className="divide-y max-h-[calc(100vh-150px)] overflow-y-auto">
                             <li
                                 className="bg-gray-100 p-4 dark:bg-gray-900"
                             >
@@ -575,7 +576,7 @@ function ChatComponent({
                 <div className="border-r flex flex-col w-full md:max-w-[300px] h-full">
                     {iconsAndMoreForUpperSidebar}
                     <div className="flex-1 overflow-y-auto">
-                        <ul className="divide-y max-h-[calc(100vh-235px)] overflow-y-auto">
+                        <ul className="divide-y max-h-[calc(100vh-150px)] overflow-y-auto">
                             {users.map((user, index) => {
                                 const lastMessage = getLastMessage(user);
                                 let lastMessageText = 'No messages yet';
