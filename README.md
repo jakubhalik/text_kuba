@@ -1,8 +1,8 @@
-# End to End Uniquely Encrypted Messaging App
+# End to End PGP Encrypted Messaging App
 
 ## The app that makes the operational side of security yours only but the heavy lifting technical side only mine
 
-### Version 0.0.6 - Pre-Alpha
+### Version 0.0.7 - Pre-Alpha
 
 When you input credentials while signing and you are not trying to use a username that already exists at first public and a private gets generated only on client. 
 The private key will never be known by the server, the private key will encrypt the name and the password. 

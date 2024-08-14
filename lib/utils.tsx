@@ -99,6 +99,16 @@ export interface FormData {
     publicKey?: string;
 }
 
+export interface LoginActionPromise {
+    success: boolean; 
+    error?: string; 
+    action?: 'generate keys' | 'nothing happened'
+}
+
+export interface SignUpActionPromise {
+    success: boolean; 
+    error?: string 
+}
 
 export function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
     return (

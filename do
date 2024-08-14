@@ -21,6 +21,7 @@ You with it alone cannot do or see anything.
 You have to have access to your data to decrypt the values with the private key, and you can get to those only via the authentication into the app for which u need not only the private key, but also your password.
 This is a 2-factor authentication without a phone/email, security upgrade of a 2-factor auth if you will.
 But even tho one cannot do anything with your private key alone, if you suspect that someone knows it you should as fast as possible, just to be safe, sign in and generate new keys, there will be a button for this that will also on your device decrypt all your data with your private key will generate the new keys, will encrypt them with the new public key, will burn the old private key from your cookies (if u have it there), will throw the new one there (if u let it there), will send a message to the server to burn the old public key and all values encrypted with it and will replace them with the newly encrypted values on your device with the new public key that will also be saved in the db encrypted in the same way as it was before.
+Now the only data decryptable by the server will be the from whom are which encrypted messages sent to whom: That is required for the server to be capable of sending the messages from one user to the other, but worry not, you already have the full anonymity of what are you sending to anyone and you can have the anonymity of to whom you are sending the encrypted messages/files/filenames by just choosing an alias nickname instead of any name which actually describes your real identity in any way.
 
 When you login in the default mode the process of logging in will continue only if a private key is in your cookies, if you have selected the no-cookies mode, you will have to input the private key, into the input on the page with the credentials for it to on your device only encrypt the name and password so it can be sent on to the server where it will be decrypted with the public key that is saved under your name. If either there is not even a public key with the name you are trying to login with or a sign in in the postgres pool cannot happen with the decrypted credentials decrypted via the public key you will get a wrong credentials error.
 
@@ -44,7 +45,10 @@ text transfer via encryption with my private key and public key of recipient and
 
 websockets encryption and decryption the same way as above with the keys
 
+encrypting dates too
+
+always filling the file and filename with pseudorandomly generated data that looks like it would usually when sending some, so the server owner can never know when is a file being sent or not (prepare a big space for the database, this level of anonymity giving will not be free space wise)
+
 possibility to generate new keys and set them right away in the cookies and the new public one in the db with all data being replaced with ones encrypted with the new private key and the old ones deleted
 
-logging in without having or setting the private key in cookies, instead just putting in in an input
-
+frontend for texts and support for switching full us and cz langs

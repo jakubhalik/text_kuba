@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, ChangeEvent, FormEvent, useEffect } from 'react';
+import { useState, useRef, ChangeEvent, FormEvent } from 'react';
 
 import { Label } from '@/components/ui/label';
 
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 
 import { useLanguage } from './GlobalStates';
 
-import { loadLanguage, FormData, XIcon, Eye, ClosedEye } from '@/lib/utils';
+import { loadLanguage, FormData, XIcon, Eye, ClosedEye, LoginActionPromise, SignUpActionPromise } from '@/lib/utils';
 
 import * as openpgp from 'openpgp';
 
@@ -27,16 +27,21 @@ import {
     AlertDialogDescription,
 } from '@/components/ui/alert-dialog';
 
+
+
+
+
+
 export default function LoginOrSignUp({
     loginAction,
     signUpAction,
 }: {
     loginAction: (
         formData: FormData
-    ) => Promise<{ success: boolean; error?: string; action: 'generate_keys' | 'nothing happened' }>;
+    ) => Promise<LoginActionPromise>;
     signUpAction: (
         formData: FormData
-    ) => Promise<{ success: boolean; error?: string }>;
+    ) => Promise<SignUpActionPromise>;
 }) {
     const { language } = useLanguage();
     
@@ -69,7 +74,6 @@ export default function LoginOrSignUp({
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-
         setData((prevData) => ({ ...prevData, [name]: value }));
     };
 
@@ -83,7 +87,6 @@ export default function LoginOrSignUp({
 
         if (!isLogin && getPassword() !== getConfirmPassword()) {
             setError(texts.password_mismatch);
-
             return;
         }
 
@@ -102,7 +105,6 @@ export default function LoginOrSignUp({
 
                 if (!privateKeyArmored) {
                     setError('Private key not found in cookies');
-
                     return;
                 }
 
@@ -113,24 +115,18 @@ export default function LoginOrSignUp({
                 console.log('Private key unarmored: ', privateKey);
 
                 const encryptedUsername = await openpgp.sign({
-
                     message: await openpgp.createMessage({
                         text: data.username,
                     }),
-
                     signingKeys: privateKey,
-
                     format: 'armored',
                 });
 
                 const encryptedPassword = await openpgp.sign({
-
                     message: await openpgp.createMessage({
                         text: getPassword(),
                     }),
-
                     signingKeys: privateKey,
-
                     format: 'armored',
                 });
 
@@ -145,7 +141,7 @@ export default function LoginOrSignUp({
                 console.log('Result Action:', result.action);
                 console.log('Result Success:', result.success);
 
-                if (result.action === 'generate_keys') {
+                if (result.action === 'generate keys') {
 
                     const { privateKey, publicKey } = await openpgp.generateKey({
                         type: 'ecc',
@@ -322,7 +318,6 @@ export default function LoginOrSignUp({
 
                 } else {
                     setSubmitLoading(false);
-
                     setError(texts.signup_failed);
                 }
 

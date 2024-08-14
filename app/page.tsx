@@ -22,7 +22,7 @@ import {
     postgresHashedPassword
 } from '@/postgresConfig';
 
-import { profile_table, messages_table, FormData } from '@/lib/utils';
+import { profile_table, messages_table, FormData, LoginActionPromise, SignUpActionPromise } from '@/lib/utils';
 
 import { cookies } from 'next/headers';
 
@@ -46,7 +46,7 @@ let decryptedPasswordForMessenger: string;
 
 async function signUp(
     formData: FormData
-): Promise<{ success: boolean; error?: string }> {
+): Promise<SignUpActionPromise> {
 
     'use server';
 
@@ -157,9 +157,6 @@ async function signUp(
             format: 'armored',
 
         });
-
-        // If this does not work, just throw each query on 1 line 
-            // and put space between the first $ vars
 
         await userClient.query(`
 
@@ -340,7 +337,7 @@ async function transferMessagesToUser(
 
 async function login(
     formData: FormData
-): Promise<{ success: boolean; error?: string; action?: 'generate_keys' | 'nothing happened' }> {
+): Promise<LoginActionPromise> {
 
     'use server';
 
@@ -447,7 +444,7 @@ async function login(
             );
             console.log('Adding the enum.');
 
-            return { success: true, action: 'generate_keys' };
+            return { success: true, action: 'generate keys' };
         }
     }
 
@@ -625,9 +622,15 @@ export default async function Home() {
                 </nav>
             </header>
             {loggedIn ? (
-                <Messenger username={decryptedUsernameForMessenger} password={decryptedPasswordForMessenger} />
+                <Messenger 
+                    username={decryptedUsernameForMessenger} 
+                    password={decryptedPasswordForMessenger} 
+                />
             ) : (
-                <LoginOrSignUp loginAction={login} signUpAction={signUp} />
+                <LoginOrSignUp 
+                    loginAction={login} 
+                    signUpAction={signUp} 
+                />
             )}
         </GlobalStates>
     );

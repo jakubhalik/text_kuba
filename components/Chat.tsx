@@ -12,6 +12,9 @@ import * as openpgp from 'openpgp';
 
 import { getCookie } from 'cookies-next';
 
+
+
+
 interface ChatProps {
     users: User[];
     onSendMessage: (
@@ -97,7 +100,9 @@ export default function Chat({
                                     decryptionKeys: privateKey,
                                 });
 
-                                file = `data:image/*;base64,${decryptedFile.data.toString('base64')}`;
+                                const fileData = decryptedFile.data as Uint8Array;
+
+                                file = `data:image/*;base64,${Buffer.from(fileData).toString('base64')}`;
 
                             } catch (e) {
                                 console.error('Error decrypting file:', e);
@@ -154,10 +159,9 @@ export default function Chat({
 
     useEffect(() => {
         if (username === stringifiedOwner) {
+
             const savedUser = localStorage.getItem('selectedUser');
-
             const initialUser = savedUser || users[0]?.username;
-
             setSelectedUser(initialUser);
 
         } else {
@@ -172,7 +176,6 @@ export default function Chat({
 
         webSocket.onmessage = (event) => {
             const message = JSON.parse(event.data);
-
             setLocalChatMessages((prevMessages) => [...prevMessages, message]);
         };
 
@@ -181,19 +184,13 @@ export default function Chat({
     }, [users, owner, username, stringifiedOwner]);
 
     useEffect(() => {
-
         if (username === owner && selectedUser) {
-
             localStorage.setItem('selectedUser', selectedUser);
-
         }
-
     }, [selectedUser, owner, username]);
 
     const handleUserClick = async (username: string) => {
-
         setSelectedUser(username);
-
     };
 
     const handleSendMessage = async (
@@ -246,7 +243,7 @@ export default function Chat({
         console.log('encrypted file: ', encryptedFile);
         console.log('encrypted filename: ', encryptedFileName);
 
-        const recipientPublicKey = publicKeys[selectedUser];
+        const recipientPublicKey = publicKeys[selectedUser!];
 
         if (!recipientPublicKey) {
             console.warn('Recipient public key not found. Skipping encryption for recipient.');
@@ -422,7 +419,6 @@ export default function Chat({
 
         } catch (error) {
             console.error('Invalid base64 string:', error);
-
             return '';
         }
     };
