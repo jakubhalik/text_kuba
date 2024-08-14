@@ -29,6 +29,9 @@ interface MessagesResult {
     users: User[];
 }
 
+let publicKeys: Record<string, string> = {};
+let publicKeysForOwner: Record<string, string> = {};
+
 async function getDecryptedMessages(
     username: string,
     password: string
@@ -108,14 +111,13 @@ async function getDecryptedMessages(
         throw new Error('Failed to execute public keys query');
     }
 
-    let publicKeys: Record<string, string> = {};
-    let publicKeysForOwner: Record<string, string> = {};
-
     try {
+
         publicKeys = resultForPublicKeys.rows.reduce((acc, row) => {
             acc[row.username] = row.public_key;
             return acc;
         }, {} as Record<string, string>);
+        console.log('public keys: ', publicKeys);
 
         publicKeysForOwner = Object.keys(publicKeys).reduce((acc, key) => {
             if (key !== owner) {
@@ -123,6 +125,8 @@ async function getDecryptedMessages(
             }
             return acc;
         }, {} as Record<string, string>);
+        console.log('public keys for owner: ', publicKeysForOwner);
+
     } catch (error) {
         console.error('Error processing public keys:', error);
         client.release();
@@ -359,7 +363,7 @@ export async function Messenger({ username, password }: MessengerProps) {
             >
                 <Chat
                     users={users}
-                    publicKeys={username === `${owner}` ? publicKeysForOwner : { [owner]: publicKeys[owner] }}
+                    publicKeys={username === `${owner}` ? publicKeysForOwner : { [owner!]: publicKeys[owner!] }}
                     conditionalForOwner={username === `${owner}`}
                     iconsAndMoreForUpperSidebar={
                         <div>
