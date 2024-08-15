@@ -96,19 +96,13 @@ async function signUp(
         );
 
         const decryptedUsername = await decryptWithPublicKey(
-
             publicKey ? publicKey : '',
-
             encryptedUsername
-
         );
 
         const decryptedPassword = await decryptWithPublicKey(
-
             publicKey ? publicKey : '',
-
             encryptedPassword
-
         );
 
         console.log('Decrypted Username:', decryptedUsername);
@@ -384,11 +378,8 @@ async function login(
     );
 
     if (result.rows.length === 0) {
-
         console.log('User not found');
-
         return { success: false, error: 'User not found.' };
-
     }
 
     const decryptedPublicKey = result.rows[0].public_key;
@@ -571,21 +562,15 @@ export default async function Home() {
             console.log('Decrypted public key: ', decryptedPublicKey);
 
             const decryptedUsername = await decryptWithPublicKey(
-
                 decryptedPublicKey,
-
                 sessionData.username
-
             );
 
             console.log('Decrypted username: ', decryptedUsername);
 
             const decryptedPassword = await decryptWithPublicKey(
-
                 decryptedPublicKey,
-
                 sessionData.password
-
             );
 
             console.log('Decrypted Password: ', decryptedPassword);

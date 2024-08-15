@@ -69,6 +69,9 @@ export default function Chat({
 
                         let file = null;
                         let decryptedFileName = null;
+                        let decryptedDecryptedMessageText = null;
+                        let decryptedFile = null;
+                        let decryptedDecryptedFileName = null;
 
                         if (message.file) {
                             try {
@@ -101,11 +104,99 @@ export default function Chat({
                             }
                         }
 
+                        try {
+                            console.log('Log before asking for the condition of message.send_to === username');
+                            console.log('the public keys you have access to: ', publicKeys);
+                            // console.log('the selected user: ', selectedUser);
+                            // console.log('public key of the selected user: ', `publicKeys.${selectedUser}`);
+                            console.log('the public key of the sent_by: ', publicKeys[message.sent_by]);
+
+                            if (message.send_to === username) {
+
+                                console.log('Message send_to did equal the username of the logged in user.');
+                                console.log('sent by: ', message.sent_by);
+
+                                const messageToVerify = await openpgp.readMessage({
+                                    armoredMessage: decryptedMessageText.data as string,
+                                });
+
+                                if (messageToVerify.packets.length !== 1) {
+                                    throw new Error('The message contains multiple literal data packets, which is unsupported.');
+                                }
+
+                                decryptedDecryptedMessageText = await openpgp.verify({
+                                    message: messageToVerify,
+                                    verificationKeys: publicKeys[message.sent_by],
+                                });
+                                console.log('decrypted message: ', decryptedDecryptedMessageText);
+
+                                if (file) {
+                                    try {
+                                        const fileMessage = await openpgp.readMessage({
+                                            armoredMessage: file,
+                                        });
+
+                                        if (fileMessage.packets.length !== 1) {
+                                            throw new Error('The file message contains multiple literal data packets, which is unsupported.');
+                                        }
+
+                                        const decryptedDecryptedFile = await openpgp.verify({
+                                            message: fileMessage,
+                                            verificationKeys: publicKeys[message.sent_by],
+                                        });
+
+                                        const fileData = decryptedDecryptedFile.data as unknown as Uint8Array;
+
+                                        decryptedFile = `data:image/*;base64,${Buffer.from(fileData).toString('base64')}`;
+
+                                        console.log('decrypted file: ', decryptedFile);
+
+                                    } catch (e) {
+                                        console.error('Error decrypting file:', e);
+                                    }
+                                }
+
+                                if (decryptedFileName) {
+                                    try {
+                                        const fileNameMessage = await openpgp.readMessage({
+                                            armoredMessage: decryptedFileName.data as string,
+                                        });
+
+                                        if (fileNameMessage.packets.length !== 1) {
+                                            throw new Error('The filename message contains multiple literal data packets, which is unsupported.');
+                                        }
+
+                                        decryptedDecryptedFileName = await openpgp.verify({
+                                            message: fileNameMessage,
+                                            verificationKeys: publicKeys[message.sent_by],
+                                        });
+                                        console.log('decrypted filename: ', decryptedDecryptedFileName);
+                                    } catch (e) {
+                                        console.error('Error decrypting filename:', e);
+                                    }
+                                }
+
+                            }
+                        } catch (e) {
+                            console.error('The operation that happens on the message.send_to === username conditional failed to happen: ', e);
+                        }
+
+                        console.log('decrypted decrypted message text: ', decryptedDecryptedMessageText);
+                        console.log('decrypted message text: ', decryptedMessageText);
+                        console.log('decrypted file: ', decryptedFile);
+                        console.log('file: ', file);
+                        console.log('decrypted decrypted filename: ', decryptedDecryptedFileName);
+                        console.log('decrypted filename: ', decryptedFileName);
+
                         return {
                             ...message,
-                            text: decryptedMessageText.data as string,
-                            file: file ? file : null,
-                            filename: decryptedFileName ? decryptedFileName.data as string : null,
+                            text: decryptedDecryptedMessageText !== null ? 
+                                decryptedDecryptedMessageText.data as string : 
+                                decryptedMessageText.data as string,
+                            file: decryptedFile !== null ? decryptedFile : file ? file : null,
+                            filename: decryptedDecryptedFileName !== null ? 
+                                decryptedDecryptedFileName.data as string : 
+                                decryptedFileName ? decryptedFileName.data as string : null,
                         };
 
                     } catch (e) {
@@ -188,6 +279,7 @@ export default function Chat({
 
         setLocalChatMessages((prevMessages) => [...prevMessages, newMsg]);
 
+        const privateKeyArmoredForSendMess = getCookie('privateKey') as string;
         const publicKey = getCookie('publicKey') as string;
 
         console.log('public key: ', publicKey);
@@ -223,6 +315,10 @@ export default function Chat({
         console.log('encrypted file: ', encryptedFile);
         console.log('encrypted filename: ', encryptedFileName);
 
+        const privateKey = await openpgp.readPrivateKey({
+            armoredKey: privateKeyArmoredForSendMess,
+        });
+
         const recipientPublicKey = publicKeys[selectedUser!];
 
         if (!recipientPublicKey) {
@@ -230,22 +326,31 @@ export default function Chat({
         } else {
 
             const encryptedMessageTextForRecipient = await openpgp.encrypt({
-                message: await openpgp.createMessage({ text: encryptedMessageText }),
+                message: await openpgp.createMessage({ text: messageText }),
                 encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+                signingKeys: privateKey,
                 format: 'armored',
             }) as string;
 
-            const encryptedFileForRecipient = encryptedFile ? await openpgp.encrypt({
-                message: await openpgp.createMessage({ text: encryptedFile }),
-                encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
-                format: 'armored',
-            }) as string : null;
+            let encryptedFileForRecipient = null;
+            if (fileBase64) {
+                encryptedFileForRecipient = await openpgp.encrypt({
+                    message: await openpgp.createMessage({ text: fileBase64 }),
+                    encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+                    signingKeys: privateKey,
+                    format: 'armored',
+                }) as string;
+            }
 
-            const encryptedFileNameForRecipient = encryptedFileName ? await openpgp.encrypt({
-                message: await openpgp.createMessage({ text: encryptedFileName }),
-                encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
-                format: 'armored',
-            }) as string : null;
+            let encryptedFileNameForRecipient = null;
+            if (fileName) {
+                encryptedFileNameForRecipient = await openpgp.encrypt({
+                    message: await openpgp.createMessage({ text: fileName }),
+                    encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+                    signingKeys: privateKey,
+                    format: 'armored',
+                }) as string;
+            }
 
             if (ws) {
                 ws.send(

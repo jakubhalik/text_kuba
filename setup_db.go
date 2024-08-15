@@ -238,8 +238,8 @@ ssl_key_file = '%s'
 
 # Resource limits
 max_connections = 99999
-shared_buffers = 1GB
-work_mem = 400MB
+shared_buffers = 2GB
+work_mem = 1GB
 
 # Security and Authentication
 password_encryption = scram-sha-256

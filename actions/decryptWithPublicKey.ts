@@ -22,9 +22,7 @@ export async function decryptWithPublicKey(
         });
 
         const message = await openpgp.readMessage({
-
             armoredMessage: encryptedText,
-
         });
 
         const verificationResult = await openpgp.verify({
@@ -45,11 +43,8 @@ export async function decryptWithPublicKey(
         return decrypted as string;
 
     } catch (error) {
-
         console.error('Error in decryptWithPublicKey:', error);
-
         throw error;
-
     }
 }
 
