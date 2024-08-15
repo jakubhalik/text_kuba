@@ -446,7 +446,7 @@ export default function LoginOrSignUp({
                                         console.log('The inputted private key: ', key);
                                         setPrivateKeyIntoCookiesPopup(false);
                                         if (data.username && getPassword()) {
-                                            handleSubmit(new Event('submit') as FormEvent<HTMLFormElement>);
+                                            handleSubmit(new Event('submit') as unknown as FormEvent<HTMLFormElement>);
                                         }
                                     } else {
                                         setError('Please enter a private key.');

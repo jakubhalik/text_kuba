@@ -5,6 +5,10 @@ import { twMerge } from 'tailwind-merge';
 import lang_us from '../lang_us.json';
 import lang_cz from '../lang_cz.json';
 
+import * as openpgp from 'openpgp';
+
+import { ReactNode } from 'react';
+
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -83,8 +87,8 @@ export interface Message {
     datetime_from: string;
     sent_by: string;
     send_to: string;
-    text: string;
-    file: ArrayBuffer | null;
+    text: string | openpgp.MaybeStream<openpgp.Data> & openpgp.WebStream<string>;
+    file: ArrayBuffer | string | null;
     filename: string | null;
 }
 
@@ -108,6 +112,52 @@ export interface LoginActionPromise {
 export interface SignUpActionPromise {
     success: boolean; 
     error?: string 
+}
+
+export type OnSendMessage = {
+    messageText: string;
+    fileBase64?: ArrayBuffer | null;
+    fileName?: string | null;
+};
+
+export interface MessageInputProps {
+    onSendMessage: (input: OnSendMessage) => void;
+    paperclipIcon: React.ReactNode;
+}
+
+export interface SharedChatProps {
+    users: User[];
+    conditionalForOwner: boolean;
+    iconsAndMoreForUpperSidebar: ReactNode;
+    arrowForLeftIcon: ReactNode;
+    buttonsIconsAndMoreForUpperChat: ReactNode;
+    username: string;
+    paperclipIcon: ReactNode;
+}
+
+export interface ChatProps extends SharedChatProps {
+    onSendMessage: (
+        username: string,
+        sendTo: string,
+        messageText: string,
+        messageTextForRecipient: string,
+        fileBase64?: string | null,
+        fileName?: string | null,
+        fileBase64ForRecipient?: string | null,
+        fileNameForRecipient?: string | null
+    ) => void;
+    chatMessages: Message[];
+    publicKeys: Record<string, string>;
+}
+
+export interface ChatComponentProps extends SharedChatProps {
+    handleUserClick: (username: string) => Promise<void>;
+    selectedUser: string | null;
+    filteredChatMessages: Message[];
+    getLastMessage: (user: User) => Message | null;
+    createBlobUrl: (base64Data: string) => string;
+    isImageFile: (filename: string | null) => boolean;
+    handleSendMessage: (input: OnSendMessage) => Promise<void>;
 }
 
 export function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {

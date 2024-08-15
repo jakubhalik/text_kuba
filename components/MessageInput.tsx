@@ -1,18 +1,16 @@
 'use client';
 
 import Image from 'next/image';
+
 import { useState, ChangeEvent } from 'react';
+
 import { Textarea } from '@/components/ui/textarea';
+
 import { Button } from '@/components/ui/button';
 
-interface MessageInputProps {
-    onSendMessage: (
-        messageText: string,
-        fileBase64?: string | null,
-        fileName?: string | null
-    ) => void;
-    paperclipIcon: React.ReactNode;
-}
+import { MessageInputProps } from '@/lib/utils';
+
+
 
 export default function MessageInput({
     onSendMessage,
@@ -27,23 +25,16 @@ export default function MessageInput({
     const handleSendMessage = async () => {
 
         if (newMessage.trim() !== '' || file) {
-
             let fileBase64 = null;
-
             let fileName = null;
-
             if (file) {
                 fileBase64 = await toBase64(file);
-
                 fileName = file.name;
             }
 
-            onSendMessage(newMessage, fileBase64, fileName);
-
+            onSendMessage({messageText: newMessage, fileBase64: fileBase64 as ArrayBuffer, fileName: fileName});
             setNewMessage('');
-
             setFile(null);
-
             setFilePreview(null);
         }
     };
@@ -63,13 +54,9 @@ export default function MessageInput({
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
 
         if (e.target.files && e.target.files.length > 0) {
-
             setFile(e.target.files[0]);
-
             const fileUrl = URL.createObjectURL(e.target.files[0]);
-
             setFilePreview(fileUrl);
-
         }
 
     };
@@ -77,9 +64,7 @@ export default function MessageInput({
     const isImageFile = (filename: string | null) => {
 
         if (!filename) return false;
-
         const extension = filename.split('.').pop()?.toLowerCase();
-
         return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
             extension!
         );
@@ -87,9 +72,11 @@ export default function MessageInput({
     };
 
     return (
-        <div className="flex items-center p-4 space-x-4 pt-4 fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800">
+        <div className="
+            flex items-center p-4 space-x-4 pt-4 fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800
+        ">
             {filePreview &&
-                (isImageFile(file?.name) ? (
+                (isImageFile(file?.name!) ? (
                     <div className="flex-shrink-0">
                         <Image
                             src={filePreview}

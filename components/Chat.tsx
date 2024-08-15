@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import { Message, User } from '../lib/utils';
+import { Message, User, ChatProps, ChatComponentProps, OnSendMessage } from '../lib/utils';
 
 import { useState, useEffect } from 'react';
 
@@ -15,27 +15,6 @@ import { getCookie } from 'cookies-next';
 
 
 
-interface ChatProps {
-    users: User[];
-    onSendMessage: (
-        username: string,
-        sendTo: string,
-        messageText: string,
-        messageTextForRecipient: string,
-        fileBase64?: string | null,
-        fileName?: string | null,
-        fileBase64ForRecipient?: string | null,
-        fileNameForRecipient?: string | null
-    ) => void;
-    conditionalForOwner: boolean;
-    iconsAndMoreForUpperSidebar: React.ReactNode;
-    arrowForLeftIcon: React.ReactNode;
-    buttonsIconsAndMoreForUpperChat: React.ReactNode;
-    chatMessages: Message[];
-    username: string;
-    paperclipIcon: React.ReactNode;
-    publicKeys: Record<string, string>;
-}
 
 export default function Chat({
     users,
@@ -124,9 +103,9 @@ export default function Chat({
 
                         return {
                             ...message,
-                            text: decryptedMessageText.data,
+                            text: decryptedMessageText.data as string,
                             file: file ? file : null,
-                            filename: decryptedFileName ? decryptedFileName.data : null,
+                            filename: decryptedFileName ? decryptedFileName.data as string : null,
                         };
 
                     } catch (e) {
@@ -138,7 +117,7 @@ export default function Chat({
                 console.log('Chat messages as you get them from the server:', chatMessages);
                 console.log('Decrypted messages:', decryptedMessages);
 
-                setLocalChatMessages(decryptedMessages);
+               setLocalChatMessages(decryptedMessages);
                 setLoading(false);
 
             } catch (e) {
@@ -193,11 +172,11 @@ export default function Chat({
         setSelectedUser(username);
     };
 
-    const handleSendMessage = async (
-        messageText: string,
-        fileBase64?: ArrayBuffer | null,
-        fileName?: string | null
-    ) => {
+    const handleSendMessage = async ({
+        messageText,
+        fileBase64,
+        fileName,
+    }: OnSendMessage) => {
         const newMsg: Message = {
             datetime_from: new Date().toLocaleString(),
             sent_by: username,
@@ -222,7 +201,8 @@ export default function Chat({
         let stringFile = null;
 
         if (fileBase64) {
-            const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
+            const base64Data = Buffer.from(fileBase64).toString('base64'); // Remove the data URL prefix
+            // const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
             stringFile = base64Data;
             console.log('filebase64: ', fileBase64);
         }
@@ -441,7 +421,7 @@ export default function Chat({
             handleUserClick={handleUserClick}
             selectedUser={
                 !conditionalForOwner
-                    ? owner
+                    ? owner!
                     : !selectedUser
                         ? users[0]?.username
                         : selectedUser
@@ -528,27 +508,6 @@ export default function Chat({
         </>
 }
 
-interface ChatComponentProps {
-    users: User[];
-    handleUserClick: (username: string) => Promise<void>;
-    selectedUser: string | null;
-    filteredChatMessages: Message[];
-    getLastMessage: (user: User) => Message | null;
-    conditionalForOwner: boolean;
-    iconsAndMoreForUpperSidebar: React.ReactNode;
-    arrowForLeftIcon: React.ReactNode;
-    buttonsIconsAndMoreForUpperChat: React.ReactNode;
-    username: string;
-    paperclipIcon: React.ReactNode;
-    createBlobUrl: (base64Data: string) => string;
-    isImageFile: (filename: string | null) => boolean;
-    handleSendMessage: (
-        messageText: string,
-        fileBase64?: string | null,
-        fileName?: string | null
-    ) => Promise<void>;
-}
-
 function ChatComponent({
     users,
     handleUserClick,
@@ -579,9 +538,13 @@ function ChatComponent({
                                 let lastMessageTime = '';
 
                                 if (lastMessage) {
-                                    lastMessageText = lastMessage.text.length > 10 ? 
-                                        `${lastMessage.text.substring(0, 10)}...` : 
-                                        lastMessage.text;
+                                    if (typeof lastMessage.text === 'string') {
+                                        lastMessageText = lastMessage.text.length > 10 ?
+                                            `${lastMessage.text.substring(0, 10)}...` :
+                                            lastMessage.text;
+                                    } else {
+                                        lastMessageText = 'Invalid message type';
+                                    }
                                     lastMessageTime = new Date(
                                         lastMessage.datetime_from
                                     ).toLocaleString();
@@ -650,22 +613,22 @@ function ChatComponent({
                                     } items-start`}
                             >
                                 <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-900">
-                                    <p>{message.text}</p>
+                                    <p>{typeof message.text === 'string' && message.text}</p>
                                     {message.file &&
                                         (isImageFile(message.filename) ? (
                                             <>
                                                 <img
                                                     src={createBlobUrl(
-                                                        message.file
+                                                        message.file as string
                                                     )}
-                                                    alt={message.filename}
+                                                    alt={message.filename!}
                                                     className="max-w-full h-auto rounded mt-2"
                                                     width="300"
                                                     height="300"
                                                 />
                                                 <a
                                                     href={createBlobUrl(
-                                                        message.file
+                                                        message.file as string
                                                     )}
                                                     download={message.filename}
                                                     className="text-blue-500 underline block mt-2"
@@ -676,7 +639,7 @@ function ChatComponent({
                                         ) : (
                                             <a
                                                 href={createBlobUrl(
-                                                    message.file
+                                                    message.file as string
                                                 )}
                                                 download={message.filename}
                                                 className="text-blue-500 underline"
