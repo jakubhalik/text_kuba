@@ -14,6 +14,7 @@ import (
 	"crypto"
 	"golang.org/x/term"
 	_ "github.com/lib/pq"
+	"github.com/joho/godotenv"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
@@ -26,22 +27,53 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Enter your name/alias: ")
-	username, _ := reader.ReadString('\n')
-	username = strings.TrimSpace(username)
-	log.Printf("Username entered: %s", username)
+	fmt.Print("Would you like to load configuration from .env file? (y/n): ")
+	useEnv, _ := reader.ReadString('\n')
+	useEnv = strings.TrimSpace(useEnv)
 
-	fmt.Print("Enter password for the 'postgres' user: ")
-	postgresPasswordBytes, _ := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Println()
-	postgresPassword := strings.TrimSpace(string(postgresPasswordBytes))
-	log.Println("Password for 'postgres' user entered.")
+	var username, postgresPassword, userPassword string
 
-	fmt.Print("Enter password for '" + username + "' user: ")
-	userPasswordBytes, _ := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Println()
-	userPassword := strings.TrimSpace(string(userPasswordBytes))
-	log.Println("Password for user entered.")
+	if strings.ToLower(useEnv) == "y" {
+		log.Println("Loading configuration from .env file.")
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatalf("Error loading .env file: %v", err)
+		}
+
+		username = os.Getenv("owner")
+		if username == "" {
+			log.Fatal("NAME not found in .env file")
+		}
+
+		postgresPassword = os.Getenv("postgres_password")
+		if postgresPassword == "" {
+			log.Fatal("POSTGRES_PASSWORD not found in .env file")
+		}
+
+		userPassword = os.Getenv("owner_password")
+		if userPassword == "" {
+			log.Fatal("USER_PASSWORD not found in .env file")
+		}
+
+		log.Printf("Configuration loaded for user: %s", username)
+	} else {
+		fmt.Print("Enter your name/alias: ")
+		username, _ = reader.ReadString('\n')
+		username = strings.TrimSpace(username)
+		log.Printf("Username entered: %s", username)
+
+		fmt.Print("Enter password for the 'postgres' user: ")
+		postgresPasswordBytes, _ := term.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Println()
+		postgresPassword = strings.TrimSpace(string(postgresPasswordBytes))
+		log.Println("Password for 'postgres' user entered.")
+
+		fmt.Print("Enter password for '" + username + "' user: ")
+		userPasswordBytes, _ := term.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Println()
+		userPassword = strings.TrimSpace(string(userPasswordBytes))
+		log.Println("Password for user entered.")
+	}
 
 	fmt.Print("Enter your sudo password: ")
 	sudoPasswordBytes, _ := term.ReadPassword(int(os.Stdin.Fd()))

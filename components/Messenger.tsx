@@ -263,17 +263,22 @@ async function sendMessage(
             ]
         );
 
-        await postgresClient.query(`
-            CREATE SCHEMA IF NOT EXISTS "postgres_schema";
-            CREATE TABLE IF NOT EXISTS "postgres_schema".messages_table (
-                datetime_from TEXT,
-                sent_by TEXT,
-                send_to TEXT,
-                text TEXT,
-                file TEXT,
-                filename TEXT
-            );
-        `);
+        try {
+            await postgresClient.query(`
+                CREATE SCHEMA IF NOT EXISTS "postgres_schema";
+                CREATE TABLE IF NOT EXISTS "postgres_schema".messages_table (
+                    datetime_from TEXT,
+                    sent_by TEXT,
+                    send_to TEXT,
+                    text TEXT,
+                    file TEXT,
+                    filename TEXT
+                );
+            `);
+            console.log('postgres_schema was created if it did not exist and message_table in it was created if it did not exist');
+        } catch (e) {
+            console.error('failure of postgres_schema was created if it did not exist and message_table in it was created if it did not exist');
+        }
 
         await postgresClient.query(
             `INSERT INTO "postgres_schema".messages_table (

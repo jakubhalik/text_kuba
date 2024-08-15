@@ -143,13 +143,9 @@ async function signUp(
         console.log('User Hashed Password:', hashedPassword);
 
         const encryptedDecryptedUsername = await openpgp.encrypt({
-
             message: await openpgp.createMessage({ text: decryptedUsername }),
-
             encryptionKeys: await openpgp.readKey({ armoredKey: publicKey! }),
-
             format: 'armored',
-
         });
 
         await userClient.query(`
@@ -384,61 +380,6 @@ async function login(
 
     const decryptedPublicKey = result.rows[0].public_key;
 
-     if (username === owner) {
-
-        const ownerInitialSignInCheck = await client.query(
-            `SELECT enumlabel FROM pg_enum WHERE enumlabel = 'owner_initial_sign_in_happened'`
-        );
-
-        if (ownerInitialSignInCheck.rows.length === 0) {
-            console.log('First time owner login detected. Generating keys.');
-
-            const enumExistsResult = await client.query(`
-                SELECT 1 
-                FROM pg_type 
-                WHERE typname = 'owner_sign_in_status'
-            `);
-
-            if (enumExistsResult.rows.length === 0) {
-                await client.query(`
-                    CREATE TYPE owner_sign_in_status AS ENUM ('owner_initial_sign_in_happened');
-                `);
-                console.log('Enum type owner_sign_in_status created.');
-            }
-
-            try {
-                const insertEnumValueResult = await client.query(`
-                    INSERT INTO pg_enum (enumtypid, enumlabel) 
-                    SELECT typ.oid, 'owner_initial_sign_in_happened' 
-                    FROM pg_type typ 
-                    WHERE typ.typname = 'owner_sign_in_status'
-                    ON CONFLICT DO NOTHING
-                    RETURNING *;
-                `);
-
-                if (insertEnumValueResult.rows.length > 0) {
-                    console.log('Enum value owner_initial_sign_in_happened inserted.');
-                } else {
-                    console.log('Enum value owner_initial_sign_in_happened already exists.');
-                }
-            } catch (error) {
-                console.error('Failed to insert enum value:', error);
-            }
-
-            await client.query(
-                `DO $$
-                 BEGIN
-                     IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'owner_initial_sign_in_happened') THEN
-                         PERFORM pg_enum.enum_range('postgres_schema', 'owner_initial_sign_in_happened');
-                     END IF;
-                 END $$;`
-            );
-            console.log('Adding the enum.');
-
-            return { success: true, action: 'generate keys' };
-        }
-    }
-
     const decryptedUsername = await decryptWithPublicKey(
         decryptedPublicKey,
         encryptedUsername
@@ -475,8 +416,8 @@ async function login(
         transferMessagesToUser(decryptedUsername, decryptedPassword);
         console.log('Transfered messages.');
     } catch (e) {
-        console.error('Failed in transferring messages.');
-        throw new Error('Failed in transferring messages.');
+        console.error('Failed in transferring messages: ', e);
+        throw new Error('Failed in transferring messages: ', e!);
     }
 
     try {
@@ -484,6 +425,61 @@ async function login(
         const userClient = await pool.connect();
 
         userClient.release();
+
+        if (username === owner) {
+
+            const ownerInitialSignInCheck = await client.query(
+                `SELECT enumlabel FROM pg_enum WHERE enumlabel = 'owner_initial_sign_in_happened'`
+            );
+
+            if (ownerInitialSignInCheck.rows.length === 0) {
+                console.log('First time owner login detected. Generating keys.');
+
+                const enumExistsResult = await client.query(`
+                    SELECT 1 
+                    FROM pg_type 
+                    WHERE typname = 'owner_sign_in_status'
+                `);
+
+                if (enumExistsResult.rows.length === 0) {
+                    await client.query(`
+                        CREATE TYPE owner_sign_in_status AS ENUM ('owner_initial_sign_in_happened');
+                    `);
+                    console.log('Enum type owner_sign_in_status created.');
+                }
+
+                try {
+                    const insertEnumValueResult = await client.query(`
+                        INSERT INTO pg_enum (enumtypid, enumlabel) 
+                        SELECT typ.oid, 'owner_initial_sign_in_happened' 
+                        FROM pg_type typ 
+                        WHERE typ.typname = 'owner_sign_in_status'
+                        ON CONFLICT DO NOTHING
+                        RETURNING *;
+                    `);
+
+                    if (insertEnumValueResult.rows.length > 0) {
+                        console.log('Enum value owner_initial_sign_in_happened inserted.');
+                    } else {
+                        console.log('Enum value owner_initial_sign_in_happened already exists.');
+                    }
+                } catch (error) {
+                    console.error('Failed to insert enum value:', error);
+                }
+
+                await client.query(
+                    `DO $$
+                     BEGIN
+                         IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'owner_initial_sign_in_happened') THEN
+                             PERFORM pg_enum.enum_range('postgres_schema', 'owner_initial_sign_in_happened');
+                         END IF;
+                     END $$;`
+                );
+                console.log('Adding the enum.');
+
+                return { success: true, action: 'generate keys' };
+            }
+        }
 
         const sessionData = {
             username: encryptedUsername,

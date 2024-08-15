@@ -59,19 +59,27 @@ export default function Chat({
                 console.log('Private Key Fingerprint:', privateKey.getFingerprint());
 
                 const decryptedMessages = await Promise.all(chatMessages.map(async (message) => {
-                    try {
-                        const decryptedMessageText = await openpgp.decrypt({
-                            message: await openpgp.readMessage({
-                                armoredMessage: message.text,
-                            }),
-                            decryptionKeys: privateKey,
-                        });
 
+                    try {
+
+                        let decryptedMessageText = null;
                         let file = null;
                         let decryptedFileName = null;
                         let decryptedDecryptedMessageText = null;
                         let decryptedFile = null;
                         let decryptedDecryptedFileName = null;
+
+                        try {
+                            decryptedMessageText = await openpgp.decrypt({
+                                message: await openpgp.readMessage({
+                                    armoredMessage: message.text,
+                                }),
+                                decryptionKeys: privateKey,
+                            });
+                            console.log('decrypted message text of the message sent by you: ', decryptedMessageText);
+                        } catch (e) {
+                            console.error('failed decrypting message text sent by you: ', e);
+                        }
 
                         if (message.file) {
                             try {
@@ -192,7 +200,7 @@ export default function Chat({
                             ...message,
                             text: decryptedDecryptedMessageText !== null ? 
                                 decryptedDecryptedMessageText.data as string : 
-                                decryptedMessageText.data as string,
+                                decryptedMessageText && decryptedMessageText.data as string,
                             file: decryptedFile !== null ? decryptedFile : file ? file : null,
                             filename: decryptedDecryptedFileName !== null ? 
                                 decryptedDecryptedFileName.data as string : 
@@ -200,7 +208,7 @@ export default function Chat({
                         };
 
                     } catch (e) {
-                        console.error('Error decrypting message text:', e);
+                        console.error('Error decrypting message text sent to you by your friend:', e);
                         return { ...message, text: 'Error decrypting message' };
                     }
                 }));
@@ -208,7 +216,7 @@ export default function Chat({
                 console.log('Chat messages as you get them from the server:', chatMessages);
                 console.log('Decrypted messages:', decryptedMessages);
 
-               setLocalChatMessages(decryptedMessages);
+                setLocalChatMessages(decryptedMessages);
                 setLoading(false);
 
             } catch (e) {
