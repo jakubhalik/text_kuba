@@ -413,11 +413,24 @@ async function login(
     };
 
     try {
-        transferMessagesToUser(decryptedUsername, decryptedPassword);
-        console.log('Transfered messages.');
+        const messagesCheckResult = await client.query(`
+            SELECT COUNT(*) AS message_count 
+            FROM "postgres_schema".messages_table 
+            WHERE pgp_sym_decrypt(send_to::bytea, $1) = $2;
+        `, [postgresHashedPassword, decryptedUsername]);
+
+        const messageCount = parseInt(messagesCheckResult.rows[0].message_count, 10);
+
+        if (messageCount > 0) {
+            transferMessagesToUser(decryptedUsername, decryptedPassword);
+            console.log('Transfered messages.');
+            console.error('Failed in transferring messages: ');
+        } else {
+            console.log('No messages to transfer.');
+        }
+        console.log('Doing transfer of messages if there is a temp message_table in postgres_schema.');
     } catch (e) {
-        console.error('Failed in transferring messages: ', e);
-        throw new Error('Failed in transferring messages: ', e!);
+        console.error('Failed in Doing transfer of messages if there is a temp message_table in postgres_schema: ', e);
     }
 
     try {
