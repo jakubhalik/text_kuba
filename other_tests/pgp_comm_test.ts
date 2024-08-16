@@ -15,10 +15,11 @@ async function generateKeys() {
     });
     console.log('Key Pair 2:', keyPair2);
 
-    const privateKey1 = keyPair1.privateKey;
-    const publicKey1 = keyPair1.publicKey;
-    const privateKey2 = keyPair2.privateKey;
-    const publicKey2 = keyPair2.publicKey;
+    const privateKey1 = await openpgp.readPrivateKey({ armoredKey: keyPair1.privateKey });
+    const publicKey1 = await openpgp.readKey({ armoredKey: keyPair1.publicKey });
+    const privateKey2 = await openpgp.readPrivateKey({ armoredKey: keyPair2.privateKey });
+    const publicKey2 = await openpgp.readKey({ armoredKey: keyPair2.publicKey });
+
     console.log('Private Key 1:', privateKey1);
     console.log('Public Key 1:', publicKey1);
     console.log('Private Key 2:', privateKey2);
@@ -30,16 +31,14 @@ async function generateKeys() {
     const encrypted = await openpgp.encrypt({
         message: await openpgp.createMessage({ text: message }),
         encryptionKeys: publicKey2,
-        signingKeys: await openpgp.readKey({ armoredKey: privateKey1 })
+        signingKeys: privateKey1
     });
     console.log('Encrypted Message:', encrypted);
 
     const decrypted = await openpgp.decrypt({
         message: await openpgp.readMessage({ armoredMessage: encrypted }),
-        decryptionKeys: await openpgp.decryptKey({
-            privateKey: await openpgp.readPrivateKey({ armoredKey: privateKey2 })
-        }),
-        verificationKeys: await openpgp.readKey({ armoredKey: publicKey1 })
+        decryptionKeys: privateKey2,
+        verificationKeys: publicKey1
     });
     console.log('Decrypted Message:', decrypted);
 
@@ -48,3 +47,4 @@ async function generateKeys() {
 }
 
 generateKeys();
+
