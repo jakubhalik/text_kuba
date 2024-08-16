@@ -71,16 +71,14 @@ async function signUp(
         `);
 
         const existingUser = await client.query(
-            `SELECT 1 FROM postgres_schema.public_keys WHERE username = $1`,
+            `SELECT 1 FROM postgres_schema.public_keys 
+            WHERE username = $1`,
             [username]
         );
 
         if (existingUser.rows.length > 0) {
-
             console.error('Username already exists');
-
             return { success: false, error: 'Username already exists' };
-
         }
 
         await client.query(
@@ -424,7 +422,6 @@ async function login(
         if (messageCount > 0) {
             transferMessagesToUser(decryptedUsername, decryptedPassword);
             console.log('Transfered messages.');
-            console.error('Failed in transferring messages: ');
         } else {
             console.log('No messages to transfer.');
         }
@@ -537,13 +534,9 @@ export default async function Home() {
 
     if (session?.value) {
         console.log('Session: ', session);
-
         const sessionData = JSON.parse(session.value);
-
         console.log('Session Data: ', sessionData);
-
         const client = await postgresUserPool.connect();
-
         console.log('Mutable variable of the userUsername: ', userUsername);
 
         const result = await client.query(

@@ -127,7 +127,6 @@ export interface MessageInputProps {
 
 export interface SharedChatProps {
     users: User[];
-    conditionalForOwner: boolean;
     iconsAndMoreForUpperSidebar: ReactNode;
     arrowForLeftIcon: ReactNode;
     buttonsIconsAndMoreForUpperChat: ReactNode;

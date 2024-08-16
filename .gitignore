@@ -40,5 +40,6 @@ private_key.asc
 next-env.d.ts
 
 # bins
-setup_db
-kill_postgres
+setup_db_bin
+kill_postgres_bin
+count_written_lines_bin

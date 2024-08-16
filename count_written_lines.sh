@@ -10,7 +10,7 @@ export -f count_lines
 total=0
 
 while IFS= read -r -d '' file; do
-    if [[ "$file" == *"/.git/"* || "$file" == *"/.next/"* || "$file" == *"/node_modules/"* || "$file" == "./bun.lockb" || "$file" == "./dev.log" || "$file" == "./dev1.log" || "$file" == *"/public/"* ]]; then
+    if [[ "$file" == *"/.git/"* || "$file" == *"/.next/"* || "$file" == *"/node_modules/"* || "$file" == "./bun.lockb" || "$file" == "./dev.log" || "$file" == "./dev1.log" || "$file" == "./count_written_lines" || "$file" == "./setup_db" || "$file" == "./kill_postgres" || "$file" == *"/public/"* ]]; then
         continue
     fi
 

@@ -59,11 +59,12 @@ When login and password already inputted make setting the private key to cookies
 # The script below right now supports only Arch Linux or Debian Linux
 # Or run things for your postgres db based on what is inside manually
 go build setup_db.go
-./setup_db
+mv setup_db setup_db_bin
+./setup_db_bin
 # or if you want your binary to be really small:
-tinygo build -o setup_db setup_db.go
-strip -s setup_db
-./setup_db
+tinygo build -o setup_db_bin setup_db.go
+strip -s setup_db_bin
+./setup_db_bin
 # or if u do not care about compiling:
 go run setup_db.go
 
@@ -77,12 +78,14 @@ bun run dev
 # This will not be that glamorous,
 # Just either drop the tables, enums, roles manually or just kill and rerun the setup db:
 go build kill_postgres.go
-strip -s kill_postgres
-./kill_postgres
+mv kill_postgres kill_postgres_bin
+strip -s kill_postgres_bin
+./kill_postgres_bin
 go build setup_db.go
-strip -s setup_db
+mv setup_db setup_db_bin
+strip -s setup_db_bin
 # If u tried to get back to some way of app being for debugging by raw sqling and now u don't know why something does not work normally anymore, just run the go scripts mate
-./setup_db
+./setup_db_bin
 ```
 
 # This project is NOT fininshed yet, it is still a work in progress - Pre-Alpha

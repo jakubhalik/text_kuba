@@ -372,8 +372,14 @@ export async function Messenger({ username, password }: MessengerProps) {
             >
                 <Chat
                     users={users}
-                    publicKeys={username === `${owner}` ? publicKeysForOwner : { [owner!]: publicKeys[owner!] }}
-                    conditionalForOwner={username === `${owner}`}
+                    publicKeys={
+                        username === `${owner}` ? 
+                        publicKeys : 
+                            { 
+                                [owner!]: publicKeys[owner!], 
+                                [username]: publicKeys[username] 
+                            }
+                    }
                     iconsAndMoreForUpperSidebar={
                         <div>
                             {/*<div className="border-b flex items-center p-4 space-x-4">

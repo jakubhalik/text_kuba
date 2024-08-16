@@ -10,7 +10,7 @@ import MessageInput from './MessageInput';
 
 import * as openpgp from 'openpgp';
 
-import { getCookie } from 'cookies-next';
+import { getCookie, setCookie } from 'cookies-next';
 
 
 
@@ -18,7 +18,6 @@ import { getCookie } from 'cookies-next';
 
 export default function Chat({
     users,
-    conditionalForOwner,
     iconsAndMoreForUpperSidebar,
     arrowForLeftIcon,
     buttonsIconsAndMoreForUpperChat,
@@ -34,134 +33,143 @@ export default function Chat({
 
     const [localChatMessages, setLocalChatMessages] =
         useState<Message[]>(chatMessages);
-
     
     useEffect(() => {
-
         const decryptMessages = async () => {
+            const myPublicKey = publicKeys[username];
+            console.log('my public key: ', myPublicKey);
+            const publicKey = getCookie('publicKey') as string;
+            if (myPublicKey !== publicKey) {
+                setCookie('publicKey', myPublicKey, {
+                    path: '/',
+                    secure: true,
+                    sameSite: 'strict',
+                });
+                console.log('public key exchanged for the one you are using now');
+            }
             if (!chatMessages.length) { 
                 setLoading(false);
                 return;
             }
-
             try {
                 const privateKeyArmored = getCookie('privateKey') as string;
                 console.log('Private Key (Armored):', privateKeyArmored);
-
                 const privateKey = await openpgp.readPrivateKey({
                     armoredKey: privateKeyArmored,
                 });
-
                 console.log('Private Key (Unarmored):', privateKey);
                 console.log('Key Packet:', privateKey.keyPacket);
                 console.log('Subkeys:', privateKey.subkeys);
                 console.log('Users:', privateKey.users);
                 console.log('Private Key Fingerprint:', privateKey.getFingerprint());
-
+                console.log('public keys: ', publicKeys);
                 const decryptedMessages = await Promise.all(chatMessages.map(async (message) => {
                     try {
-
-                        if (message.send_to === username) {
-                            const decryptedMessageText = await openpgp.decrypt({
-                                message: await openpgp.readMessage({
-                                    armoredMessage: message.text,
-                                }),
-                                decryptionKeys: privateKey,
-                                verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
-                            });
-                            console.log('this message was sent by the other person to you: ', decryptedMessageText);
-
+                        console.log('starting a try block of decrypting a message');
+                        console.log('public keys: ', publicKeys);
+                        try {
+                            let decryptedMessageText = null;
                             let file = null;
                             let decryptedFileName = null;
-
-                            if (message.file) {
+                            if (message.send_to === username) {
+                                console.log('send to: ', message.send_to);
+                                console.log('sent by: ', message.sent_by);
                                 try {
-                                    const decryptedFile = await openpgp.decrypt({
+                                    decryptedMessageText = await openpgp.decrypt({
                                         message: await openpgp.readMessage({
-                                            armoredMessage: message.file,
+                                            armoredMessage: message.text,
                                         }),
                                         decryptionKeys: privateKey,
                                         verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
                                     });
-
-                                    const fileData = decryptedFile.data as Uint8Array;
-
-                                    file = `data:image/*;base64,${Buffer.from(fileData).toString('base64')}`;
-
+                                    console.log('this message was sent by the other person to you: ', decryptedMessageText);
                                 } catch (e) {
-                                    console.error('Error decrypting file:', e);
+                                    console.error('error in transferring message text sent by the other person than me to me: ', e);
+                                    return { ...message, text: 'error in transferring message text sent by the other person than me to me' }
                                 }
-                            }
 
-                            if (message.filename) {
-                                try {
-                                    decryptedFileName = await openpgp.decrypt({
-                                        message: await openpgp.readMessage({
-                                            armoredMessage: message.filename,
-                                        }),
-                                        decryptionKeys: privateKey,
-                                        verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
-                                    });
-                                } catch (e) {
-                                    console.error('Error decrypting filename:', e);
+                                if (message.file) {
+                                    try {
+                                        const decryptedFile = await openpgp.decrypt({
+                                            message: await openpgp.readMessage({
+                                                armoredMessage: message.file,
+                                            }),
+                                            decryptionKeys: privateKey,
+                                            verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
+                                        });
+                                        const fileData = decryptedFile.data as Uint8Array;
+                                        file = `data:image/*;base64,${Buffer.from(fileData).toString('base64')}`;
+                                    } catch (e) {
+                                        console.error('Error decrypting file:', e);
+                                    }
                                 }
-                            }
-                            return {
-                                ...message,
-                                text: decryptedMessageText.data as string,
-                                file: file ? file : null,
-                                filename: decryptedFileName ? decryptedFileName.data as string : null,
-                            };
-                        } else {
-                            const decryptedMessageText = await openpgp.decrypt({
-                                message: await openpgp.readMessage({
-                                    armoredMessage: message.text,
-                                }),
-                                decryptionKeys: privateKey,
-                            });
-                            console.log('this message was sent by you: ', decryptedMessageText);
 
-                            let file = null;
-                            let decryptedFileName = null;
-
-                            if (message.file) {
-                                try {
-                                    const decryptedFile = await openpgp.decrypt({
-                                        message: await openpgp.readMessage({
-                                            armoredMessage: message.file,
-                                        }),
-                                        decryptionKeys: privateKey,
-                                    });
-
-                                    const fileData = decryptedFile.data as Uint8Array;
-
-                                    file = `data:image/*;base64,${Buffer.from(fileData).toString('base64')}`;
-
-                                } catch (e) {
-                                    console.error('Error decrypting file:', e);
+                                if (message.filename) {
+                                    try {
+                                        decryptedFileName = await openpgp.decrypt({
+                                            message: await openpgp.readMessage({
+                                                armoredMessage: message.filename,
+                                            }),
+                                            decryptionKeys: privateKey,
+                                            verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
+                                        });
+                                    } catch (e) {
+                                        console.error('Error decrypting filename:', e);
+                                    }
                                 }
-                            }
+                                return {
+                                    ...message,
+                                    text: decryptedMessageText.data as string,
+                                    file: file ? file : null,
+                                    filename: decryptedFileName ? decryptedFileName.data as string : null,
+                                };
+                            } else {
+                                decryptedMessageText = await openpgp.decrypt({
+                                    message: await openpgp.readMessage({
+                                        armoredMessage: message.text,
+                                    }),
+                                    decryptionKeys: privateKey,
+                                });
+                                console.log('this message was sent by you: ', decryptedMessageText);
 
-                            if (message.filename) {
-                                try {
-                                    decryptedFileName = await openpgp.decrypt({
-                                        message: await openpgp.readMessage({
-                                            armoredMessage: message.filename,
-                                        }),
-                                        decryptionKeys: privateKey,
-                                    });
-                                } catch (e) {
-                                    console.error('Error decrypting filename:', e);
+                                if (message.file) {
+                                    try {
+                                        const decryptedFile = await openpgp.decrypt({
+                                            message: await openpgp.readMessage({
+                                                armoredMessage: message.file,
+                                            }),
+                                            decryptionKeys: privateKey,
+                                        });
+                                        const fileData = decryptedFile.data as Uint8Array;
+                                        file = `data:image/*;base64,${Buffer.from(fileData).toString('base64')}`;
+                                    } catch (e) {
+                                        console.error('Error decrypting file:', e);
+                                    }
                                 }
+
+                                if (message.filename) {
+                                    try {
+                                        decryptedFileName = await openpgp.decrypt({
+                                            message: await openpgp.readMessage({
+                                                armoredMessage: message.filename,
+                                            }),
+                                            decryptionKeys: privateKey,
+                                        });
+                                    } catch (e) {
+                                        console.error('Error decrypting filename:', e);
+                                    }
+                                }
+                                return {
+                                    ...message,
+                                    text: decryptedMessageText.data as string,
+                                    file: file ? file : null,
+                                    filename: decryptedFileName ? decryptedFileName.data as string : null,
+                                };
                             }
-                            return {
-                                ...message,
-                                text: decryptedMessageText.data as string,
-                                file: file ? file : null,
-                                filename: decryptedFileName ? decryptedFileName.data as string : null,
-                            };
+                        } catch (e) { 
+                            console.error('Error even executing the if username === message.send_to: ', e); 
+                            return { ...message, text: 'Error even executing the if username === message.send_to: ', e } 
                         }
-
                     } catch (e) {
                         console.error('Error decrypting message text:', e);
                         return { ...message, text: 'Error decrypting message' };
@@ -170,7 +178,6 @@ export default function Chat({
 
                 console.log('Chat messages as you get them from the server:', chatMessages);
                 console.log('Decrypted messages:', decryptedMessages);
-
                 setLocalChatMessages(decryptedMessages);
                 setLoading(false);
 
@@ -286,7 +293,8 @@ export default function Chat({
         if (!recipientPublicKey) {
             console.warn('Recipient public key not found. Skipping encryption for recipient.');
         } else {
-
+            console.log('public keys: ', publicKeys);
+            console.log('recipient public key: ', recipientPublicKey);
             const encryptedMessageTextForRecipient = await openpgp.encrypt({
                 message: await openpgp.createMessage({ text: messageText }),
                 encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
@@ -473,15 +481,11 @@ export default function Chat({
     };
 
     const isImageFile = (filename: string | null) => {
-
-        if (!filename) return false;
-
+        if (!filename) { return false; }
         const extension = filename.split('.').pop()?.toLowerCase();
-
         return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
             extension!
         );
-
     };
 
     return !loading ? 
@@ -489,7 +493,7 @@ export default function Chat({
             users={users}
             handleUserClick={handleUserClick}
             selectedUser={
-                !conditionalForOwner
+                username !== owner
                     ? owner!
                     : !selectedUser
                         ? users[0]?.username
@@ -497,7 +501,6 @@ export default function Chat({
             }
             filteredChatMessages={filteredChatMessages}
             getLastMessage={getLastMessage}
-            conditionalForOwner={conditionalForOwner}
             iconsAndMoreForUpperSidebar={iconsAndMoreForUpperSidebar}
             arrowForLeftIcon={arrowForLeftIcon}
             buttonsIconsAndMoreForUpperChat={buttonsIconsAndMoreForUpperChat}
@@ -508,7 +511,7 @@ export default function Chat({
             handleSendMessage={handleSendMessage}
         /> : 
         <>
-            {conditionalForOwner && (
+            {username === owner && (
                 <div className="border-r flex flex-col w-full md:max-w-[300px] h-full">
                     {iconsAndMoreForUpperSidebar}
                     <div className="flex-1 overflow-y-auto">
@@ -583,7 +586,6 @@ function ChatComponent({
     selectedUser,
     filteredChatMessages,
     getLastMessage,
-    conditionalForOwner,
     iconsAndMoreForUpperSidebar,
     arrowForLeftIcon,
     buttonsIconsAndMoreForUpperChat,
@@ -593,10 +595,10 @@ function ChatComponent({
     isImageFile,
     handleSendMessage,
 }: ChatComponentProps) {
-
+    const owner = process.env.NEXT_PUBLIC_OWNER;
     return (
         <>
-            {conditionalForOwner && (
+            {username === owner && (
                 <div className="border-r flex flex-col w-full md:max-w-[300px] h-full">
                     {iconsAndMoreForUpperSidebar}
                     <div className="flex-1 overflow-y-auto">
