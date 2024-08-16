@@ -37,7 +37,7 @@ export default function Chat({
     useEffect(() => {
         const decryptMessages = async () => {
             const myPublicKey = publicKeys[username];
-            console.log('my public key: ', myPublicKey);
+            // console.log('my public key: ', myPublicKey);
             const publicKey = getCookie('publicKey') as string;
             if (myPublicKey !== publicKey) {
                 setCookie('publicKey', myPublicKey, {
@@ -45,7 +45,7 @@ export default function Chat({
                     secure: true,
                     sameSite: 'strict',
                 });
-                console.log('public key exchanged for the one you are using now');
+                // console.log('public key exchanged for the one you are using now');
             }
             if (!chatMessages.length) { 
                 setLoading(false);
@@ -53,27 +53,78 @@ export default function Chat({
             }
             try {
                 const privateKeyArmored = getCookie('privateKey') as string;
-                console.log('Private Key (Armored):', privateKeyArmored);
+                // console.log('Private Key (Armored):', privateKeyArmored);
                 const privateKey = await openpgp.readPrivateKey({
                     armoredKey: privateKeyArmored,
                 });
-                console.log('Private Key (Unarmored):', privateKey);
-                console.log('Key Packet:', privateKey.keyPacket);
-                console.log('Subkeys:', privateKey.subkeys);
-                console.log('Users:', privateKey.users);
-                console.log('Private Key Fingerprint:', privateKey.getFingerprint());
-                console.log('public keys: ', publicKeys);
+                // console.log('Private Key (Unarmored):', privateKey);
+                // console.log('Key Packet:', privateKey.keyPacket);
+                // console.log('Subkeys:', privateKey.subkeys);
+                // console.log('Users:', privateKey.users);
+                // console.log('Private Key Fingerprint:', privateKey.getFingerprint());
+                // console.log('public keys: ', publicKeys);
                 const decryptedMessages = await Promise.all(chatMessages.map(async (message) => {
                     try {
-                        console.log('starting a try block of decrypting a message');
-                        console.log('public keys: ', publicKeys);
+                        // console.log('starting a try block of decrypting a message');
+                        // console.log('public keys: ', publicKeys);
                         try {
                             let decryptedMessageText = null;
                             let file = null;
                             let decryptedFileName = null;
                             if (message.send_to === username) {
-                                console.log('send to: ', message.send_to);
-                                console.log('sent by: ', message.sent_by);
+                                // test of pgp comm ->
+                                /* try {
+                                    const keyPair1 = await openpgp.generateKey({
+                                        type: 'ecc',
+                                        curve: 'curve25519',
+                                        userIDs: [{}]
+                                    });
+                                    console.log('test Key Pair 1:', keyPair1);
+
+                                    const keyPair2 = await openpgp.generateKey({
+                                        type: 'ecc',
+                                        curve: 'curve25519',
+                                        userIDs: [{}]
+                                    });
+                                    console.log('test Key Pair 2:', keyPair2);
+
+                                    const privateKey1 = await openpgp.readPrivateKey({ armoredKey: keyPair1.privateKey });
+                                    const publicKey1 = await openpgp.readKey({ armoredKey: keyPair1.publicKey });
+                                    const privateKey2 = await openpgp.readPrivateKey({ armoredKey: keyPair2.privateKey });
+                                    const publicKey2 = await openpgp.readKey({ armoredKey: keyPair2.publicKey });
+
+                                    console.log('test Private Key 1:', privateKey1);
+                                    console.log('test Public Key 1:', publicKey1);
+                                    console.log('test Private Key 2:', privateKey2);
+                                    console.log('test Public Key 2:', publicKey2);
+
+                                    const message = 'This is a secret message';
+                                    console.log('test Message:', message);
+
+                                    const encrypted = await openpgp.encrypt({
+                                        message: await openpgp.createMessage({ text: message }),
+                                        encryptionKeys: publicKey2,
+                                        signingKeys: privateKey1
+                                    });
+                                    console.log('test Encrypted Message:', encrypted);
+
+                                    const decrypted = await openpgp.decrypt({
+                                        message: await openpgp.readMessage({ armoredMessage: encrypted }),
+                                        decryptionKeys: privateKey2,
+                                        verificationKeys: publicKey1
+                                    });
+                                    console.log('test Decrypted Message:', decrypted);
+
+                                    const decryptedText = decrypted.data;
+                                    console.log('test Decrypted Text:', decryptedText);
+                                    console.log('test of pgp comm successfull');
+                                } catch (e) {
+                                    console.error('the test of pgp comm failed: ', e);
+                                    return { ...message, text: 'the test of pgp comm failed' }
+                                } */
+                                // the pgp comm test <-
+                                // console.log('send to: ', message.send_to);
+                                // console.log('sent by: ', message.sent_by);
                                 try {
                                     decryptedMessageText = await openpgp.decrypt({
                                         message: await openpgp.readMessage({
@@ -82,7 +133,7 @@ export default function Chat({
                                         decryptionKeys: privateKey,
                                         verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
                                     });
-                                    console.log('this message was sent by the other person to you: ', decryptedMessageText);
+                                    // console.log('this message was sent by the other person to you: ', decryptedMessageText);
                                 } catch (e) {
                                     console.error('error in transferring message text sent by the other person than me to me: ', e);
                                     return { ...message, text: 'error in transferring message text sent by the other person than me to me' }
@@ -130,7 +181,7 @@ export default function Chat({
                                     }),
                                     decryptionKeys: privateKey,
                                 });
-                                console.log('this message was sent by you: ', decryptedMessageText);
+                                // console.log('this message was sent by you: ', decryptedMessageText);
 
                                 if (message.file) {
                                     try {
@@ -176,8 +227,8 @@ export default function Chat({
                     }
                 }));
 
-                console.log('Chat messages as you get them from the server:', chatMessages);
-                console.log('Decrypted messages:', decryptedMessages);
+                // console.log('Chat messages as you get them from the server:', chatMessages);
+                // console.log('Decrypted messages:', decryptedMessages);
                 setLocalChatMessages(decryptedMessages);
                 setLoading(false);
 
@@ -251,7 +302,7 @@ export default function Chat({
 
         const publicKey = getCookie('publicKey') as string;
 
-        console.log('public key: ', publicKey);
+        // console.log('public key: ', publicKey);
 
         const encryptedMessageText = await openpgp.encrypt({
             message: await openpgp.createMessage({ text: messageText }),
@@ -265,7 +316,7 @@ export default function Chat({
             const base64Data = Buffer.from(fileBase64).toString('base64'); // Remove the data URL prefix
             // const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
             stringFile = base64Data;
-            console.log('filebase64: ', fileBase64);
+            // console.log('filebase64: ', fileBase64);
         }
 
         const encryptedFile = stringFile ? await openpgp.encrypt({
@@ -280,9 +331,9 @@ export default function Chat({
             format: 'armored',
         }) as string : null;
 
-        console.log('encrypted message text: ', encryptedMessageText);
-        console.log('encrypted file: ', encryptedFile);
-        console.log('encrypted filename: ', encryptedFileName);
+        // console.log('encrypted message text: ', encryptedMessageText);
+        // console.log('encrypted file: ', encryptedFile);
+        // console.log('encrypted filename: ', encryptedFileName);
 
         const recipientPublicKey = publicKeys[selectedUser!];
         const privateKeyArmored = getCookie('privateKey') as string;
@@ -293,11 +344,11 @@ export default function Chat({
         if (!recipientPublicKey) {
             console.warn('Recipient public key not found. Skipping encryption for recipient.');
         } else {
-            console.log('public keys: ', publicKeys);
-            console.log('recipient public key: ', recipientPublicKey);
+            // console.log('public keys: ', publicKeys);
+            // console.log('recipient public key: ', recipientPublicKey);
             const encryptedMessageTextForRecipient = await openpgp.encrypt({
                 message: await openpgp.createMessage({ text: messageText }),
-                encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+                encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
                 signingKeys: privateKey,
                 format: 'armored',
             }) as string;
@@ -308,19 +359,19 @@ export default function Chat({
                 const base64Data = Buffer.from(fileBase64).toString('base64'); // Remove the data URL prefix
                 // const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
                 stringFile = base64Data;
-                console.log('filebase64: ', fileBase64);
+                // console.log('filebase64: ', fileBase64);
             }
 
             const encryptedFileForRecipient = stringFile ? await openpgp.encrypt({
                 message: await openpgp.createMessage({ text: stringFile }),
-                encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+                encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
                 signingKeys: privateKey,
                 format: 'armored',
             }) as string : null;
 
             const encryptedFileNameForRecipient = fileName ? await openpgp.encrypt({
                 message: await openpgp.createMessage({ text: fileName }),
-                encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+                encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
                 signingKeys: privateKey,
                 format: 'armored',
             }) as string : null;
@@ -350,7 +401,7 @@ export default function Chat({
         }
 
         // This block is for a client side test ->
-
+/* 
         if (!privateKeyArmored || !publicKey) {
             console.error('Missing or corrupted key(s)');
         } else {
@@ -420,7 +471,7 @@ export default function Chat({
         } catch (error) {
             console.error('Failed to unarmor the private key:', error);
         }
-        
+         */
         // This block is for a client side test <-
         
     };
