@@ -121,6 +121,7 @@ export default function LoginOrSignUp({
                     signingKeys: privateKey,
                     format: 'armored',
                 });
+                console.log('encrypted username: ', encryptedUsername);
 
                 const encryptedPassword = await openpgp.sign({
                     message: await openpgp.createMessage({
@@ -129,6 +130,7 @@ export default function LoginOrSignUp({
                     signingKeys: privateKey,
                     format: 'armored',
                 });
+                console.log('encrypted password: ', encryptedPassword);
 
                 const formData: FormData = {
                     username: data.username,
