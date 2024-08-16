@@ -25,6 +25,7 @@ You with it alone cannot do or see anything.
 You have to have access to your data to decrypt the values with the private key, and you can get to those only via the authentication into the app for which u need not only the private key, but also your password.
 This is a 2-factor authentication without a phone/email, security upgrade of a 2-factor auth if you will.
 But even tho one cannot do anything with your private key alone, if you suspect that someone knows it you should as fast as possible, just to be safe, sign in and generate new keys, there will be a button for this that will also on your device decrypt all your data with your private key will generate the new keys, will encrypt them with the new public key, will burn the old private key from your cookies (if u have it there), will throw the new one there (if u let it there), will send a message to the server to burn the old public key and all values encrypted with it and will replace them with the newly encrypted values on your device with the new public key that will also be saved in the db encrypted in the same way as it was before.
+Now the only data decryptable by the server will be the from whom are which encrypted messages sent to whom: That is required for the server to be capable of sending the messages from one user to the other, but worry not, you already have the full anonymity of what are you sending to anyone and you can have the anonymity of to whom you are sending the encrypted messages/files/filenames by just choosing an alias nickname instead of any name which actually describes your real identity in any way.
 
 When you login in the default mode the process of logging in will continue only if a private key is in your cookies, if you have selected the no-cookies mode, you will have to input the private key, into the input on the page with the credentials for it to on your device only encrypt the name and password so it can be sent on to the server where it will be decrypted with the public key that is saved under your name. If either there is not even a public key with the name you are trying to login with or a sign in in the postgres pool cannot happen with the decrypted credentials decrypted via the public key you will get a wrong credentials error.
 
@@ -39,6 +40,75 @@ When the last message in the chat sidebar is too long, for example longer than 1
 When opening the private key popup make the textarea selected by the user
 
 When login and password already inputted make setting the private key to cookies relog with that private key and the credentials
+
+fix: 
+```bash
+ ⨯ unhandledRejection: error: relation "postgres_schema.messages_table" does not exist
+    at /home/x/d/g/gh/text_kuba/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async $$ACTION_1 (webpack-internal:///(rsc)/./app/page.tsx:194:31) {
+  length: 130,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '391',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1428',
+  routine: 'parserOpenTable'
+}
+```
+
+and:
+```bash
+Error in decryptWithPublicKey: Error: Could not find signing key with key ID 7fb0857d3926ef71
+    at eval (webpack-internal:///(rsc)/./node_modules/openpgp/dist/node/openpgp.min.mjs:62:356378)
+    at eval (webpack-internal:///(rsc)/./node_modules/openpgp/dist/node/openpgp.min.mjs:62:356846)
+    at eval (webpack-internal:///(rsc)/./node_modules/openpgp/dist/node/openpgp.min.mjs:62:356994)
+    at _u.map (<anonymous>)
+    at Th (webpack-internal:///(rsc)/./node_modules/openpgp/dist/node/openpgp.min.mjs:62:356113)
+    at Ih.verify (webpack-internal:///(rsc)/./node_modules/openpgp/dist/node/openpgp.min.mjs:62:354892)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Module.Yh (webpack-internal:///(rsc)/./node_modules/openpgp/dist/node/openpgp.min.mjs:62:369629)
+    at async decryptWithPublicKey (webpack-internal:///(rsc)/./actions/decryptWithPublicKey.ts:25:36)
+    at async $$ACTION_2 (webpack-internal:///(rsc)/./app/page.tsx:361:31)
+    at async /home/x/d/g/gh/text_kuba/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:39:406
+    at async t2 (/home/x/d/g/gh/text_kuba/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:38:6412)
+    at async rS (/home/x/d/g/gh/text_kuba/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:41:1369)
+    at async doRender (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/base-server.js:1376:30)
+    at async cacheEntry.responseCache.get.routeKind (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/base-server.js:1537:28)
+    at async DevServer.renderToResponseWithComponentsImpl (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/base-server.js:1445:28)
+    at async DevServer.renderPageComponent (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/base-server.js:1842:24)
+    at async DevServer.renderToResponseImpl (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/base-server.js:1880:32)
+    at async DevServer.pipeImpl (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/base-server.js:893:25)
+    at async NextNodeServer.handleCatchallRenderRequest (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/next-server.js:269:17)
+    at async DevServer.handleRequestImpl (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/base-server.js:789:17)
+    at async /home/x/d/g/gh/text_kuba/node_modules/next/dist/server/dev/next-dev-server.js:331:20
+    at async Span.traceAsyncFn (/home/x/d/g/gh/text_kuba/node_modules/next/dist/trace/trace.js:151:20)
+    at async DevServer.handleRequest (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/dev/next-dev-server.js:328:24)
+    at async invokeRender (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/lib/router-server.js:174:21)
+    at async handleRequest (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/lib/router-server.js:353:24)
+    at async requestHandlerImpl (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/lib/router-server.js:377:13)
+    at async Server.requestListener (/home/x/d/g/gh/text_kuba/node_modules/next/dist/server/lib/start-server.js:140:13)
+ ⨯ node_modules/openpgp/dist/node/openpgp.min.mjs (2:356117) @ eval
+ ⨯ Error: Could not find signing key with key ID 7fb0857d3926ef71
+    at _u.map (<anonymous>)
+    at async decryptWithPublicKey (./actions/decryptWithPublicKey.ts:25:36)
+    at async $$ACTION_2 (./app/page.tsx:361:31)
+```
+
+text transfer via sign with my private key and encryption with the public key of recipient and inverse decryption
+    this will need the messenger component to send the public keys of users the user can chat with to the chat component and for the chat component to be doing for all messages/files/filenames/dates not just the encryptions it does for its own storage, but to also besides that encrypt it the way mentioned above with that being sent back to the messenger component with there being those arguments used in the saving in postgres_schema instead of the same way as is the other stored there
+    asking for the public keys in a separate query from the one for the users, so u can also select the owner one all normally and then in a later condition send all the public keys but the owner one to the chat component only if the username === `${owner}` and to otherwise send only the owner public key
+
 <br>
 <br>
 <br>
