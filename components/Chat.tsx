@@ -69,6 +69,7 @@ export default function Chat({
                                 decryptionKeys: privateKey,
                                 verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
                             });
+                            console.log('this message was sent by the other person to you: ', decryptedMessageText);
 
                             let file = null;
                             let decryptedFileName = null;
@@ -118,6 +119,7 @@ export default function Chat({
                                 }),
                                 decryptionKeys: privateKey,
                             });
+                            console.log('this message was sent by you: ', decryptedMessageText);
 
                             let file = null;
                             let decryptedFileName = null;

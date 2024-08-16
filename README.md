@@ -76,10 +76,10 @@ bun run dev
 ```bash
 # This will not be that glamorous,
 # Just either drop the tables, enums, roles manually or just kill and rerun the setup db:
-tinygo build -o kill_postgres kill_postgres.go
+go build kill_postgres.go
 strip -s kill_postgres
 ./kill_postgres
-tinygo build -o setup_db setup_db.go
+go build setup_db.go
 strip -s setup_db
 # If u tried to get back to some way of app being for debugging by raw sqling and now u don't know why something does not work normally anymore, just run the go scripts mate
 ./setup_db
