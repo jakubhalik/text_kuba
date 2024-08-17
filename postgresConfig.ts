@@ -14,6 +14,9 @@ export const postgresUserPool = new Pool({
     database: `text_${owner}`,
     user: 'postgres',
     password: postgresPassword,
+    max: 1000,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
 });
 
 const postgresCombinedPassword = `postgres${postgresPassword}`;
