@@ -104,6 +104,9 @@ text transfer via sign with my private key and encryption with the public key of
 
 done till here
 
+fix the mistake that makes it impossible now for more than one person to be logged in at once lol, it is in the Home function , loggedIn server side handling without implementation for handling infinite users, rookie mistake
+the session variables are fine, but the mutable ones cannot be only in the Home function , it is how my whole logging in works, those mutable variables that are global across the entire file must stay that way , but what I need u to change is for it to not be loggedIn but loggedInUsers so each time a new user logs in he is added to the loggedInUsers server cached array, I want you to cache these values in loggedInUsers for 24 hours so u then in the xml returning part do not do loggedIn && but loggedIn[decryptedUsername] &&
+
 websockets encryption and decryption the same way as above with the keys
 
 encrypting dates too

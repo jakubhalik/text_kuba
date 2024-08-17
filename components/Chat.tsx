@@ -567,33 +567,6 @@ export default function Chat({
                     {iconsAndMoreForUpperSidebar}
                     <div className="flex-1 overflow-y-auto">
                         <ul className="divide-y max-h-[calc(100vh-150px)] overflow-y-auto">
-                            <li
-                                className="bg-gray-100 p-4 dark:bg-gray-900"
-                            >
-                                <div
-                                    className="flex items-center gap-4 p-4 rounded-lg cursor-pointer"
-                                >
-                                    <Image
-                                        alt="Avatar"
-                                        className="rounded-full"
-                                        height="40"
-                                        src="/placeholder.svg"
-                                        style={{
-                                            aspectRatio: '40/40',
-                                            objectFit: 'cover',
-                                        }}
-                                        width="40"
-                                    />
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold">
-                                        </h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        </p>
-                                    </div>
-                                    <span className="text-sm">
-                                    </span>
-                                </div>
-                            </li>
                         </ul>
                     </div>
                 </div>
