@@ -631,7 +631,6 @@ function ChatComponent({
                                 const lastMessage = getLastMessage(user);
                                 let lastMessageText = 'No messages yet';
                                 let lastMessageTime = '';
-
                                 if (lastMessage) {
                                     if (typeof lastMessage.text === 'string') {
                                         lastMessageText = lastMessage.text.length > 10 ?
@@ -644,11 +643,12 @@ function ChatComponent({
                                         lastMessage.datetime_from
                                     ).toLocaleString();
                                 }
-
                                 return (
                                     <li
                                         key={index}
-                                        className="bg-gray-100 p-4 dark:bg-gray-900"
+                                        className={`p-4 ${user.username === selectedUser ? 
+                                            'bg-blue-200 dark:bg-slate-900' 
+                                            : 'bg-gray-100 dark:bg-gray-900'}`}
                                     >
                                         <div
                                             className="flex items-center gap-4 p-4 rounded-lg cursor-pointer"

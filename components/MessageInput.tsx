@@ -73,7 +73,7 @@ export default function MessageInput({
 
     return (
         <div className="
-            flex items-center p-4 space-x-4 pt-4 fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800
+            flex items-center p-4 space-x-4 pt-4 fixed bottom-0 left-0 right-0 bg-blue-200 dark:bg-gray-800
         ">
             {filePreview &&
                 (isImageFile(file?.name!) ? (

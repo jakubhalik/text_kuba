@@ -107,6 +107,8 @@ text transfer via sign with my private key and encryption with the public key of
     this will need the messenger component to send the public keys of users the user can chat with to the chat component and for the chat component to be doing for all messages/files/filenames/dates not just the encryptions it does for its own storage, but to also besides that encrypt it the way mentioned above with that being sent back to the messenger component with there being those arguments used in the saving in postgres_schema instead of the same way as is the other stored there
     asking for the public keys in a separate query from the one for the users, so u can also select the owner one all normally and then in a later condition send all the public keys but the owner one to the chat component only if the username === `${owner}` and to otherwise send only the owner public key
 
+hover on bg in the sidebar (I get that when it is in phone mode it is not exactly a sidebar), probly like blue, when it is the li of the selectedUser , and fixing the light theme for MessageInput
+
 done till here
 
 websockets encryption and decryption the same way as above with the keys
@@ -118,6 +120,8 @@ possibility to generate new keys and set them right away in the cookies and the 
 pseudorandom profile pics for fun now before profiles
 
 frontend for texts and support for switching full us and cz langs
+
+fix viewing pictures
 
 deploy the pre-alpha when it is in this stage and have some people chat with some person there for real for pre-alpha testing
 
