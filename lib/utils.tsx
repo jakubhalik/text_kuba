@@ -10,6 +10,8 @@ import * as openpgp from 'openpgp';
 import { ReactNode } from 'react';
 
 
+
+
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
@@ -132,6 +134,7 @@ export interface SharedChatProps {
     buttonsIconsAndMoreForUpperChat: ReactNode;
     username: string;
     paperclipIcon: ReactNode;
+    avatarFiles: string[];
 }
 
 export interface ChatProps extends SharedChatProps {

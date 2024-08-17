@@ -21,7 +21,6 @@ import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
 import Image from 'next/image';
 
 import fs from 'fs';
-
 import path from 'path';
 
 
@@ -40,7 +39,6 @@ async function getDecryptedMessages(
     username: string,
     password: string
 ): Promise<MessagesResult> {
-
     'use server';
 
     const pool = new Pool({
@@ -50,10 +48,8 @@ async function getDecryptedMessages(
         user: username,
         password: password,
     });
-
     const client = await pool.connect();
     const postgresClient = await postgresUserPool.connect();
-
     const combinedPassword = `${username}${password}`;
     const hashedPassword = crypto
         .createHash('sha256')
@@ -116,13 +112,11 @@ async function getDecryptedMessages(
     }
 
     try {
-
         publicKeys = resultForPublicKeys.rows.reduce((acc, row) => {
             acc[row.username] = row.public_key;
             return acc;
         }, {} as Record<string, string>);
         console.log('public keys: ', publicKeys);
-
         publicKeysForOwner = Object.keys(publicKeys).reduce((acc, key) => {
             if (key !== owner) {
                 acc[key] = publicKeys[key];
@@ -130,13 +124,11 @@ async function getDecryptedMessages(
             return acc;
         }, {} as Record<string, string>);
         console.log('public keys for owner: ', publicKeysForOwner);
-
     } catch (error) {
         console.error('Error processing public keys:', error);
         client.release();
         throw new Error('Failed to process public keys');
     }
-
     if (Object.keys(publicKeysForOwner).length === 0) {
         console.warn(`
             No non-owner public keys found. 
@@ -144,7 +136,6 @@ async function getDecryptedMessages(
                 from non-owner users to owner.`
         );
     }
-
     let chatMessagesProcessed;
     try {
         chatMessagesProcessed = resultForChat.rows.map((message) => {
@@ -181,15 +172,11 @@ async function sendMessage(
     fileForRecipient: string | null = null,
     fileNameForRecipient: string | null = null
 ): Promise<void> {
-
     'use server';
 
     const session = cookies().get('session');
-
     const sessionData = JSON.parse(session!.value);
-
     const postgresClient = await postgresUserPool.connect();
-
     const result = await postgresClient.query(
         `SELECT 
             pgp_sym_decrypt(public_key::bytea, $1) 
@@ -201,22 +188,16 @@ async function sendMessage(
                     username = $2`,
         [postgresHashedPassword, username]
     );
-
     if (result.rows.length > 0) {
-
         const decryptedPublicKey = result.rows[0].public_key;
-
         const decryptedPassword = await decryptWithPublicKey(
             decryptedPublicKey,
             sessionData.password
         );
-
         const password = decryptedPassword;
-
         if (typeof password !== 'string') {
             throw new Error('Password must be a string');
         }
-
         const pool = new Pool({
             host,
             port: Number(port),
@@ -224,15 +205,12 @@ async function sendMessage(
             user: username,
             password: password,
         });
-
         const client = await pool.connect();
-
         const combinedPassword = `${username}${password}`;
         const hashedPassword = crypto
             .createHash('sha256')
             .update(combinedPassword)
             .digest('hex');
-
         const datetimeFrom = new Date().toISOString();
 
         await client.query(
@@ -307,36 +285,25 @@ async function sendMessage(
                 fileNameForRecipient,
             ]
         );
-
         client.release();
-
     }
-
     postgresClient.release();
-
 }
 
-const getAvatarFiles = () => {
-    const avatarDirectory = path.join(process.cwd(), 'public');
-
-    const files = fs.readdirSync(avatarDirectory).filter((file) => file.startsWith('avatar_') && file.endsWith('.jpg'));
-
-    return files;
-};
-
 export async function Messenger({ username, password }: MessengerProps) {
-
     const { chatMessages, users } = await getDecryptedMessages(
         username,
         password
     );
-
+    const getAvatarFiles = () => {
+        const avatarDirectory = path.join(process.cwd(), 'public');
+        const files = fs.readdirSync(avatarDirectory).filter((file) => 
+            file.startsWith('avatar_') && file.endsWith('.jpg'));
+        return files;
+    };
     const avatarFiles = getAvatarFiles();
-
     const randomIndex = Math.floor(Math.random() * avatarFiles.length);
-
     const selectedAvatar = avatarFiles[randomIndex];
-
     return (
         <div className="h-screen flex flex-col">
             <div className="border-b flex items-center p-4">
@@ -429,6 +396,7 @@ export async function Messenger({ username, password }: MessengerProps) {
                             <span className="sr-only">Attach</span>
                         </>
                     }
+                    avatarFiles={avatarFiles}
                 />
             </div>
         </div>

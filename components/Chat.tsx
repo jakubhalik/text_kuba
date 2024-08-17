@@ -25,7 +25,8 @@ export default function Chat({
     onSendMessage,
     username,
     paperclipIcon,
-    publicKeys
+    publicKeys,
+    avatarFiles
 }: ChatProps) {
     const [loading, setLoading] = useState(true);
 
@@ -560,6 +561,7 @@ export default function Chat({
             createBlobUrl={createBlobUrl}
             isImageFile={isImageFile}
             handleSendMessage={handleSendMessage}
+            avatarFiles={avatarFiles}
         /> : 
         <>
             {username === owner && (
@@ -618,6 +620,7 @@ function ChatComponent({
     createBlobUrl,
     isImageFile,
     handleSendMessage,
+    avatarFiles
 }: ChatComponentProps) {
     const owner = process.env.NEXT_PUBLIC_OWNER;
     return (
@@ -660,7 +663,7 @@ function ChatComponent({
                                                 alt="Avatar"
                                                 className="rounded-full"
                                                 height="40"
-                                                src="/placeholder.svg"
+                                                src={`/${avatarFiles[Math.floor(Math.random() * avatarFiles.length)]}`}
                                                 style={{
                                                     aspectRatio: '40/40',
                                                     objectFit: 'cover',

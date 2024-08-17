@@ -109,6 +109,8 @@ text transfer via sign with my private key and encryption with the public key of
 
 hover on bg in the sidebar (I get that when it is in phone mode it is not exactly a sidebar), probly like blue, when it is the li of the selectedUser , and fixing the light theme for MessageInput
 
+pseudorandom profile pics for fun now before profiles
+
 done till here
 
 websockets encryption and decryption the same way as above with the keys
@@ -116,8 +118,6 @@ websockets encryption and decryption the same way as above with the keys
 encrypting and decrypting dates too
 
 possibility to generate new keys and set them right away in the cookies and the new public one in the db with all data being replaced with ones encrypted with the new private key and the old ones deleted
-
-pseudorandom profile pics for fun now before profiles
 
 frontend for texts and support for switching full us and cz langs
 
