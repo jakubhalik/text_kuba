@@ -111,9 +111,9 @@ hover on bg in the sidebar (I get that when it is in phone mode it is not exactl
 
 pseudorandom profile pics for fun now before profiles
 
-done till here
-
 websockets encryption and decryption the same way as above with the keys
+
+done till here
 
 encrypting and decrypting dates too
 
