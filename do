@@ -98,21 +98,31 @@ Error in decryptWithPublicKey: Error: Could not find signing key with key ID 7fb
     at async decryptWithPublicKey (./actions/decryptWithPublicKey.ts:25:36)
     at async $$ACTION_2 (./app/page.tsx:361:31)
 
+fix the mistake that makes it impossible now for more than one person to be logged in at once lol, it is in the Home function , loggedIn server side handling without implementation for handling infinite users, rookie mistake
+the session variables are fine, but the mutable ones cannot be only in the Home function , it is how my whole logging in works, those mutable variables that are global across the entire file must stay that way , but what I need u to change is for it to not be loggedIn but loggedInUsers so each time a new user logs in he is added to the loggedInUsers server cached array, I want you to cache these values in loggedInUsers for 24 hours so u then in the xml returning part do not do loggedIn && but loggedIn[decryptedUsername] &&
+
+fix of the crashing when someone signs up when other are logged in
+
 text transfer via sign with my private key and encryption with the public key of recipient and inverse decryption
     this will need the messenger component to send the public keys of users the user can chat with to the chat component and for the chat component to be doing for all messages/files/filenames/dates not just the encryptions it does for its own storage, but to also besides that encrypt it the way mentioned above with that being sent back to the messenger component with there being those arguments used in the saving in postgres_schema instead of the same way as is the other stored there
     asking for the public keys in a separate query from the one for the users, so u can also select the owner one all normally and then in a later condition send all the public keys but the owner one to the chat component only if the username === `${owner}` and to otherwise send only the owner public key
 
 done till here
 
-fix the mistake that makes it impossible now for more than one person to be logged in at once lol, it is in the Home function , loggedIn server side handling without implementation for handling infinite users, rookie mistake
-the session variables are fine, but the mutable ones cannot be only in the Home function , it is how my whole logging in works, those mutable variables that are global across the entire file must stay that way , but what I need u to change is for it to not be loggedIn but loggedInUsers so each time a new user logs in he is added to the loggedInUsers server cached array, I want you to cache these values in loggedInUsers for 24 hours so u then in the xml returning part do not do loggedIn && but loggedIn[decryptedUsername] &&
-
 websockets encryption and decryption the same way as above with the keys
 
-encrypting dates too
-
-always filling the file and filename with pseudorandomly generated data that looks like it would usually when sending some, so the server owner can never know when is a file being sent or not (prepare a big space for the database, this level of anonymity giving will not be free space wise)
+encrypting and decrypting dates too
 
 possibility to generate new keys and set them right away in the cookies and the new public one in the db with all data being replaced with ones encrypted with the new private key and the old ones deleted
 
+pseudorandom profile pics for fun now before profiles
+
 frontend for texts and support for switching full us and cz langs
+
+deploy the pre-alpha when it is in this stage and have some people chat with some person there for real for pre-alpha testing
+
+gonna use the auth and e2e encrypted chatting components of this app for different apps from the point of when I get to this point
+
+always filling the file and filename with pseudorandomly generated data that looks like it would usually when sending some, so the server owner can never know when is a file being sent or not (prepare a big space for the database, this level of anonymity giving will not be free space wise)
+
+adding an option when generating new keys for decrypting messages with these new ones only from now on/change the encryption on all the ones that were encrypted so far and giving the recipient option to accept or refuse the reencrypted old messages and giving him an option to refuse or accept the deletion of the old public key of his friend and telling the first sender of this information

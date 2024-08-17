@@ -42,7 +42,6 @@ When opening the private key popup make the textarea selected by the user
 When login and password already inputted make setting the private key to cookies relog with that private key and the credentials
 
 fix: 
-```bash
  ⨯ unhandledRejection: error: relation "postgres_schema.messages_table" does not exist
     at /home/x/d/g/gh/text_kuba/node_modules/pg/lib/client.js:526:17
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
@@ -65,10 +64,9 @@ fix:
   line: '1428',
   routine: 'parserOpenTable'
 }
-```
+
 
 and:
-```bash
 Error in decryptWithPublicKey: Error: Could not find signing key with key ID 7fb0857d3926ef71
     at eval (webpack-internal:///(rsc)/./node_modules/openpgp/dist/node/openpgp.min.mjs:62:356378)
     at eval (webpack-internal:///(rsc)/./node_modules/openpgp/dist/node/openpgp.min.mjs:62:356846)
@@ -103,12 +101,15 @@ Error in decryptWithPublicKey: Error: Could not find signing key with key ID 7fb
     at _u.map (<anonymous>)
     at async decryptWithPublicKey (./actions/decryptWithPublicKey.ts:25:36)
     at async $$ACTION_2 (./app/page.tsx:361:31)
-```
+
+fix the mistake that makes it impossible now for more than one person to be logged in at once lol, it is in the Home function , loggedIn server side handling without implementation for handling infinite users, rookie mistake
+the session variables are fine, but the mutable ones cannot be only in the Home function , it is how my whole logging in works, those mutable variables that are global across the entire file must stay that way , but what I need u to change is for it to not be loggedIn but loggedInUsers so each time a new user logs in he is added to the loggedInUsers server cached array, I want you to cache these values in loggedInUsers for 24 hours so u then in the xml returning part do not do loggedIn && but loggedIn[decryptedUsername] &&
+
+fix of the crashing when someone signs up when other are logged in
 
 text transfer via sign with my private key and encryption with the public key of recipient and inverse decryption
     this will need the messenger component to send the public keys of users the user can chat with to the chat component and for the chat component to be doing for all messages/files/filenames/dates not just the encryptions it does for its own storage, but to also besides that encrypt it the way mentioned above with that being sent back to the messenger component with there being those arguments used in the saving in postgres_schema instead of the same way as is the other stored there
     asking for the public keys in a separate query from the one for the users, so u can also select the owner one all normally and then in a later condition send all the public keys but the owner one to the chat component only if the username === `${owner}` and to otherwise send only the owner public key
-
 <br>
 <br>
 <br>
