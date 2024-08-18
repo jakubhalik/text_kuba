@@ -301,6 +301,7 @@ export default function Chat({
                 }));
                 console.log('Chat messages as you get them from the server:', chatMessages);
                 console.log('Decrypted messages:', decryptedMessages);
+                decryptedMessages.sort((a, b) => new Date(a.datetime_from).getTime() - new Date(b.datetime_from).getTime());
                 setLocalChatMessages(decryptedMessages);
                 setLoading(false);
             } catch (e) {
