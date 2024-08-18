@@ -9,17 +9,16 @@ wss.on('connection', (ws, request) => {
         clients[username] = ws;
         ws.on('message', (message) => {
             const parsedMessage = JSON.parse(message);
-            const { sendTo, text, file, filename } = parsedMessage;
+            const { sendTo, text, datetimeFrom, file, filename } = parsedMessage;
             if (sendTo && clients[sendTo]) {
-                const datetimeFrom = new Date().toLocaleString();
                 clients[sendTo].send(
                     JSON.stringify({
                         sent_by: username,
                         send_to: sendTo,
                         text,
+                        datetimeFrom,
                         file,
                         filename,
-                        datetime_from: datetimeFrom,
                     })
                 );
             }

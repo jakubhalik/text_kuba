@@ -113,20 +113,25 @@ pseudorandom profile pics for fun now before profiles
 
 websockets encryption and decryption the same way as above with the keys
 
-done till here
-
 encrypting and decrypting dates too
 
-possibility to generate new keys and set them right away in the cookies and the new public one in the db with all data being replaced with ones encrypted with the new private key and the old ones deleted
+done till here
+
+fix viewing pictures
 
 frontend for texts and support for switching full us and cz langs
 
-fix viewing pictures
+possibility to generate new keys and set them right away in the cookies and the new public one in the db with all data being replaced with ones encrypted with the new private key and the old ones deleted
+
+displaying the pgp info and settings popup automatically when just singed up and for when logged in for the first time
 
 deploy the pre-alpha when it is in this stage and have some people chat with some person there for real for pre-alpha testing
 
 gonna use the auth and e2e encrypted chatting components of this app for different apps from the point of when I get to this point
 
-always filling the file and filename with pseudorandomly generated data that looks like it would usually when sending some, so the server owner can never know when is a file being sent or not (prepare a big space for the database, this level of anonymity giving will not be free space wise)
+settings option of displaying datetime_from info normally instead of in the retared american way
 
 adding an option when generating new keys for decrypting messages with these new ones only from now on/change the encryption on all the ones that were encrypted so far and giving the recipient option to accept or refuse the reencrypted old messages and giving him an option to refuse or accept the deletion of the old public key of his friend and telling the first sender of this information
+
+always filling the file and filename with pseudorandomly generated data that looks like it would usually when sending some, so the server owner can never know when is a file being sent or not (prepare a big space for the database, this level of anonymity giving will not be free space wise)
+

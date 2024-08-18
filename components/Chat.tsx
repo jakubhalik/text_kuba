@@ -63,6 +63,7 @@ export default function Chat({
                     armoredKey: privateKeyArmored,
                 });
                 let decryptedMessageText = null;
+                let decryptedDatetimeFrom = null;
                 let file = null;
                 let decryptedFileName = null;
                 try {
@@ -77,6 +78,19 @@ export default function Chat({
                 } catch (e) {
                     console.error('error in transferring message text sent by the other person than me to me through web sockets: ', e);
                     return { ...message, text: 'error in transferring message text sent by the other person than me to me through web sockets' }
+                }
+                try {
+                    decryptedDatetimeFrom = await openpgp.decrypt({
+                        message: await openpgp.readMessage({
+                            armoredMessage: message.datetime_from,
+                        }),
+                        decryptionKeys: privateKey,
+                        verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
+                    });
+                    console.log('this is datetime_from of the message that was sent by the other person to you through web sockets: ', decryptedMessageText);
+                } catch (e) {
+                    console.error('error in transferring datetime_from of the message sent by the other person than me to me through web sockets: ', e);
+                    return { ...message, text: 'error in transferring datetime_from of the message sent by the other person than me to me through web sockets' }
                 }
                 if (message.file) {
                     try {
@@ -109,6 +123,7 @@ export default function Chat({
                 return {
                     ...message,
                     text: decryptedMessageText.data as string,
+                    datetime_from: new Date(decryptedDatetimeFrom.data).toLocaleString(),
                     file: file ? file : null,
                     filename: decryptedFileName ? decryptedFileName.data as string : null,
                 };
@@ -161,6 +176,7 @@ export default function Chat({
                         // console.log('public keys: ', publicKeys);
                         try {
                             let decryptedMessageText = null;
+                            let decryptedDatetimeFrom = null;
                             let file = null;
                             let decryptedFileName = null;
                             if (message.send_to === username) {
@@ -177,6 +193,19 @@ export default function Chat({
                                     console.error('error in transferring message text sent by the other person than me to me: ', e);
                                     return { ...message, text: 'error in transferring message text sent by the other person than me to me' }
                                 }
+                                try {
+                                    decryptedDatetimeFrom = await openpgp.decrypt({
+                                        message: await openpgp.readMessage({
+                                            armoredMessage: message.datetime_from,
+                                        }),
+                                        decryptionKeys: privateKey,
+                                        verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
+                                    });
+                                    // console.log('this is datetime_from of the message that was sent by the other person to you: ', decryptedMessageText);
+                                } catch (e) {
+                                    console.error('error in transferring datetime_from of the message sent by the other person than me to me: ', e);
+                                    return { ...message, text: 'error in transferring datetime_from of the message sent by the other person than me to me' }
+                                }
                                 if (message.file) {
                                     try {
                                         const decryptedFile = await openpgp.decrypt({
@@ -208,6 +237,7 @@ export default function Chat({
                                 return {
                                     ...message,
                                     text: decryptedMessageText.data as string,
+                                    datetime_from: new Date(decryptedDatetimeFrom.data).toLocaleString(),
                                     file: file ? file : null,
                                     filename: decryptedFileName ? decryptedFileName.data as string : null,
                                 };
@@ -219,6 +249,13 @@ export default function Chat({
                                     decryptionKeys: privateKey,
                                 });
                                 // console.log('this message was sent by you: ', decryptedMessageText);
+                                decryptedDatetimeFrom = await openpgp.decrypt({
+                                    message: await openpgp.readMessage({
+                                        armoredMessage: message.datetime_from,
+                                    }),
+                                    decryptionKeys: privateKey,
+                                });
+                                // console.log('this datetime_from is from the message that was sent by you: ', decryptedMessageText);
                                 if (message.file) {
                                     try {
                                         const decryptedFile = await openpgp.decrypt({
@@ -248,6 +285,7 @@ export default function Chat({
                                 return {
                                     ...message,
                                     text: decryptedMessageText.data as string,
+                                    datetime_from: new Date(decryptedDatetimeFrom.data).toLocaleString(),
                                     file: file ? file : null,
                                     filename: decryptedFileName ? decryptedFileName.data as string : null,
                                 };
@@ -293,8 +331,14 @@ export default function Chat({
         setLocalChatMessages((prevMessages) => [...prevMessages, newMsg]);
         const publicKey = getCookie('publicKey') as string;
         // console.log('public key: ', publicKey);
+        const datetimeFrom = new Date().toISOString();
         const encryptedMessageText = await openpgp.encrypt({
             message: await openpgp.createMessage({ text: messageText }),
+            encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
+            format: 'armored',
+        }) as string;
+        const encryptedDatetimeFrom = await openpgp.encrypt({
+            message: await openpgp.createMessage({ text: datetimeFrom }),
             encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
             format: 'armored',
         }) as string;
@@ -334,6 +378,12 @@ export default function Chat({
                 signingKeys: privateKey,
                 format: 'armored',
             }) as string;
+            const encryptedDatetimeFromForRecipient = await openpgp.encrypt({
+                message: await openpgp.createMessage({ text: datetimeFrom }),
+                encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
+                signingKeys: privateKey,
+                format: 'armored',
+            }) as string;
             let stringFile = null;
             if (fileBase64) {
                 const base64Data = Buffer.from(fileBase64).toString('base64'); // Remove the data URL prefix
@@ -358,6 +408,7 @@ export default function Chat({
                     JSON.stringify({
                         sendTo: selectedUser,
                         text: encryptedMessageTextForRecipient,
+                        datetimeFrom: encryptedDatetimeFrom,
                         file: encryptedFileForRecipient,
                         filename: encryptedFileNameForRecipient,
                     })
@@ -367,7 +418,9 @@ export default function Chat({
                 username,
                 selectedUser!,
                 encryptedMessageText,
+                encryptedDatetimeFrom,
                 encryptedMessageTextForRecipient,
+                encryptedDatetimeFrom,
                 encryptedFile,
                 encryptedFileName,
                 encryptedFileForRecipient,

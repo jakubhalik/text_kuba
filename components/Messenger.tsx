@@ -64,8 +64,7 @@ async function getDecryptedMessages(
             pgp_sym_decrypt(text::bytea, $1) as text,
             pgp_sym_decrypt(file::bytea, $1) as file,
             pgp_sym_decrypt(filename::bytea, $1) as filename
-        FROM "${username}_schema".messages_table
-        ORDER BY datetime_from ASC;
+        FROM "${username}_schema".messages_table;
     `;
 
     const queryForUsers = `
@@ -141,7 +140,6 @@ async function getDecryptedMessages(
         chatMessagesProcessed = resultForChat.rows.map((message) => {
             return {
                 ...message,
-                datetime_from: new Date(message.datetime_from).toLocaleString(),
             };
         });
     } catch (error) {
@@ -166,6 +164,7 @@ async function sendMessage(
     username: string,
     sendTo: string,
     messageText: string,
+    datetimeFrom: string,
     messageTextForRecipient: string,
     file: string | null = null,
     fileName: string | null = null,
@@ -211,7 +210,6 @@ async function sendMessage(
             .createHash('sha256')
             .update(combinedPassword)
             .digest('hex');
-        const datetimeFrom = new Date().toISOString();
 
         await client.query(
             `INSERT INTO "${username}_schema".messages_table (
