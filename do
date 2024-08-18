@@ -115,6 +115,8 @@ websockets encryption and decryption the same way as above with the keys
 
 encrypting and decrypting dates too
 
+sorting by ascending dates on the client
+
 done till here
 
 fix viewing pictures

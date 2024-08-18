@@ -16,7 +16,7 @@ wss.on('connection', (ws, request) => {
                         sent_by: username,
                         send_to: sendTo,
                         text,
-                        datetimeFrom,
+                        datetime_from: datetimeFrom,
                         file,
                         filename,
                     })

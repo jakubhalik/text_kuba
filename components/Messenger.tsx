@@ -166,6 +166,7 @@ async function sendMessage(
     messageText: string,
     datetimeFrom: string,
     messageTextForRecipient: string,
+    datetimeFromForRecipient: string,
     file: string | null = null,
     fileName: string | null = null,
     fileForRecipient: string | null = null,
@@ -274,7 +275,7 @@ async function sendMessage(
                 pgp_sym_encrypt($7::text, $2)
             )`,
             [
-                datetimeFrom,
+                datetimeFromForRecipient,
                 postgresHashedPassword,
                 username,
                 sendTo,
