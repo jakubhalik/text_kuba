@@ -43,32 +43,25 @@ export default function MessageInput({
 
         new Promise((resolve, reject) => {
             const reader = new FileReader();
-
             reader.readAsDataURL(file);
-
             reader.onload = () => resolve(reader.result);
-
             reader.onerror = (error) => reject(error);
         });
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-
         if (e.target.files && e.target.files.length > 0) {
             setFile(e.target.files[0]);
             const fileUrl = URL.createObjectURL(e.target.files[0]);
             setFilePreview(fileUrl);
         }
-
     };
 
     const isImageFile = (filename: string | null) => {
-
         if (!filename) return false;
         const extension = filename.split('.').pop()?.toLowerCase();
         return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
             extension!
         );
-
     };
 
     return (

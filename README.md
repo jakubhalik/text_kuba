@@ -163,6 +163,7 @@ mv setup_db setup_db_bin
 strip -s setup_db_bin
 # If u tried to get back to some way of app being for debugging by raw sqling and now u don't know why something does not work normally anymore, just run the go scripts mate
 ./setup_db_bin
+Delete the session cookies if u have them in your browser
 ```
 
 # This project is NOT fininshed yet, it is still a work in progress - Pre-Alpha

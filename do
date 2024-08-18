@@ -117,9 +117,9 @@ encrypting and decrypting dates too
 
 sorting by ascending dates on the client
 
-done till here
-
 fix viewing pictures
+
+done till here
 
 frontend for texts and support for switching full us and cz langs
 
@@ -134,6 +134,8 @@ gonna use the auth and e2e encrypted chatting components of this app for differe
 settings option of displaying datetime_from info normally instead of in the retared american way
 
 adding an option when generating new keys for decrypting messages with these new ones only from now on/change the encryption on all the ones that were encrypted so far and giving the recipient option to accept or refuse the reencrypted old messages and giving him an option to refuse or accept the deletion of the old public key of his friend and telling the first sender of this information
+
+implement your own custom scrollers, that look cuter, so it does not look so retarded when there is more of them, use the one that was on ur personal portfolio page from 2022, but make it's styles in tailwind instead this time
 
 always filling the file and filename with pseudorandomly generated data that looks like it would usually when sending some, so the server owner can never know when is a file being sent or not (prepare a big space for the database, this level of anonymity giving will not be free space wise)
 

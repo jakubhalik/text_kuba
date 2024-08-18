@@ -101,8 +101,7 @@ export default function Chat({
                             decryptionKeys: privateKey,
                             verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
                         });
-                        const fileData = decryptedFile.data as Uint8Array;
-                        file = `data:image/*;base64,${Buffer.from(fileData).toString('base64')}`;
+                        file = decryptedFile.data as string;
                     } catch (e) {
                         console.error('Error decrypting file:', e);
                     }
@@ -120,11 +119,12 @@ export default function Chat({
                         console.error('Error decrypting filename:', e);
                     }
                 }
+                const fileUrl = isImageFile(decryptedFileName!.data as string) &&  createBlobUrl(file!);
                 return {
                     ...message,
                     text: decryptedMessageText.data as string,
                     datetime_from: new Date(decryptedDatetimeFrom.data as string).toLocaleString(),
-                    file: file ? file : null,
+                    file: fileUrl ? fileUrl : null,
                     filename: decryptedFileName ? decryptedFileName.data as string : null,
                 };
             }))
@@ -215,8 +215,7 @@ export default function Chat({
                                             decryptionKeys: privateKey,
                                             verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
                                         });
-                                        const fileData = decryptedFile.data as Uint8Array;
-                                        file = `data:image/*;base64,${Buffer.from(fileData).toString('base64')}`;
+                                        file = decryptedFile.data as string;
                                     } catch (e) {
                                         console.error('Error decrypting file:', e);
                                     }
@@ -264,8 +263,7 @@ export default function Chat({
                                             }),
                                             decryptionKeys: privateKey,
                                         });
-                                        const fileData = decryptedFile.data as Uint8Array;
-                                        file = `data:image/*;base64,${Buffer.from(fileData).toString('base64')}`;
+                                        file = decryptedFile.data as string;
                                     } catch (e) {
                                         console.error('Error decrypting file:', e);
                                     }
@@ -343,14 +341,8 @@ export default function Chat({
             format: 'armored',
         }) as string;
         let stringFile = null;
-        if (fileBase64) {
-            const base64Data = Buffer.from(fileBase64).toString('base64'); // Remove the data URL prefix
-            // const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
-            stringFile = base64Data;
-            // console.log('filebase64: ', fileBase64);
-        }
-        const encryptedFile = stringFile ? await openpgp.encrypt({
-            message: await openpgp.createMessage({ text: stringFile }),
+        const encryptedFile = fileBase64 ? await openpgp.encrypt({
+            message: await openpgp.createMessage({ text: fileBase64 as unknown as string }),
             encryptionKeys: await openpgp.readKey({ armoredKey: publicKey }),
             format: 'armored',
         }) as string : null;
@@ -384,15 +376,8 @@ export default function Chat({
                 signingKeys: privateKey,
                 format: 'armored',
             }) as string;
-            let stringFile = null;
-            if (fileBase64) {
-                const base64Data = Buffer.from(fileBase64).toString('base64'); // Remove the data URL prefix
-                // const base64Data = fileBase64.split(',')[1]; // Remove the data URL prefix
-                stringFile = base64Data;
-                // console.log('filebase64: ', fileBase64);
-            }
-            const encryptedFileForRecipient = stringFile ? await openpgp.encrypt({
-                message: await openpgp.createMessage({ text: stringFile }),
+            const encryptedFileForRecipient = fileBase64 ? await openpgp.encrypt({
+                message: await openpgp.createMessage({ text: fileBase64 as unknown as string }),
                 encryptionKeys: await openpgp.readKey({ armoredKey: recipientPublicKey }),
                 signingKeys: privateKey,
                 format: 'armored',
@@ -454,7 +439,7 @@ export default function Chat({
     };
 
     const createBlobUrl = (base64Data: string) => {
-        if (base64Data.startsWith('data:')) {
+        if (base64Data.startsWith('data:image/')) {
             return base64Data;
         }
         try {
@@ -473,7 +458,9 @@ export default function Chat({
     };
 
     const isImageFile = (filename: string | null) => {
-        if (!filename) { return false; }
+        if (!filename) { 
+            return false; 
+        }
         const extension = filename.split('.').pop()?.toLowerCase();
         return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
             extension!
