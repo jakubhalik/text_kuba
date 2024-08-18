@@ -543,10 +543,19 @@ export default async function Home() {
         <GlobalStates>
             <header className="flex pr-4 py-4 border-b">
                 <nav className="flex gap-2 ml-auto">
-                    {loggedInUsers[decryptedUsernameForMessenger!] && <ButtonForDisplayKeysPopup />}
+                    {
+                        loggedInUsers[decryptedUsernameForMessenger!] && 
+                        <ButtonForDisplayKeysPopup />
+                    }
                     <ModeToggle />
                     <LangToggle />
-                    {loggedInUsers[decryptedUsernameForMessenger!] && <SignOutForm action={signOut} />}
+                    {
+                        loggedInUsers[decryptedUsernameForMessenger!] && 
+                            <SignOutForm 
+                                action={signOut} 
+                                username={decryptedUsernameForMessenger!} 
+                            />
+                    }
                 </nav>
             </header>
             {loggedInUsers[decryptedUsernameForMessenger!] ? (

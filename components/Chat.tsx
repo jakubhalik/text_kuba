@@ -54,7 +54,7 @@ export default function Chat({
         );
         webSocket.onmessage = (event) => {
             const messageFromWebSockets = JSON.parse(event.data);
-            console.log('message sent to you through web sockets: ', messageFromWebSockets);
+            // console.log('message sent to you through web sockets: ', messageFromWebSockets);
             const messagesArray = Array.isArray(messageFromWebSockets) ? messageFromWebSockets : [messageFromWebSockets];
             const decryptedMessage = Promise.all(
                 messagesArray.map(async (message: Message) => {
@@ -74,7 +74,7 @@ export default function Chat({
                         decryptionKeys: privateKey,
                         verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
                     });
-                    console.log('this message was sent by the other person to you through web sockets: ', decryptedMessageText.data);
+                    // console.log('this message was sent by the other person to you through web sockets: ', decryptedMessageText.data);
                 } catch (e) {
                     console.error('error in transferring message text sent by the other person than me to me through web sockets: ', e);
                     return { ...message, text: 'error in transferring message text sent by the other person than me to me through web sockets' }
@@ -87,7 +87,7 @@ export default function Chat({
                         decryptionKeys: privateKey,
                         verificationKeys: await openpgp.readKey({ armoredKey: publicKeys[message.sent_by] }),
                     });
-                    console.log('this is datetime_from of the message that was sent by the other person to you through web sockets: ', decryptedDatetimeFrom);
+                    // console.log('this is datetime_from of the message that was sent by the other person to you through web sockets: ', decryptedDatetimeFrom);
                 } catch (e) {
                     console.error('error in transferring datetime_from of the message sent by the other person than me to me through web sockets: ', e);
                     return { ...message, text: 'error in transferring datetime_from of the message sent by the other person than me to me through web sockets' }
@@ -299,8 +299,8 @@ export default function Chat({
                         return { ...message, text: 'Error decrypting message' };
                     }
                 }));
-                console.log('Chat messages as you get them from the server:', chatMessages);
-                console.log('Decrypted messages:', decryptedMessages);
+                // console.log('Chat messages as you get them from the server:', chatMessages);
+                // console.log('Decrypted messages:', decryptedMessages);
                 decryptedMessages.sort((a, b) => new Date(a.datetime_from).getTime() - new Date(b.datetime_from).getTime());
                 setLocalChatMessages(decryptedMessages);
                 setLoading(false);
