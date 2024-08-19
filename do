@@ -119,9 +119,9 @@ sorting by ascending dates on the client
 
 fix viewing pictures
 
-done till here
-
 frontend for texts and support for switching full us and cz langs
+
+done till here
 
 possibility to generate new keys and set them right away in the cookies and the new public one in the db with all data being replaced with ones encrypted with the new private key and the old ones deleted
 
