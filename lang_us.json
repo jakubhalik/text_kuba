@@ -22,7 +22,7 @@
     "signup_info_3": "But we are also using the pgp pub keys algorithms for authentication: We will save the public one in an encrypted way we can decrypt so we can always authenticate you.",
     "signup_info_4": "This will give you a 2-factor authentication without a use of a phone or an email.",
     "signup_info_5": "It will work in a way where your credentials will be always sent to our server encrypted with a private key so only the public one can decrypt them, your database user will also be created using SCRAM-SHA256 encryption, so as we will never store your credentials in any by us decryptable way you must remember your password and never loose your private key, so you are capable to sign in.",
-    "signup_info_6": "As you sign up you will get logged into the Messenger app where you will also get a cancelable popup about key specifications that you can anytime get back up by clicking the key button.",
+    "signup_info_6": "As you sign up you will get logged into the messaging app where you will also get a cancelable popup about key specifications that you can anytime get back up by clicking the key button.",
     "signup_info_7": "Now this seems horrendous, all the other apps let you forget all your passwords all the time, but you cannot forget your password and loose your private key, that is the only way you can have true security in the application you are using, this is the only way we cannot possibly have a backdoor into your account.",
     "signup_info_8": "The view of the keys will be hidden at first, you can display it by clicking on a button, but do it only when your monitor/screen is not being recorded in any way.",
     "signup_info_9": "You will also get to copy the keys without even displaying them in the page.",
