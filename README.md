@@ -2,7 +2,7 @@
 
 ## The app that makes the operational side of security yours only but the heavy lifting technical side only mine
 
-### Version 0.1.0 - Pre-Alpha
+### Version 0.1.1 - Pre-Alpha
 
 When you input credentials while signing and you are not trying to use a username that already exists at first public and a private gets generated only on client. 
 The private key will never be known by the server, the private key will encrypt the name and the password. 
@@ -19,15 +19,16 @@ Because if you do loose your private key, you will never be capable to sign back
 Now this seems horrendous, all the other apps let you forget all your passwords all the time, but you cannot forget your password and loose your private key, that is the only way you can have true security in the application you are using, this is the only way we cannot possibly have a backdoor into your account.
 The view of the keys will be hidden at first, you can display it clearly by clicking a button, but do it only when your monitor/screen is not being recorded in any way.
 You will also get to copy the keys without even displaying them in the page.
-The private key will get saved into your strict cookies for this page, if you have allowed it for the ease of logging in in the future, but even then you absolutely should save your private key in some secure password manager, ideally in more of them over backup devices, so you can be sure of not loosing a private key.
+The private key will get saved into your strict cookies for this page, but you absolutely should save your private key in some secure password manager, ideally in more of them over backup devices, so you can be sure of not loosing a private key.
 Someone getting your private key is not such a big deal as it might seem, because with it alone one cannot really do anything to you.
 You with it alone cannot do or see anything.
 You have to have access to your data to decrypt the values with the private key, and you can get to those only via the authentication into the app for which u need not only the private key, but also your password.
 This is a 2-factor authentication without a phone/email, security upgrade of a 2-factor auth if you will.
-But even tho one cannot do anything with your private key alone, if you suspect that someone knows it you should as fast as possible, just to be safe, sign in and generate new keys, there will be a button for this that will also on your device decrypt all your data with your private key will generate the new keys, will encrypt them with the new public key, will burn the old private key from your cookies (if u have it there), will throw the new one there (if u let it there), will send a message to the server to burn the old public key and all values encrypted with it and will replace them with the newly encrypted values on your device with the new public key that will also be saved in the db encrypted in the same way as it was before.
+But even tho one cannot do anything with your private key alone, if you suspect that someone knows it you should as fast as possible, just to be safe, sign in and generate new keys, there will be a button for this that will also on your device decrypt all your data with your private key will generate the new keys, will encrypt them with the new public key, will burn the old private key from your cookies (if u have it there), will throw the new one there, will send a message to the server to burn the old public key and all values encrypted with it and will replace them with the newly encrypted values on your device with the new public key that will also be saved in the db encrypted in the same way as it was before.
 Now the only data decryptable by the server will be the from whom are which encrypted messages sent to whom: That is required for the server to be capable of sending the messages from one user to the other, but worry not, you already have the full anonymity of what are you sending to anyone and you can have the anonymity of to whom you are sending the encrypted messages/files/filenames by just choosing an alias nickname instead of any name which actually describes your real identity in any way.
-
-When you login in the default mode the process of logging in will continue only if a private key is in your cookies, if you have selected the no-cookies mode, you will have to input the private key, into the input on the page with the credentials for it to on your device only encrypt the name and password so it can be sent on to the server where it will be decrypted with the public key that is saved under your name. If either there is not even a public key with the name you are trying to login with or a sign in in the postgres pool cannot happen with the decrypted credentials decrypted via the public key you will get a wrong credentials error.
+The communication part: Each time you will message anyone the message will be first signed by your private key and then encrypted by the public key of the person you are sending the message to so only his private key that only he has can decrypt the message you sent him and so when he was capable of decrypting it through having his private key he can also verify that the message was really from you through the public one of yours that he as your friend automatically has.
+When you login in the default mode the process of logging in will continue only if a private key is in your cookies for it to on your device only encrypt the name and password so it can be sent on to the server where it will be decrypted with the public key that is saved under your name so it can there log you into your account on the postgres database through a pool, so you can have access to your personal schema on the database. If either there is not even a public key with the name you are trying to login with or a sign in in the postgres pool cannot happen with the decrypted credentials decrypted via the public key you will get a wrong credentials error.
+From here down it's just messy "docs" of what was done so far in my process, it works well for me to remember what I worked on, and maybe can be good for devs to kinda get into the "so what was implemented here so far so I can understand this repo for my use/contribution" mode
 
 The public keys will be in a postgres_schema
 
@@ -116,6 +117,12 @@ hover on bg in the sidebar (I get that when it is in phone mode it is not exactl
 pseudorandom profile pics for fun now before profiles
 
 websockets encryption and decryption the same way as above with the keys
+
+encrypting and decrypting dates too
+
+sorting by ascending dates on the client
+
+fix viewing pictures
 <br>
 <br>
 <br>

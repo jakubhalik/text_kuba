@@ -408,7 +408,9 @@ export default function LoginOrSignUp({
                             <button className="hidden">Open</button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
-                            <AlertDialogTitle>Set private key into strict cookies</AlertDialogTitle>
+                            <AlertDialogTitle>
+                                {texts.private_key_to_strict_cookies_alert_dialog_title}
+                            </AlertDialogTitle>
                             <button
                                 className="absolute top-[13px] right-14 rounded-full p-1"
                                 onClick={() => setHiddenPrivateKeyTextarea(!hiddenPrivateKeyTextarea)}
@@ -422,7 +424,9 @@ export default function LoginOrSignUp({
                                 <XIcon className="h-4 w-4" />
                             </button>
                             <VisuallyHidden>
-                                <AlertDialogDescription>Set private key into strict cookies</AlertDialogDescription>
+                                <AlertDialogDescription>
+                                    {texts.private_key_to_strict_cookies_alert_dialog_description}
+                                </AlertDialogDescription>
                             </VisuallyHidden>
                             <textarea
                                 id="private-key"
@@ -496,7 +500,51 @@ export default function LoginOrSignUp({
                                 htmlFor="terms"
                                 data-cy="signup_information"
                             >
-                                {texts.signup_information}
+                                {texts.signup_info_1}
+                                <br />
+                                <br />
+                                {texts.signup_info_2}
+                                <br />
+                                <br />
+                                {texts.signup_info_3}
+                                <br />
+                                {texts.signup_info_4}
+                                <br />
+                                <br />
+                                {texts.signup_info_5}
+                                <br />
+                                <br />
+                                {texts.signup_info_6}
+                                <br />
+                                <br />
+                                {texts.signup_info_7}
+                                <br />
+                                <br />
+                                {texts.signup_info_8}
+                                <br />
+                                <br />
+                                {texts.signup_info_9}
+                                <br />
+                                <br />
+                                {texts.signup_info_10}
+                                <br />
+                                <br />
+                                {texts.signup_info_11}
+                                <br />
+                                {texts.signup_info_12}
+                                <br />
+                                {texts.signup_info_13}
+                                <br />
+                                <br />
+                                {texts.signup_info_14}
+                                <br />
+                                <br />
+                                {texts.signup_info_15}
+                                <br />
+                                {texts.signup_info_16}
+                                <br />
+                                <br />
+                                {texts.signup_info_17}
                             </Label>
                         </div>
                     )}
@@ -524,7 +572,7 @@ export default function LoginOrSignUp({
                                 }, 0);
                             }}
                         >
-                            Set private key to cookies
+                            {texts.private_key_to_strict_cookies_button}
                         </Button>
                     }
                 </form>
