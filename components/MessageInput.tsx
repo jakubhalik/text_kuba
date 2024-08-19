@@ -17,13 +17,10 @@ export default function MessageInput({
     paperclipIcon,
 }: MessageInputProps) {
     const [newMessage, setNewMessage] = useState('');
-
     const [file, setFile] = useState<File | null>(null);
-
     const [filePreview, setFilePreview] = useState<string | null>(null);
 
     const handleSendMessage = async () => {
-
         if (newMessage.trim() !== '' || file) {
             let fileBase64 = null;
             let fileName = null;
@@ -31,16 +28,18 @@ export default function MessageInput({
                 fileBase64 = await toBase64(file);
                 fileName = file.name;
             }
-
-            onSendMessage({messageText: newMessage, fileBase64: fileBase64 as ArrayBuffer, fileName: fileName});
+            onSendMessage({
+                messageText: newMessage, 
+                fileBase64: fileBase64 as ArrayBuffer, 
+                fileName: fileName
+            });
             setNewMessage('');
             setFile(null);
             setFilePreview(null);
         }
     };
 
-    const toBase64 = (file: File): Promise<string | ArrayBuffer | null> =>
-
+    const toBase64 = (file: File): Promise<string | ArrayBuffer | null> => 
         new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);

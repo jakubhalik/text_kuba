@@ -46,6 +46,14 @@
     "lang_toggle_czech_dropdown_menu_item": "Czech",
     "private_key_to_strict_cookies_alert_dialog_title": "Set private key into strict cookies",
     "private_key_to_strict_cookies_alert_dialog_description": "Set private key into strict cookies",
-    "private_key_to_strict_cookies_button": "Set private key to cookies"
+    "private_key_to_strict_cookies_button": "Set private key to cookies",
+    "download_img": "Download Image",
+    "display_keys_popup_dialog_title": "Your pgp keys",
+    "display_keys_dialog_description_1": "As you already know, you cannot afford to loose your private key, so copy it and back it up in a password manager.",
+    "display_keys_dialog_description_2": "Make sure nothing is recording your monitor when displaying the keys.",
+    "display_keys_button_public_key_to_clipboard": "Public key to clipboard",
+    "display_keys_button_private_key_to_clipboard": "Private key to clipboard",
+    "display_keys_button_show_public_key": "Show public key",
+    "display_keys_button_show_private_key": "Show private key"
 }
 

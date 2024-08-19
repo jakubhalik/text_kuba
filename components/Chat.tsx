@@ -12,6 +12,9 @@ import * as openpgp from 'openpgp';
 
 import { getCookie, setCookie } from 'cookies-next';
 
+import { useLanguage } from './GlobalStates';
+import { loadLanguage } from '../lib/utils';
+
 
 
 
@@ -550,6 +553,8 @@ function ChatComponent({
     avatarFiles
 }: ChatComponentProps) {
     const owner = process.env.NEXT_PUBLIC_OWNER;
+    const { language } = useLanguage();
+    const texts = loadLanguage(language);
     return (
         <>
             {username === owner && (
@@ -658,7 +663,7 @@ function ChatComponent({
                                                     download={message.filename}
                                                     className="text-blue-500 underline block mt-2"
                                                 >
-                                                    Download Image
+                                                    {texts.download_img}
                                                 </a>
                                             </>
                                         ) : (

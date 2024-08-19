@@ -44,7 +44,6 @@ export default function LoginOrSignUp({
     ) => Promise<SignUpActionPromise>;
 }) {
     const { language } = useLanguage();
-    
     const texts = loadLanguage(language);
 
     const [isLogin, setIsLogin] = useState<boolean>(true);
