@@ -260,7 +260,15 @@ export interface ChatComponentProps extends SharedChatProps {
     handleSendMessage: (input: OnSendMessage) => Promise<void>;
 }
 
-export type ReEncrypt = (formData: FormData, checkLoginAndSendAllDataIfLoginWorksServerSide: boolean) => Promise<{success: boolean, action?: 'checked login'}>;
+export interface ReEncryptInterface {
+    success: boolean, 
+    action?: 'checked login',
+    chatMessages?: Message[],
+    users?: User[],
+    publicKeys?: Record<string, string>
+}
+
+export type ReEncrypt = (formData: FormData, checkLoginAndSendAllDataIfLoginWorksServerSide: boolean) => Promise<ReEncryptInterface>;
 
 export const makePubKeysTableIfNotExists = `CREATE TABLE IF NOT EXISTS postgres_schema.public_keys (username TEXT PRIMARY KEY, public_key TEXT NOT NULL);`;
 export const insertUsersPubKey = `INSERT INTO postgres_schema.public_keys (username, public_key) VALUES ($1, pgp_sym_encrypt($2, $3))`;

@@ -22,7 +22,7 @@ import {
     postgresHashedPassword
 } from '@/postgresConfig';
 
-import { profile_table, messages_table, FormData, LoginActionPromise, SignUpActionPromise, ReEncrypt, makePubKeysTableIfNotExists, insertUsersPubKey, selectUsersPubKey } from '@/lib/utils';
+import { profile_table, messages_table, FormData, LoginActionPromise, SignUpActionPromise, ReEncryptInterface, makePubKeysTableIfNotExists, insertUsersPubKey, selectUsersPubKey } from '@/lib/utils';
 
 import { cookies } from 'next/headers';
 
@@ -395,7 +395,7 @@ async function signOut(username: string): Promise<void> {
     cookies().delete('session');
 }
 
-const reEncrypt: ReEncrypt = async (formData, checkLoginAndSendAllDataIfLoginWorksServerSide) => {
+async function reEncrypt (formData: FormData, checkLoginAndSendAllDataIfLoginWorksServerSide: boolean): Promise<ReEncryptInterface> {
     'use server';
     try {
         if (checkLoginAndSendAllDataIfLoginWorksServerSide) {
@@ -439,8 +439,9 @@ const reEncrypt: ReEncrypt = async (formData, checkLoginAndSendAllDataIfLoginWor
         }
     } catch (e) {
         console.error('error in reEncrypting server function: ', e);
-        throw new Error('error in reEncrypting server function');
+        return { success: false };
     }
+    return { success: false };
 }
 
 export default async function Home() {

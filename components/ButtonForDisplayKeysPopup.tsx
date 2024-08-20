@@ -23,11 +23,12 @@ import Loading from '@/components/Loading';
 
 import PrivacyModelInfo from './PrivacyModelInfo';
 
+import * as openpgp from 'openpgp';
+
 interface KeysPopupProps {
     action: ReEncrypt;
     username: string;
 }
-
 export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopupProps) {
     const { language } = useLanguage();
     const texts = loadLanguage(language);
@@ -71,6 +72,9 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
             console.log(result.chatMessages);
             console.log(result.users);
             console.log(result.publicKeys);
+            const privateKeyForDecryption = await openpgp.readPrivateKey({
+                armoredKey: privateKeyArmored,
+            });
             setSuccess(true);
             setSubmitLoading(false);
         }
