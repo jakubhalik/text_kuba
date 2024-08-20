@@ -13,11 +13,11 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-interface SignOutFormProps {
-    action: (username: string) => Promise<void>;
+interface MoreFormProps {
+    signoutAction: (username: string) => Promise<void>;
     username: string;
 }
-export default function SignOutForm({ action, username }: SignOutFormProps) {
+export default function MoreForm({ signoutAction, username }: MoreFormProps) {
     const { language } = useLanguage();
     const texts = loadLanguage(language);
     return (
@@ -38,7 +38,7 @@ export default function SignOutForm({ action, username }: SignOutFormProps) {
                 <DropdownMenuItem
                     onClick={async (e) => {
                         e.preventDefault();
-                        await action(username);
+                        await signoutAction(username);
                         return;
                     }}
                     data-cy="signout_button"

@@ -13,6 +13,8 @@
     "switch_to_sign_up": "Zaregistrovat se",
     "password_mismatch": "Hesla se neshodují",
     "login_failed": "Neplatné přihlašovací údaje",
+    "private_key_not_in_cookies": "Soukromý klíč nebyl nalezen v cookies",
+    "enter_private_key": "Zadejte prosím svůj soukromý klíč",
     "signup_failed": "Registrace se nezdařila; Uživatelské jméno může již být používáno někým jiným",
     "signup_h": "Registrace",
     "confirm_password_label": "Potvrzení hesla",

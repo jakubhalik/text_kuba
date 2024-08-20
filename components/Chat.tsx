@@ -686,12 +686,10 @@ function ChatComponent({
                             </div>
                         ))}
                 </div>
-
                 <MessageInput
                     onSendMessage={handleSendMessage}
                     paperclipIcon={paperclipIcon}
                 />
-
             </div>
         </>
     );

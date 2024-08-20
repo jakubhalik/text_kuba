@@ -13,6 +13,8 @@
     "switch_to_sign_up": "Sign up",
     "password_mismatch": "Passwords do not match",
     "login_failed": "Invalid credentials",
+    "private_key_not_in_cookies": "Private key not found in cookies",
+    "enter_private_key": "Please enter a private key",
     "signup_failed": "Sign up failed; The username might be already in use by someone else",
     "signup_h": "Sign Up",
     "confirm_password_label": "Confirm Password",
@@ -54,6 +56,14 @@
     "display_keys_button_public_key_to_clipboard": "Public key to clipboard",
     "display_keys_button_private_key_to_clipboard": "Private key to clipboard",
     "display_keys_button_show_public_key": "Show public key",
-    "display_keys_button_show_private_key": "Show private key"
+    "display_keys_button_show_private_key": "Show private key",
+    "display_keys_gen_new_keys_dialog_title_1": "Generate new keys,",
+    "display_keys_gen_new_keys_dialog_description_1": "encrypt all your data with these new keys and delete your old keys",
+    "display_keys_gen_new_keys_dialog_description_2": "If any user sends you a message in the same set of miliseconds in which you will be changing your keys, you will be unable to decrypt that message",
+    "display_keys_gen_new_keys_button": "Gen new keys and re-encrypt",
+    "display_keys_gen_new_keys_input_placeholder": "Your password will be needed for generating new keys and re-encrypting all your data",
+    "display_keys_gen_new_keys_submit_button": "Submit",
+    "display_keys_gen_new_keys_error": "Invalid credentials",
+    "display_keys_pgp_keys_info": "Read our pgp keys privacy model information"
 }
 

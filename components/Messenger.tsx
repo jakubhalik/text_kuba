@@ -178,14 +178,8 @@ async function sendMessage(
     const sessionData = JSON.parse(session!.value);
     const postgresClient = await postgresUserPool.connect();
     const result = await postgresClient.query(
-        `SELECT 
-            pgp_sym_decrypt(public_key::bytea, $1) 
-            AS 
-            public_key 
-                FROM 
-                postgres_schema.public_keys 
-                    WHERE 
-                    username = $2`,
+        `SELECT pgp_sym_decrypt(public_key::bytea, $1) AS public_key 
+        FROM postgres_schema.public_keys WHERE username = $2`,
         [postgresHashedPassword, username]
     );
     if (result.rows.length > 0) {

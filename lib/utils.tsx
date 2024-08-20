@@ -43,6 +43,102 @@ export const messages_table = [
     'filename',
 ];
 
+export async function handleEncryptedLogin({
+    username,
+    setError,
+    texts,
+    getPassword,
+    setSubmitLoading,
+    getCookie,
+}: {
+    username: string;
+    setError: (error: string) => void;
+    texts: { login_failed: string; private_key_not_in_cookies: string };
+    getPassword: () => string;
+    setSubmitLoading: (loading: boolean) => void;
+    getCookie: (name: string) => string | undefined;
+}) {
+    setTimeout(() => {
+        setError(texts.login_failed);
+        setSubmitLoading(false);
+    }, 10000);
+    setSubmitLoading(true);
+    const privateKeyArmored = getCookie('privateKey') as string;
+    if (!privateKeyArmored) {
+        setError(texts.private_key_not_in_cookies);
+        return;
+    }
+    const privateKey = await openpgp.readPrivateKey({
+        armoredKey: privateKeyArmored,
+    });
+    const encryptedUsername = await openpgp.sign({
+        message: await openpgp.createMessage({ text: username }),
+        signingKeys: privateKey,
+        format: 'armored',
+    });
+    const encryptedPassword = await openpgp.sign({
+        message: await openpgp.createMessage({ text: getPassword() }),
+        signingKeys: privateKey,
+        format: 'armored',
+    });
+    console.log('encrypted password: ', encryptedPassword);
+    const formData: FormData = {
+        username: username,
+        encryptedUsername: encryptedUsername as string,
+        encryptedPassword: encryptedPassword as string,
+    };
+    return formData;
+}
+
+export async function handleKeyGeneration({
+    username,
+    password,
+    setError,
+    setSubmitLoading,
+    setCookie,
+    texts,
+}: {
+    username: string;
+    password: string;
+    setError: (error: string) => void;
+    setSubmitLoading: (loading: boolean) => void;
+    setCookie: (name: string, value: string, options?: object) => void;
+    texts: { [key: string]: string };
+}): Promise<FormData | null> {
+    try {
+        const { privateKey, publicKey } = await openpgp.generateKey({
+            type: 'ecc',
+            curve: 'curve25519',
+            userIDs: [{ name: username }],
+        });
+        const publicKeyArmored = publicKey;
+        const privateKeyArmored = privateKey;
+        const encryptedUsername = await openpgp.sign({
+            message: await openpgp.createMessage({ text: username }),
+            signingKeys: await openpgp.readPrivateKey({ armoredKey: privateKeyArmored }),
+            format: 'armored',
+        });
+        const encryptedPassword = await openpgp.sign({
+            message: await openpgp.createMessage({ text: password }),
+            signingKeys: await openpgp.readPrivateKey({ armoredKey: privateKeyArmored }),
+            format: 'armored',
+        });
+        setCookie('privateKey', privateKeyArmored, { path: '/', secure: true, sameSite: 'strict' });
+        setCookie('publicKey', publicKeyArmored, { path: '/', secure: true, sameSite: 'strict' });
+        // console.log('Generated and stored keys in cookies.');
+        return {
+            username,
+            encryptedUsername: encryptedUsername as string,
+            encryptedPassword: encryptedPassword as string,
+            publicKey: publicKeyArmored,
+        };
+    } catch (error) {
+        setSubmitLoading(false);
+        setError(texts.login_failed);
+        return null;
+    }
+}
+
 export function capitalizeFirstLetter(input: string): string {
     return input
         .split(' ')
@@ -163,6 +259,12 @@ export interface ChatComponentProps extends SharedChatProps {
     isImageFile: (filename: string | null) => boolean;
     handleSendMessage: (input: OnSendMessage) => Promise<void>;
 }
+
+export type ReEncrypt = (formData: FormData, checkLoginAndSendAllDataIfLoginWorksServerSide: boolean) => Promise<{action: 'checked login' | void}>;
+
+export const makePubKeysTableIfNotExists = `CREATE TABLE IF NOT EXISTS postgres_schema.public_keys (username TEXT PRIMARY KEY, public_key TEXT NOT NULL);`;
+export const insertUsersPubKey = `INSERT INTO postgres_schema.public_keys (username, public_key) VALUES ($1, pgp_sym_encrypt($2, $3))`;
+export const selectUsersPubKey = `SELECT pgp_sym_decrypt(public_key::bytea, $1) AS public_key FROM postgres_schema.public_keys WHERE username = $2;`;
 
 export function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
