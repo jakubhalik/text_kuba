@@ -81,7 +81,7 @@ export async function handleEncryptedLogin({
         signingKeys: privateKey,
         format: 'armored',
     });
-    console.log('encrypted password: ', encryptedPassword);
+    // console.log('encrypted password: ', encryptedPassword);
     const formData: FormData = {
         username: username,
         encryptedUsername: encryptedUsername as string,
@@ -260,7 +260,7 @@ export interface ChatComponentProps extends SharedChatProps {
     handleSendMessage: (input: OnSendMessage) => Promise<void>;
 }
 
-export type ReEncrypt = (formData: FormData, checkLoginAndSendAllDataIfLoginWorksServerSide: boolean) => Promise<{action: 'checked login' | void}>;
+export type ReEncrypt = (formData: FormData, checkLoginAndSendAllDataIfLoginWorksServerSide: boolean) => Promise<{success: boolean, action?: 'checked login'}>;
 
 export const makePubKeysTableIfNotExists = `CREATE TABLE IF NOT EXISTS postgres_schema.public_keys (username TEXT PRIMARY KEY, public_key TEXT NOT NULL);`;
 export const insertUsersPubKey = `INSERT INTO postgres_schema.public_keys (username, public_key) VALUES ($1, pgp_sym_encrypt($2, $3))`;

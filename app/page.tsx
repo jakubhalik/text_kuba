@@ -31,6 +31,7 @@ import * as openpgp from 'openpgp';
 import { Messenger } from '@/components/Messenger';
 
 import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
+import { getDecryptedMessages } from '@/actions/getDecryptedMessages';
 
 
 
@@ -394,8 +395,52 @@ async function signOut(username: string): Promise<void> {
     cookies().delete('session');
 }
 
-export const reEncrypt: ReEncrypt = async (formData, checkLoginAndSendAllDataIfLoginWorksServerSide) => {
+const reEncrypt: ReEncrypt = async (formData, checkLoginAndSendAllDataIfLoginWorksServerSide) => {
     'use server';
+    try {
+        if (checkLoginAndSendAllDataIfLoginWorksServerSide) {
+            const client = await postgresUserPool.connect();
+            const { username, encryptedUsername, encryptedPassword } = formData;
+            const result = await client.query(selectUsersPubKey, [postgresHashedPassword, username]);
+            if (result.rows.length === 0) {
+                // console.log('User not found');
+                return { success: false };
+            }
+            const decryptedPublicKey = result.rows[0].public_key;
+            const decryptedUsername = await decryptWithPublicKey(
+                decryptedPublicKey,
+                encryptedUsername
+            );
+            const decryptedPassword = await decryptWithPublicKey(
+                decryptedPublicKey,
+                encryptedPassword
+            );
+            // console.log('Decrypted Username:', decryptedUsername);
+            // console.log('Decrypted Password:', decryptedPassword);
+            const pool = new Pool({
+                host,
+                port,
+                database: `text_${owner}`,
+                user: decryptedUsername,
+                password: decryptedPassword,
+            });
+            try {
+                const userClient = await pool.connect();
+                userClient.release();
+            } catch (e) {
+                console.error('Connecting to pool in reencrypt function failed: ', e);
+                return { success: false };
+            }
+            const { chatMessages, users, publicKeys } = await getDecryptedMessages(
+                decryptedUsername, 
+                decryptedPassword
+            );
+            return { success: true, action: 'checked login', chatMessages, users, publicKeys };
+        }
+    } catch (e) {
+        console.error('error in reEncrypting server function: ', e);
+        throw new Error('error in reEncrypting server function');
+    }
 }
 
 export default async function Home() {

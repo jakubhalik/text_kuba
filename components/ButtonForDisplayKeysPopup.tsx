@@ -42,6 +42,8 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
     const [error, setError] = useState('');
     const [submitLoading, setSubmitLoading] = useState(false);
     const [pgpKeysInfo, setPgpKeysInfo] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [errorPopup, setErrorPopup] = useState(false);
     useEffect(() => { !displayKeysPopup && setPasswordInput(false); }, [displayKeysPopup]);
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
@@ -52,6 +54,7 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setErrorPopup(false);
         const formData = await handleEncryptedLogin({
             username: username,
             setError,
@@ -63,6 +66,18 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
         const checkLoginAndSendAllDataIfLoginWorksServerSide = true;
         const result = await action(formData!, checkLoginAndSendAllDataIfLoginWorksServerSide);
         if (result.action === 'checked login') {
+            setErrorPopup(false);
+            console.log('logged through re-encrypt:');
+            console.log(result.chatMessages);
+            console.log(result.users);
+            console.log(result.publicKeys);
+            setSuccess(true);
+            setSubmitLoading(false);
+        }
+        if (!result.success) {
+            setError(texts.display_keys_gen_new_keys_error);
+            setErrorPopup(true);
+            setSubmitLoading(false);
         }
     }
 
@@ -93,6 +108,7 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
                 <br />
                 <DialogTitle>{texts.display_keys_gen_new_keys_dialog_title_1}</DialogTitle>
                 <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_1}</DialogDescription>
+                <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_2}</DialogDescription>
                 {!passwordInput && <Button 
                     size="tiny" 
                     className="bg-red-500 hover:bg-red-600 active:bg-red-700 dark:bg-red-300 dark:hover:bg-red-400 dark:active:bg-red-500"
@@ -112,9 +128,11 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
                     />
                     {!submitLoading && <Button type="submit" className="bg-red-500 hover:bg-red-600 active:bg-red-700 dark:bg-red-300 dark:hover:bg-red-400 dark:active:bg-red-500">{texts.display_keys_gen_new_keys_submit_button}</Button>}
                     {submitLoading && <Loading />}
-                    {error && <p className="red-500">{error}</p>}
+                    {errorPopup && error && <p className="text-red-500">{error}</p>}
                   </form>}
-                <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_2}</DialogDescription>
+                {submitLoading && <DialogDescription>{texts.display_keys_gen_new_keys_loading_dialog_description}</DialogDescription>}
+                {success && <p className="text-green-500">{texts.display_keys_gen_new_keys_success}</p>}
+                <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_3}</DialogDescription>
                 <Button size="tiny" onClick={() => setPgpKeysInfo(!pgpKeysInfo)}>{texts.display_keys_pgp_keys_info}</Button>
                 {pgpKeysInfo && <PrivacyModelInfo />}
                 </DialogContent>
