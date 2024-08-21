@@ -65,6 +65,7 @@
     "display_keys_gen_new_keys_input_placeholder": "Your password will be needed for generating new keys and re-encrypting all your data",
     "display_keys_gen_new_keys_submit_button": "Submit",
     "display_keys_gen_new_keys_error": "Invalid credentials",
+    "display_keys_gen_new_keys_critical_error": "Re-encryption server side fail, this might be really bad for you, sorry.",
     "display_keys_gen_new_keys_success": "Generating new keys and re-encryption was successful",
     "display_keys_gen_new_keys_loading_dialog_description": "Do not leave this page until this process is complete!",
     "display_keys_pgp_keys_info": "Read our pgp keys privacy model information"

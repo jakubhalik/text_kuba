@@ -36,8 +36,10 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
     const [displayKeysPopup, setDisplayKeysPopup] = useState(false);
     const publicKeyArmored = getCookie('publicKey') as string;
     const privateKeyArmored = getCookie('privateKey') as string;
-    const [publicKey, setPublicKey] = useState('');
-    const [privateKey, setPrivateKey] = useState('');
+    const [publicKey, setPublicKey] = useState(publicKeyArmored);
+    const [privateKey, setPrivateKey] = useState(privateKeyArmored);
+    const [publicKeyShow, setPublicKeyShow] = useState(false);
+    const [privateKeyShow, setPrivateKeyShow] = useState(false);
     const [passwordInput, setPasswordInput] = useState(false);
     const passwordRef = useRef<HTMLInputElement>(null);
     const [error, setError] = useState('');
@@ -260,12 +262,14 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
                 console.log('Reencrypting successful.');
                 setCookie('privateKey', newPrivateKey, { path: '/', secure: true, sameSite: 'strict' });
                 setCookie('publicKey', newPublicKey, { path: '/', secure: true, sameSite: 'strict' });
+                setPublicKey(newPublicKey);
+                setPrivateKey(newPrivateKey);
                 setSuccess(true);
             }
             setSubmitLoading(false);
         }
         if (!result.success) {
-            setError(texts.display_keys_gen_new_keys_error);
+            setError(result.error && result.error === 're-encryption failed' ? texts.display_keys_gen_new_keys_critical_error : texts.display_keys_gen_new_keys_error);
             setErrorPopup(true);
             setSubmitLoading(false);
         }
@@ -289,12 +293,12 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
                     <DialogDescription>{texts.display_keys_dialog_description_1}</DialogDescription>
                     <DialogDescription>{texts.display_keys_dialog_description_2}</DialogDescription>
                     <br />
-                <Button size="tiny" onClick={() => copyToClipboard(publicKeyArmored)}>{texts.display_keys_button_public_key_to_clipboard}</Button>
-                <Button size="tiny" onClick={() => copyToClipboard(privateKeyArmored)}>{texts.display_keys_button_public_key_to_clipboard}</Button>
-                <Button size="tiny" onClick={() => publicKey !== publicKeyArmored ? setPublicKey(publicKeyArmored) : setPublicKey('')}>{texts.display_keys_button_show_public_key}</Button>
-                {publicKey && <p className="text-[6px] sm:text-xs">{publicKey}</p>}
-                <Button size="tiny" onClick={() => privateKey !== privateKeyArmored ? setPrivateKey(privateKeyArmored) : setPrivateKey('')}>{texts.display_keys_button_show_private_key}</Button>
-                {privateKey && <p className="text-[6px] sm:text-xs">{privateKey}</p>}
+                <Button size="tiny" onClick={() => copyToClipboard(publicKey)}>{texts.display_keys_button_public_key_to_clipboard}</Button>
+                <Button size="tiny" onClick={() => copyToClipboard(privateKey)}>{texts.display_keys_button_public_key_to_clipboard}</Button>
+                <Button size="tiny" onClick={() => setPublicKeyShow(!publicKeyShow)}>{texts.display_keys_button_show_public_key}</Button>
+                {publicKeyShow && <p className="text-[6px] sm:text-xs">{publicKey}</p>}
+                <Button size="tiny" onClick={() => setPrivateKeyShow(!privateKeyShow)}>{texts.display_keys_button_show_private_key}</Button>
+                {privateKeyShow && <p className="text-[6px] sm:text-xs">{privateKey}</p>}
                 <br />
                 <DialogTitle>{texts.display_keys_gen_new_keys_dialog_title_1}</DialogTitle>
                 <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_1}</DialogDescription>
