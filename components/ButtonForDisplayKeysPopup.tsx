@@ -14,7 +14,7 @@ import {
 
 import { KeyIcon } from 'lucide-react';
 
-import { getCookie } from 'cookies-next';
+import { getCookie, setCookie } from 'cookies-next';
 
 import { useLanguage } from './GlobalStates';
 import { loadLanguage, handleEncryptedLogin, ReEncrypt } from '@/lib/utils';
@@ -71,11 +71,197 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
             console.log('logged through re-encrypt:');
             console.log(result.chatMessages);
             console.log(result.users);
+            const userToLog = result.users!.find((user: { username: string }) => user.username === username);
+            console.log(userToLog);
             console.log(result.publicKeys);
             const privateKeyForDecryption = await openpgp.readPrivateKey({
                 armoredKey: privateKeyArmored,
             });
-            setSuccess(true);
+            const decryptedMessages = await Promise.all(result.chatMessages!.map(async (message) => {
+                try {
+                    // console.log('starting a try block of decrypting a message');
+                    // console.log('public keys: ', publicKeys);
+                    try {
+                        let decryptedMessageText = null;
+                        let decryptedDatetimeFrom = null;
+                        let file = null;
+                        let decryptedFileName = null;
+                        if (message.send_to === username) {
+                            try {
+                                decryptedMessageText = await openpgp.decrypt({
+                                    message: await openpgp.readMessage({
+                                        armoredMessage: message.text,
+                                    }),
+                                    decryptionKeys: privateKeyForDecryption,
+                                    verificationKeys: await openpgp.readKey({ armoredKey: result.publicKeys![message.sent_by] }),
+                                });
+                                // console.log('this message was sent by the other person to you: ', decryptedMessageText);
+                            } catch (e) {
+                                console.error('error in transferring message text sent by the other person than me to me: ', e);
+                                return { ...message, text: 'error in transferring message text sent by the other person than me to me' }
+                            }
+                            try {
+                                decryptedDatetimeFrom = await openpgp.decrypt({
+                                    message: await openpgp.readMessage({
+                                        armoredMessage: message.datetime_from,
+                                    }),
+                                    decryptionKeys: privateKeyForDecryption,
+                                    verificationKeys: await openpgp.readKey({ armoredKey: result.publicKeys![message.sent_by] }),
+                                });
+                                // console.log('this is datetime_from of the message that was sent by the other person to you: ', decryptedMessageText);
+                            } catch (e) {
+                                console.error('error in transferring datetime_from of the message sent by the other person than me to me: ', e);
+                                return { ...message, text: 'error in transferring datetime_from of the message sent by the other person than me to me' }
+                            }
+                            if (message.file) {
+                                try {
+                                    const decryptedFile = await openpgp.decrypt({
+                                        message: await openpgp.readMessage({
+                                            armoredMessage: message.file,
+                                        }),
+                                        decryptionKeys: privateKeyForDecryption,
+                                        verificationKeys: await openpgp.readKey({ armoredKey: result.publicKeys![message.sent_by] }),
+                                    });
+                                    file = decryptedFile.data as string;
+                                } catch (e) {
+                                    console.error('Error decrypting file:', e);
+                                }
+                            }
+                            if (message.filename) {
+                                try {
+                                    decryptedFileName = await openpgp.decrypt({
+                                        message: await openpgp.readMessage({
+                                            armoredMessage: message.filename,
+                                        }),
+                                        decryptionKeys: privateKeyForDecryption,
+                                        verificationKeys: await openpgp.readKey({ armoredKey: result.publicKeys![message.sent_by] }),
+                                    });
+                                } catch (e) {
+                                    console.error('Error decrypting filename:', e);
+                                }
+                            }
+                            return {
+                                ...message,
+                                text: decryptedMessageText.data as string,
+                                datetime_from: new Date(decryptedDatetimeFrom.data as string).toLocaleString(),
+                                file: file ? file : null,
+                                filename: decryptedFileName ? decryptedFileName.data as string : null,
+                            };
+                        } else {
+                            decryptedMessageText = await openpgp.decrypt({
+                                message: await openpgp.readMessage({
+                                    armoredMessage: message.text,
+                                }),
+                                decryptionKeys: privateKeyForDecryption,
+                            });
+                            // console.log('this message was sent by you: ', decryptedMessageText);
+                            decryptedDatetimeFrom = await openpgp.decrypt({
+                                message: await openpgp.readMessage({
+                                    armoredMessage: message.datetime_from,
+                                }),
+                                decryptionKeys: privateKeyForDecryption,
+                            });
+                            // console.log('this datetime_from is from the message that was sent by you: ', decryptedMessageText);
+                            if (message.file) {
+                                try {
+                                    const decryptedFile = await openpgp.decrypt({
+                                        message: await openpgp.readMessage({
+                                            armoredMessage: message.file,
+                                        }),
+                                        decryptionKeys: privateKeyForDecryption,
+                                    });
+                                    file = decryptedFile.data as string;
+                                } catch (e) {
+                                    console.error('Error decrypting file:', e);
+                                }
+                            }
+                            if (message.filename) {
+                                try {
+                                    decryptedFileName = await openpgp.decrypt({
+                                        message: await openpgp.readMessage({
+                                            armoredMessage: message.filename,
+                                        }),
+                                        decryptionKeys: privateKeyForDecryption,
+                                    });
+                                } catch (e) {
+                                    console.error('Error decrypting filename:', e);
+                                }
+                            }
+                            return {
+                                ...message,
+                                text: decryptedMessageText.data as string,
+                                datetime_from: new Date(decryptedDatetimeFrom.data as string).toLocaleString(),
+                                file: file ? file : null,
+                                filename: decryptedFileName ? decryptedFileName.data as string : null,
+                            };
+                        }
+                    } catch (e) { 
+                        console.error('Error even executing the if username === message.send_to: ', e); 
+                        return { ...message, text: 'Error even executing the if username === message.send_to: ', e } 
+                    }
+                } catch (e) {
+                    console.error('Error decrypting message text:', e);
+                    return { ...message, text: 'Error decrypting message' };
+                }
+            }));
+            console.log(decryptedMessages);
+            const { privateKey, publicKey } = await openpgp.generateKey({
+                type: 'ecc',
+                curve: 'curve25519',
+                userIDs: [{ name: username }],
+            });
+            const newPrivateKey = privateKey;
+            const newPublicKey = publicKey;
+            const privateKeyForSigning = await openpgp.readPrivateKey({
+                armoredKey: newPrivateKey,
+            });
+            const reEncryptedMessages = await Promise.all(decryptedMessages.map(async (message) => {
+                try {
+                    const encryptedMessageText = await openpgp.encrypt({
+                        message: await openpgp.createMessage({ text: message.text }),
+                        encryptionKeys: await openpgp.readKey({ armoredKey: newPublicKey }),
+                        signingKeys: privateKeyForSigning,
+                        format: 'armored',
+                    }) as string;
+                    const encryptedDatetimeFrom = await openpgp.encrypt({
+                        message: await openpgp.createMessage({ text: message.datetime_from }),
+                        encryptionKeys: await openpgp.readKey({ armoredKey: newPublicKey }),
+                        signingKeys: privateKeyForSigning,
+                        format: 'armored',
+                    }) as string;
+                    const encryptedFile = message.file ? await openpgp.encrypt({
+                        message: await openpgp.createMessage({ text: message.file as unknown as string }),
+                        encryptionKeys: await openpgp.readKey({ armoredKey: newPublicKey }),
+                        signingKeys: privateKeyForSigning,
+                        format: 'armored',
+                    }) as string : null;
+                    const encryptedFileName = message.filename ? await openpgp.encrypt({
+                        message: await openpgp.createMessage({ text: message.filename }),
+                        encryptionKeys: await openpgp.readKey({ armoredKey: newPublicKey }),
+                        signingKeys: privateKeyForSigning,
+                        format: 'armored',
+                    }) as string : null;
+                    return {
+                        ...message,
+                        text: encryptedMessageText,
+                        datetime_from: encryptedDatetimeFrom,
+                        file: encryptedFile,
+                        filename: encryptedFileName,
+                    }
+                } catch (e) {
+                    console.error('Error re-encrypting message:', e);
+                    return { ...message, text: 'Error re-encrypting message' };
+                }
+            }));
+            console.log(reEncryptedMessages);
+            const reEncrypt = true;
+            const resultTwo = await action(formData!, false, reEncrypt, reEncryptedMessages, newPublicKey);
+            if (resultTwo.action === 're-encrypted') {
+                console.log('Reencrypting successful.');
+                setCookie('privateKey', newPrivateKey, { path: '/', secure: true, sameSite: 'strict' });
+                setCookie('publicKey', newPublicKey, { path: '/', secure: true, sameSite: 'strict' });
+                setSuccess(true);
+            }
             setSubmitLoading(false);
         }
         if (!result.success) {

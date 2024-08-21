@@ -121,7 +121,7 @@ async function sendMessage(
                     filename TEXT
                 );
             `);
-            console.log('postgres_schema was created if it did not exist and message_table in it was created if it did not exist');
+            // console.log('postgres_schema was created if it did not exist and message_table in it was created if it did not exist');
         } catch (e) {
             console.error('failure of postgres_schema was created if it did not exist and message_table in it was created if it did not exist');
         }

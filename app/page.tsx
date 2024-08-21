@@ -32,6 +32,7 @@ import { Messenger } from '@/components/Messenger';
 
 import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
 import { getDecryptedMessages } from '@/actions/getDecryptedMessages';
+import { Message } from 'postcss';
 
 
 
@@ -395,47 +396,101 @@ async function signOut(username: string): Promise<void> {
     cookies().delete('session');
 }
 
-async function reEncrypt (formData: FormData, checkLoginAndSendAllDataIfLoginWorksServerSide: boolean): Promise<ReEncryptInterface> {
+async function reEncrypt (formData: FormData, checkLoginAndSendAllDataIfLoginWorksServerSide: boolean, reEncrypt?: boolean, reEncryptedMessages?: Message[], newPublicKey?: string): Promise<ReEncryptInterface> {
     'use server';
     try {
+        const client = await postgresUserPool.connect();
+        const { username, encryptedUsername, encryptedPassword } = formData;
+        const result = await client.query(selectUsersPubKey, [postgresHashedPassword, username]);
+        if (result.rows.length === 0) {
+            // console.log('User not found');
+            return { success: false };
+        }
+        const decryptedPublicKey = result.rows[0].public_key;
+        const decryptedUsername = await decryptWithPublicKey(
+            decryptedPublicKey,
+            encryptedUsername
+        );
+        const decryptedPassword = await decryptWithPublicKey(
+            decryptedPublicKey,
+            encryptedPassword
+        );
+        // console.log('Decrypted Username:', decryptedUsername);
+        // console.log('Decrypted Password:', decryptedPassword);
+        const pool = new Pool({
+            host,
+            port,
+            database: `text_${owner}`,
+            user: decryptedUsername,
+            password: decryptedPassword,
+        });
+        try {
+            const userClient = await pool.connect();
+            userClient.release();
+        } catch (e) {
+            console.error('Connecting to pool in reencrypt function failed: ', e);
+            return { success: false };
+        }
+        const { chatMessages, users, publicKeys } = await getDecryptedMessages(
+            decryptedUsername, 
+            decryptedPassword
+        );
         if (checkLoginAndSendAllDataIfLoginWorksServerSide) {
-            const client = await postgresUserPool.connect();
-            const { username, encryptedUsername, encryptedPassword } = formData;
-            const result = await client.query(selectUsersPubKey, [postgresHashedPassword, username]);
-            if (result.rows.length === 0) {
-                // console.log('User not found');
-                return { success: false };
-            }
-            const decryptedPublicKey = result.rows[0].public_key;
-            const decryptedUsername = await decryptWithPublicKey(
-                decryptedPublicKey,
-                encryptedUsername
-            );
-            const decryptedPassword = await decryptWithPublicKey(
-                decryptedPublicKey,
-                encryptedPassword
-            );
-            // console.log('Decrypted Username:', decryptedUsername);
-            // console.log('Decrypted Password:', decryptedPassword);
-            const pool = new Pool({
-                host,
-                port,
-                database: `text_${owner}`,
-                user: decryptedUsername,
-                password: decryptedPassword,
-            });
-            try {
-                const userClient = await pool.connect();
-                userClient.release();
-            } catch (e) {
-                console.error('Connecting to pool in reencrypt function failed: ', e);
-                return { success: false };
-            }
-            const { chatMessages, users, publicKeys } = await getDecryptedMessages(
-                decryptedUsername, 
-                decryptedPassword
-            );
             return { success: true, action: 'checked login', chatMessages, users, publicKeys };
+        }
+        if (reEncrypt && reEncryptedMessages && newPublicKey) {
+            const userCombinedPassword = `${decryptedUsername}${decryptedPassword}`;
+            const userHashedPassword = crypto
+                .createHash('sha256')
+                .update(userCombinedPassword)
+                .digest('hex');
+            const userClient = await pool.connect();
+            try {
+                    await userClient.query(`
+                        CREATE TABLE "${decryptedUsername}_schema"."messages_table_backup" AS 
+                        TABLE "${decryptedUsername}_schema"."messages_table";
+                    `);
+                    await userClient.query(`
+                        DELETE FROM "${decryptedUsername}_schema"."messages_table";
+                    `);
+                 for (const message of reEncryptedMessages) {
+                    await userClient.query(`
+                        INSERT INTO "${decryptedUsername}_schema"."messages_table" 
+                            (datetime_from, sent_by, send_to, text, file, filename) 
+                        VALUES (
+                            pgp_sym_encrypt($1::text, $2), 
+                            pgp_sym_encrypt($3::text, $2), 
+                            pgp_sym_encrypt($4::text, $2), 
+                            pgp_sym_encrypt($5::text, $2), 
+                            pgp_sym_encrypt($6::text, $2), 
+                            pgp_sym_encrypt($7::text, $2)
+                        );
+                    `, [
+                        message.datetime_from,
+                        userHashedPassword,
+                        message.sent_by,
+                        message.send_to,
+                        message.text,
+                        message.file,
+                        message.filename
+                    ]);
+                }
+                await client.query(`
+                    UPDATE postgres_schema.public_keys 
+                    SET public_key = pgp_sym_encrypt($1::text, $2)
+                    WHERE username = $3;
+                `, [newPublicKey, postgresHashedPassword, username]);
+                await userClient.query(`
+                    DROP TABLE "${decryptedUsername}_schema"."messages_table_backup";
+                `);
+                console.log('Re-encrypted all user personal schema tables successfully.');
+                return { success: true, action: 're-encrypted' };
+            } catch (error) {
+                console.error('Error re-encrypting user personal schema tables:', error);
+                return { success: false, error: 're-encryption failed' };
+            } finally {
+                userClient.release();
+            }
         }
     } catch (e) {
         console.error('error in reEncrypting server function: ', e);
