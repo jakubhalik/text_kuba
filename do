@@ -121,15 +121,17 @@ fix viewing pictures
 
 frontend for texts and support for switching full us and cz langs
 
-done till here
-
 possibility to generate new keys and set them right away in the cookies and the new public one in the db with all data being replaced with ones encrypted with the new private key and the old ones deleted
+
+done till here
 
 possibility to change password
 
 displaying the pgp info and settings popup automatically when just singed up and for when logged in for the first time
 
 deploy the pre-alpha when it is in this stage and have some people chat with some person there for real for pre-alpha testing
+
+brutal verification keys handling
 
 gonna use the auth and e2e encrypted chatting components of this app for different apps from the point of when I get to this point
 
