@@ -22,7 +22,7 @@ import {
     postgresHashedPassword
 } from '@/postgresConfig';
 
-import { profile_table, messages_table, FormData, LoginActionPromise, SignUpActionPromise, ReEncryptInterface, makePubKeysTableIfNotExists, insertUsersPubKey, selectUsersPubKey, ChangePasswordInterface } from '@/lib/utils';
+import { profile_table, messages_table, FormData, LoginActionPromise, SignUpActionPromise, ReEncryptInterface, Message, makePubKeysTableIfNotExists, insertUsersPubKey, selectUsersPubKey, ChangePasswordInterface } from '@/lib/utils';
 
 import { cookies } from 'next/headers';
 
@@ -32,7 +32,6 @@ import { Messenger } from '@/components/Messenger';
 
 import { decryptWithPublicKey } from '@/actions/decryptWithPublicKey';
 import { getDecryptedMessages } from '@/actions/getDecryptedMessages';
-import { Message } from 'postcss';
 
 
 

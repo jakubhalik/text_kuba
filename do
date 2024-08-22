@@ -125,9 +125,9 @@ possibility to generate new keys and set them right away in the cookies and the 
 
 possibility to change password
 
-done till here
-
 displaying the pgp info and settings popup automatically when just singed up and for when logged in for the first time
+
+done till here
 
 czech lang perfecting
 

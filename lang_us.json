@@ -19,6 +19,8 @@
     "signup_h": "Sign Up",
     "confirm_password_label": "Confirm Password",
     "confirm_password_input_placeholder": "Confirm your password",
+    "enter_private_key_input_placeholder": "Enter your private key",
+    "set_private_key_button_text": "Set",
     "signup_info_1": "By creating an account you are generating on your device only in this browser on this page locally a private and public key for encrypting your data, the private one will never leave your device, our servers will never know what it is.",
     "signup_info_2": "This is mainly done because each time you will message anyone the message will be first signed by your private key and then encrypted by the public key of the person you are sending the message to so only his private key that only he has can decrypt the message you sent him and so when he was capable of decrypting it through having his private key he can also verify that the message was really from you through the public one of yours that he as your friend automatically has.",
     "signup_info_3": "But we are also using the pgp pub keys algorithms for authentication: We will save the public one in an encrypted way we can decrypt so we can always authenticate you.",

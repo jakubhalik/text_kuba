@@ -240,7 +240,7 @@ export default function LoginOrSignUp({
                             <textarea
                                 id="private-key"
                                 name="Private key"
-                                placeholder="Enter your private key"
+                                placeholder={texts.enter_private_key_input_placeholder}
                                 value={privateKey}
                                 onChange={(e) => setPrivateKey(e.target.value)}
                                 ref={textareaRef}
@@ -268,7 +268,7 @@ export default function LoginOrSignUp({
                                     }
                                 }}
                             >
-                                Set
+                                {texts.set_private_key_button_text}
                             </AlertDialogAction>
                         </AlertDialogContent>
                     </AlertDialog>
