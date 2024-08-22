@@ -28,12 +28,13 @@ import * as openpgp from 'openpgp';
 interface KeysPopupProps {
     action: ReEncrypt;
     username: string;
+    firstTime: boolean;
 }
-export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopupProps) {
+export default function ButtonForDisplayKeysPopup({ action, username, firstTime }: KeysPopupProps) {
     const { language } = useLanguage();
     const texts = loadLanguage(language);
 
-    const [displayKeysPopup, setDisplayKeysPopup] = useState(false);
+    const [displayKeysPopup, setDisplayKeysPopup] = useState(firstTime);
     const publicKeyArmored = getCookie('publicKey') as string;
     const privateKeyArmored = getCookie('privateKey') as string;
     const [publicKey, setPublicKey] = useState(publicKeyArmored);

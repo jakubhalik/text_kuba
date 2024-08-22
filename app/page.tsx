@@ -41,6 +41,7 @@ import { Message } from 'postcss';
 
 
 let loggedInUsers: Record<string, { username: string; timestamp: number }> = {};
+let newUsers: Record<string, { username: string; timestamp: number }> = {};
 
 async function transferMessagesToUser(
     username: string,
@@ -155,6 +156,16 @@ async function cleanUpCache() {
     }
 }
 
+async function cleanUpNewUsersCache() {
+    'use server';
+    const now = Date.now();
+    for (const user in newUsers) {
+        if (newUsers[user].timestamp + cache_expiration_ms < now) {
+            delete newUsers[user];
+        }
+    }
+}
+
 async function signUp(
     formData: FormData
 ): Promise<SignUpActionPromise> {
@@ -230,6 +241,10 @@ async function signUp(
         `);
         userClient.release();
         // console.log('signUp - End');
+        newUsers[decryptedUsername] = {
+            username: decryptedUsername,
+            timestamp: Date.now(),
+        }
         return await login({
             username: decryptedUsername,
             encryptedUsername,
@@ -389,6 +404,7 @@ async function signOut(username: string): Promise<void> {
     'use server';
     try {
         delete loggedInUsers[username];
+        delete newUsers[username];
         // console.log('deleting decrypted username of the logged in user from the loggedInUsers aka signing him out');
     } catch (e) {
         console.error('error in deleting decrypted username of the logged in user from the loggedInUsers aka signing him out: ', e);
@@ -588,6 +604,7 @@ async function reEncrypt (formData: FormData, checkLoginAndSendAllDataIfLoginWor
 export default async function Home() {
     try {
         cleanUpCache();
+        cleanUpNewUsersCache();
         // console.log('cleaning up any expired cached sessions');
     } catch (e) {
         console.error('error in cleaning up any expired cached sessions: ', e);
@@ -640,7 +657,7 @@ export default async function Home() {
                 <nav className="flex gap-2 ml-auto">
                     {
                         loggedInUsers[decryptedUsernameForMessenger!] && 
-                        <ButtonForDisplayKeysPopup username={decryptedUsernameForMessenger!} action={reEncrypt} />
+                        <ButtonForDisplayKeysPopup username={decryptedUsernameForMessenger!} action={reEncrypt} firstTime={newUsers[decryptedUsernameForMessenger!] ? true : false} />
                     }
                     <ModeToggle />
                     <LangToggle />
