@@ -22,7 +22,7 @@ import {
     postgresHashedPassword
 } from '@/postgresConfig';
 
-import { profile_table, messages_table, FormData, LoginActionPromise, SignUpActionPromise, ReEncryptInterface, makePubKeysTableIfNotExists, insertUsersPubKey, selectUsersPubKey } from '@/lib/utils';
+import { profile_table, messages_table, FormData, LoginActionPromise, SignUpActionPromise, ReEncryptInterface, makePubKeysTableIfNotExists, insertUsersPubKey, selectUsersPubKey, ChangePasswordInterface } from '@/lib/utils';
 
 import { cookies } from 'next/headers';
 
@@ -396,6 +396,92 @@ async function signOut(username: string): Promise<void> {
     cookies().delete('session');
 }
 
+async function changePassword (formData: FormData, newPassword: string): Promise<ChangePasswordInterface> {
+    'use server';
+    try {
+        const client = await postgresUserPool.connect();
+        const { username, encryptedUsername, encryptedPassword } = formData;
+        const result = await client.query(selectUsersPubKey, [postgresHashedPassword, username]);
+        if (result.rows.length === 0) {
+            // console.log('User not found');
+            return { success: false };
+        }
+        const decryptedPublicKey = result.rows[0].public_key;
+        const decryptedUsername = await decryptWithPublicKey(
+            decryptedPublicKey,
+            encryptedUsername
+        );
+        const decryptedPassword = await decryptWithPublicKey(
+            decryptedPublicKey,
+            encryptedPassword
+        );
+        // console.log('Decrypted Username:', decryptedUsername);
+        // console.log('Decrypted Password:', decryptedPassword);
+        const pool = new Pool({
+            host,
+            port,
+            database: `text_${owner}`,
+            user: decryptedUsername,
+            password: decryptedPassword,
+        });
+        try {
+            const userClient = await pool.connect();
+            userClient.release();
+        } catch (e) {
+            console.error('Connecting to pool in change password function failed: ', e);
+            return { success: false, action: 'fail' };
+        }
+        try {
+            await client.query(`ALTER USER "${decryptedUsername}" WITH PASSWORD '${newPassword}'`);
+        } catch (e) {
+            console.error('Changing password failed: ', e);
+            return { success: false, action: 'critical fail' };
+        }
+        try {
+            const combinedPassword = `${decryptedUsername}${decryptedPassword}`;
+            const hashedPassword = crypto
+                .createHash('sha256')
+                .update(combinedPassword)
+                .digest('hex');
+            const newCombinedPassword = `${decryptedUsername}${newPassword}`;
+            const newHashedPassword = crypto
+                .createHash('sha256')
+                .update(newCombinedPassword)
+                .digest('hex');
+            const userClient = await pool.connect();
+            try {
+                await userClient.query(`
+                    UPDATE "${decryptedUsername}_schema"."messages_table" 
+                    SET 
+                        datetime_from = pgp_sym_encrypt(pgp_sym_decrypt(datetime_from::bytea, $1)::text, $2),
+                        sent_by = pgp_sym_encrypt(pgp_sym_decrypt(sent_by::bytea, $1)::text, $2),
+                        send_to = pgp_sym_encrypt(pgp_sym_decrypt(send_to::bytea, $1)::text, $2),
+                        text = pgp_sym_encrypt(pgp_sym_decrypt(text::bytea, $1)::text, $2),
+                        file = pgp_sym_encrypt(pgp_sym_decrypt(file::bytea, $1)::text, $2),
+                        filename = pgp_sym_encrypt(pgp_sym_decrypt(filename::bytea, $1)::text, $2)
+                `, [hashedPassword, newHashedPassword]);
+
+                await userClient.query(`
+                    UPDATE "${decryptedUsername}_schema"."profile_table" 
+                    SET 
+                        ${profile_table.map(column => 
+                            `${column} = pgp_sym_encrypt(pgp_sym_decrypt(${column}::bytea, $1)::text, $2)`
+                        ).join(', ')}
+                `, [hashedPassword, newHashedPassword]);
+            } finally {
+                userClient.release();
+            }
+            return { success: true };
+        } catch (e) {
+            console.error('Re-encrypting data synchronyslou at the layer where it is synchronous in change password server function failed: ', e);
+            return { success: false, action: 'critical fail' };
+        }
+    } catch (e) {
+        console.error('error in change password server function: ', e);
+        return { success: false, action: 'critical fail' };
+    }
+}
+
 async function reEncrypt (formData: FormData, checkLoginAndSendAllDataIfLoginWorksServerSide: boolean, reEncrypt?: boolean, reEncryptedMessages?: Message[], newPublicKey?: string): Promise<ReEncryptInterface> {
     'use server';
     try {
@@ -483,7 +569,7 @@ async function reEncrypt (formData: FormData, checkLoginAndSendAllDataIfLoginWor
                 await userClient.query(`
                     DROP TABLE "${decryptedUsername}_schema"."messages_table_backup";
                 `);
-                console.log('Re-encrypted all user personal schema tables successfully.');
+                // console.log('Re-encrypted all user personal schema tables successfully.');
                 return { success: true, action: 're-encrypted' };
             } catch (error) {
                 console.error('Error re-encrypting user personal schema tables:', error);
@@ -562,6 +648,7 @@ export default async function Home() {
                         loggedInUsers[decryptedUsernameForMessenger!] && 
                             <MoreForm
                                 signoutAction={signOut} 
+                                changePasswordAction={changePassword}
                                 username={decryptedUsernameForMessenger!} 
                             />
                     }

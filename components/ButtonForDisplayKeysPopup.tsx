@@ -293,42 +293,42 @@ export default function ButtonForDisplayKeysPopup({ action, username }: KeysPopu
                     <DialogDescription>{texts.display_keys_dialog_description_1}</DialogDescription>
                     <DialogDescription>{texts.display_keys_dialog_description_2}</DialogDescription>
                     <br />
-                <Button size="tiny" onClick={() => copyToClipboard(publicKey)}>{texts.display_keys_button_public_key_to_clipboard}</Button>
-                <Button size="tiny" onClick={() => copyToClipboard(privateKey)}>{texts.display_keys_button_public_key_to_clipboard}</Button>
-                <Button size="tiny" onClick={() => setPublicKeyShow(!publicKeyShow)}>{texts.display_keys_button_show_public_key}</Button>
-                {publicKeyShow && <p className="text-[6px] sm:text-xs">{publicKey}</p>}
-                <Button size="tiny" onClick={() => setPrivateKeyShow(!privateKeyShow)}>{texts.display_keys_button_show_private_key}</Button>
-                {privateKeyShow && <p className="text-[6px] sm:text-xs">{privateKey}</p>}
-                <br />
-                <DialogTitle>{texts.display_keys_gen_new_keys_dialog_title_1}</DialogTitle>
-                <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_1}</DialogDescription>
-                <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_2}</DialogDescription>
-                {!passwordInput && <Button 
-                    size="tiny" 
-                    className="bg-red-500 hover:bg-red-600 active:bg-red-700 dark:bg-red-300 dark:hover:bg-red-400 dark:active:bg-red-500"
-                    onClick={() => setPasswordInput(true)}
-                >
-                    {texts.display_keys_gen_new_keys_button}
-                </Button>}
-                {passwordInput && <form className="grid grid-cols-2 items-center gap-4" onSubmit={handleSubmit}>
-                    <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        ref={passwordRef}
-                        required
-                        placeholder={texts.display_keys_gen_new_keys_input_placeholder}
-                        className="col-span-1"
-                    />
-                    {!submitLoading && <Button type="submit" className="bg-red-500 hover:bg-red-600 active:bg-red-700 dark:bg-red-300 dark:hover:bg-red-400 dark:active:bg-red-500">{texts.display_keys_gen_new_keys_submit_button}</Button>}
-                    {submitLoading && <Loading />}
-                    {errorPopup && error && <p className="text-red-500">{error}</p>}
-                  </form>}
-                {submitLoading && <DialogDescription>{texts.display_keys_gen_new_keys_loading_dialog_description}</DialogDescription>}
-                {success && <p className="text-green-500">{texts.display_keys_gen_new_keys_success}</p>}
-                <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_3}</DialogDescription>
-                <Button size="tiny" onClick={() => setPgpKeysInfo(!pgpKeysInfo)}>{texts.display_keys_pgp_keys_info}</Button>
-                {pgpKeysInfo && <PrivacyModelInfo />}
+                    <Button size="tiny" onClick={() => copyToClipboard(publicKey)}>{texts.display_keys_button_public_key_to_clipboard}</Button>
+                    <Button size="tiny" onClick={() => copyToClipboard(privateKey)}>{texts.display_keys_button_private_key_to_clipboard}</Button>
+                    <Button size="tiny" onClick={() => setPublicKeyShow(!publicKeyShow)}>{texts.display_keys_button_show_public_key}</Button>
+                    {publicKeyShow && <p className="text-[6px] sm:text-xs">{publicKey}</p>}
+                    <Button size="tiny" onClick={() => setPrivateKeyShow(!privateKeyShow)}>{texts.display_keys_button_show_private_key}</Button>
+                    {privateKeyShow && <p className="text-[6px] sm:text-xs">{privateKey}</p>}
+                    <br />
+                    <DialogTitle>{texts.display_keys_gen_new_keys_dialog_title_1}</DialogTitle>
+                    <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_1}</DialogDescription>
+                    <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_2}</DialogDescription>
+                    {!passwordInput && <Button 
+                        size="tiny" 
+                        className="bg-red-500 hover:bg-red-600 active:bg-red-700 dark:bg-red-300 dark:hover:bg-red-400 dark:active:bg-red-500"
+                        onClick={() => setPasswordInput(true)}
+                    >
+                        {texts.display_keys_gen_new_keys_button}
+                    </Button>}
+                    {passwordInput && <form className="grid grid-cols-2 items-center gap-4" onSubmit={handleSubmit}>
+                        <Input
+                            id="password"
+                            name="password"
+                            type="password"
+                            ref={passwordRef}
+                            required
+                            placeholder={texts.display_keys_gen_new_keys_input_placeholder}
+                            className="col-span-1"
+                        />
+                        {!submitLoading && <Button type="submit" className="bg-red-500 hover:bg-red-600 active:bg-red-700 dark:bg-red-300 dark:hover:bg-red-400 dark:active:bg-red-500">{texts.display_keys_gen_new_keys_submit_button}</Button>}
+                        {submitLoading && <Loading />}
+                        {errorPopup && error && <p className="text-red-500">{error}</p>}
+                    </form>}
+                    {submitLoading && <DialogDescription>{texts.display_keys_gen_new_keys_loading_dialog_description}</DialogDescription>}
+                    {success && <p className="text-green-500">{texts.display_keys_gen_new_keys_success}</p>}
+                    <DialogDescription>{texts.display_keys_gen_new_keys_dialog_description_3}</DialogDescription>
+                    <Button size="tiny" onClick={() => setPgpKeysInfo(!pgpKeysInfo)}>{texts.display_keys_pgp_keys_info}</Button>
+                    {pgpKeysInfo && <PrivacyModelInfo />}
                 </DialogContent>
             </Dialog>
         </>

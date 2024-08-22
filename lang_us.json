@@ -68,6 +68,16 @@
     "display_keys_gen_new_keys_critical_error": "Re-encryption server side fail, this might be really bad for you, sorry.",
     "display_keys_gen_new_keys_success": "Generating new keys and re-encryption was successful",
     "display_keys_gen_new_keys_loading_dialog_description": "Do not leave this page until this process is complete!",
-    "display_keys_pgp_keys_info": "Read our pgp keys privacy model information"
+    "display_keys_pgp_keys_info": "Read our pgp keys privacy model information",
+    "open_change_password_popup_button": "Change password",
+    "change_password_title": "Change password",
+    "change_password_input_placeholder": "Current password",
+    "change_password_new_password_input_placeholder": "New password",
+    "change_password_submit_button": "Submit",
+    "change_password_error": "Invalid credentials",
+    "change_password_critical_error": "Server side fail. This might be really bad for your account. Sorry.",
+    "change_password_dialog_description": "Start this process only if you have a good internet, if you leave the page, the corruption of the process could make you loose access to your account!",
+    "change_password_loading_dialog_description": "Do not leave this page until this process is complete!",
+    "change_password_success": "Successfully changed your password"
 }
 
