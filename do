@@ -127,9 +127,9 @@ possibility to change password
 
 displaying the pgp info and settings popup automatically when just singed up and for when logged in for the first time
 
-done till here
-
 czech lang perfecting
+
+done till here
 
 deploy the pre-alpha when it is in this stage and have some people chat with some person there for real for pre-alpha testing
 

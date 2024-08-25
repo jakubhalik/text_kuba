@@ -123,6 +123,16 @@ encrypting and decrypting dates too
 sorting by ascending dates on the client
 
 fix viewing pictures
+
+frontend for texts and support for switching full us and cz langs
+
+possibility to generate new keys and set them right away in the cookies and the new public one in the db with all data being replaced with ones encrypted with the new private key and the old ones deleted
+
+possibility to change password
+
+displaying the pgp info and settings popup automatically when just singed up and for when logged in for the first time
+
+czech lang perfecting
 <br>
 <br>
 <br>
