@@ -1,21 +1,18 @@
 'use client';
-
 import Image from 'next/image';
-
 import { useState, ChangeEvent } from 'react';
-
 import { Textarea } from '@/components/ui/textarea';
-
 import { Button } from '@/components/ui/button';
-
 import { MessageInputProps } from '@/lib/utils';
-
-
+import { useLanguage } from './GlobalStates';
+import { loadLanguage } from '../lib/utils';
 
 export default function MessageInput({
     onSendMessage,
     paperclipIcon,
 }: MessageInputProps) {
+    const { language } = useLanguage();
+    const texts = loadLanguage(language);
     const [newMessage, setNewMessage] = useState('');
     const [file, setFile] = useState<File | null>(null);
     const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -85,7 +82,7 @@ export default function MessageInput({
                 ))}
             <Textarea
                 className="min-h-0 max-h-40 overflow-hidden resize-none flex-1"
-                placeholder="Type a message..."
+                placeholder={texts.type_message}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
             />
@@ -99,7 +96,7 @@ export default function MessageInput({
                 {paperclipIcon}
             </div>
             <Button size="sm" onClick={handleSendMessage}>
-                <p className="text-[15px] font-medium">Send</p>
+                <p className="text-[15px] font-medium">{texts.send_message}</p>
             </Button>
         </div>
     );

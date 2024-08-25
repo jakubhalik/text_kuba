@@ -1,12 +1,9 @@
 'use client';
 
 import * as React from 'react';
-
-import '/node_modules/flag-icons/css/flag-icons.min.css';
-
+import Flag from './Flag';
 import { useLanguage } from './GlobalStates';
 import { loadLanguage } from '@/lib/utils';
-
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -27,7 +24,7 @@ export function LangToggle() {
                     size="icon"
                     data-cy="button_for_dropdown_menu_for_lang_toggle"
                 >
-                    <span className={`fi fi-${language}`}></span>
+                    <Flag language={language} />
                     <span className="sr-only" data-cy="lang_toggle">{texts.lang_toggle}</span>
                 </Button>
             </DropdownMenuTrigger>
@@ -38,7 +35,7 @@ export function LangToggle() {
                 >
                     {texts.lang_toggle_english_dropdown_menu_item}
                     <span className="ml-auto">
-                        <span className="fi fi-us"></span>
+                        <Flag language={'us'} />
                     </span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -47,7 +44,7 @@ export function LangToggle() {
                 >
                     {texts.lang_toggle_czech_dropdown_menu_item}
                     <span className="ml-auto">
-                        <span className="fi fi-cz"></span>
+                        <Flag language={'cz'} />
                     </span>
                 </DropdownMenuItem>
             </DropdownMenuContent>

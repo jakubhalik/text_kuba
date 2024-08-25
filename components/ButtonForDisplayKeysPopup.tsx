@@ -51,7 +51,7 @@ export default function ButtonForDisplayKeysPopup({ action, username, firstTime 
     useEffect(() => { !displayKeysPopup && setPasswordInput(false); }, [displayKeysPopup]);
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        alert('Copied to clipboard!');
+        alert(texts.copied_to_clipboard);
         console.log(text);
     };
     const getPassword = () => passwordRef.current?.value || '';
@@ -59,6 +59,7 @@ export default function ButtonForDisplayKeysPopup({ action, username, firstTime 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrorPopup(false);
+        setSuccess(false);
         const formData = await handleEncryptedLogin({
             username: username,
             setError,

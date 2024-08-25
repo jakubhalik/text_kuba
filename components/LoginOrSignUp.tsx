@@ -167,6 +167,7 @@ export default function LoginOrSignUp({
                         <Input
                             id="username"
                             name="username"
+                            type="password"
                             placeholder={texts.username_input_placeholder}
                             value={data.username}
                             onChange={handleChange}

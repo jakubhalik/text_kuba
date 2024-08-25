@@ -54,9 +54,9 @@
     "download_img": "Stáhnout obrázek",
     "display_keys_popup_dialog_title": "Vaše pgp klíče",
     "display_keys_dialog_description_1": "Jak již víš, nemůžeš si dovolit ztratit svůj soukromý klíč, takže jej zkopíruj a zazálohuj v nějakém bezpečném správci hesel.",
-    "display_keys_dialog_description_2": "Ujisti se, že při zobrazení klíčů není monitor nijak nahráván.",
-    "display_keys_button_public_key_to_clipboard": "Zkopírovat Veřejný Klíč do schránky",
-    "display_keys_button_private_key_to_clipboard": "Zkopírovat Soukromý Klíč do schránky",
+    "display_keys_dialog_description_2": "Před zobrazením klíčů se ujisti, že tvůj monitor není žádným způsobem nahráván, stejně tak obrazovka.",
+    "display_keys_button_public_key_to_clipboard": "Zkopírovat veřejný klíč do schránky",
+    "display_keys_button_private_key_to_clipboard": "Zkopírovat soukromý klíč do schránky",
     "display_keys_button_show_public_key": "Zobrazit veřejný klíč",
     "display_keys_button_show_private_key": "Zobrazit soukromý klíč",
     "display_keys_gen_new_keys_dialog_title_1": "Vygeneruj nové kliče,",
@@ -80,5 +80,9 @@
     "change_password_critical_error": "Server stranná chyba. Omlouváme se, tohle bude asi špatné pro váš účet.",
     "change_password_dialog_description": "Spusť, jenom když máš dobrý internet. Opustíš-li stránku, můžeš přijít o přístup k účtu!",
     "change_password_loading_dialog_description": "Nezavírej stránku, dokud tento proces nebude hotov!",
-    "change_password_success": "Heslo úspěšně změněno"
+    "change_password_success": "Heslo úspěšně změněno",
+    "copied_to_clipboard": "Zkopírováno do schránky",
+    "chats_heading": "Chaty",
+    "type_message": "Napiš zprávu...",
+    "send_message": "Poslat"
 }

@@ -43,6 +43,7 @@ export default function MoreForm({ signoutAction, changePasswordAction, username
         e.preventDefault();
         setSubmitLoading(true);
         setErrorPopup(false);
+        setSuccess(false);
         const formData = await handleEncryptedLogin({
             username: username,
             setError,

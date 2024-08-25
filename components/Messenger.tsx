@@ -11,6 +11,7 @@ import { Message, User, PaperclipIcon, /* SearchIcon, VideoIcon, PhoneIcon */ } 
 // import { MoreHorizontal } from 'lucide-react';
 
 import Chat from './Chat';
+import ChatsHeading from './ChatsHeading';
 
 import { postgresUserPool } from '@/postgresConfig';
 
@@ -187,7 +188,7 @@ export async function Messenger({ username, password }: MessengerProps) {
                         />
                     </div>
                     <div className="space-y-1">
-                        <h1 className="text-lg font-bold">Chats</h1>
+                        <h1 className="text-lg font-bold"><ChatsHeading /></h1>
                     </div>
                 </div>
                 {/*<Button className="ml-auto" variant="ghost" size="icon">

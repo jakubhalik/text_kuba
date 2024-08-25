@@ -80,6 +80,10 @@
     "change_password_critical_error": "Server side fail. This might be really bad for your account. Sorry.",
     "change_password_dialog_description": "Start this process only if you have a good internet, if you leave the page, the corruption of the process could make you loose access to your account!",
     "change_password_loading_dialog_description": "Do not leave this page until this process is complete!",
-    "change_password_success": "Successfully changed your password"
+    "change_password_success": "Successfully changed your password",
+    "copied_to_clipboard": "Copied to clipboard",
+    "chats_heading": "Chats",
+    "type_message": "Type a message...",
+    "send_message": "Send"
 }
 
